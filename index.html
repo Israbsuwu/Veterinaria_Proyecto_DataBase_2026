@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Veterinaria Pepe y Pepito — Salud Animal & Tienda</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --vet-green: #5a9629;
+      --vet-green-dark: #46791e;
+      --vet-green-light: #70b038;
+      --bg-light: #f8fafc;
+      --border-gray: #e2e8f0;
+      --text-dark: #1e293b;
+      --text-muted: #64748b;
+      --font-heading: 'Montserrat', sans-serif;
+      --font-body: 'Open Sans', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-body);
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-strip {
+      background: #27272a;
+      color: #d4d4d8;
+      font-size: 0.78rem;
+      padding: 0.4rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .site-header {
+      background: #ffffff;
+      border-bottom: 2px solid #e2e8f0;
+      padding: 0.9rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+    }
+
+    .brand-logo-badge {
+      width: 46px;
+      height: 46px;
+      background: var(--vet-green);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 12px rgba(90, 150, 41, 0.35);
+    }
+
+    .brand-title h1 {
+      font-family: var(--font-heading);
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+      line-height: 1.1;
+    }
+
+    .brand-title span {
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .btn-toggle-portal {
+      background: var(--vet-green);
+      color: #fff;
+      border: none;
+      padding: 0.65rem 1.2rem;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .btn-toggle-portal:hover {
+      background: var(--vet-green-dark);
+    }
+
+    .cart-indicator-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--border-gray);
+      padding: 0.65rem 1.1rem;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+    }
+
+    .cart-indicator-btn:hover {
+      background: #e2e8f0;
+      border-color: #cbd5e1;
+    }
+
+    .cart-badge-count {
+      background: var(--vet-green);
+      color: #ffffff;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .main-wrap {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    .services-banner-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .service-banner-box {
+      background: var(--vet-green);
+      color: #ffffff;
+      border-radius: 4px;
+      padding: 2.2rem 1.2rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(90, 150, 41, 0.25);
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .service-banner-box:hover {
+      background: var(--vet-green-dark);
+      transform: translateY(-3px);
+    }
+
+    .service-banner-title {
+      font-family: var(--font-heading);
+      font-size: 1rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .service-banner-icon {
+      font-size: 4rem;
+      line-height: 1;
+    }
+
+    .section-headline {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+      margin-bottom: 1.2rem;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .product-card {
+      background: #ffffff;
+      border: 1.5px solid #e17055;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    }
+
+    .product-btn-add {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--vet-green);
+      color: #fff;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.15rem;
+      cursor: pointer;
+      z-index: 5;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    .product-btn-add:hover {
+      background: var(--vet-green-dark);
+      transform: scale(1.05);
+    }
+
+    .product-img-box {
+      width: 100%;
+      height: 250px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.8rem;
+      background: #fff;
+    }
+
+    .product-img-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .product-body {
+      background: #e2e8f0;
+      padding: 0.85rem 1rem 1rem;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .product-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    .product-price {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+    }
+
+    .product-price span {
+      font-size: 0.78rem;
+      color: #64748b;
+      font-weight: 600;
+    }
+
+    .btn-detail {
+      align-self: flex-start;
+      background: var(--vet-green);
+      color: #fff;
+      border: none;
+      padding: 0.4rem 0.9rem;
+      border-radius: 3px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 0.2rem;
+    }
+
+    .btn-detail:hover {
+      background: var(--vet-green-dark);
+    }
+
+    /* ================= SIDEBAR DEL CARRITO ================= */
+    .cart-drawer-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(3px);
+      z-index: 150;
+      display: none;
+    }
+
+    .cart-drawer-backdrop.active {
+      display: block;
+    }
+
+    .cart-drawer {
+      position: fixed;
+      top: 0;
+      right: -420px;
+      width: 100%;
+      max-width: 400px;
+      height: 100vh;
+      background: #ffffff;
+      box-shadow: -10px 0 30px rgba(0,0,0,0.15);
+      z-index: 160;
+      display: flex;
+      flex-direction: column;
+      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cart-drawer.active {
+      right: 0;
+    }
+
+    .cart-drawer-header {
+      padding: 1.2rem;
+      background: #f8fafc;
+      border-bottom: 2px solid var(--border-gray);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cart-drawer-header h3 {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      color: var(--vet-green-dark);
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .cart-btn-close {
+      background: transparent;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0.3rem;
+    }
+
+    .cart-items-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+
+    .cart-empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      margin-top: 3rem;
+    }
+
+    .cart-item-card {
+      background: #f8fafc;
+      border: 1px solid var(--border-gray);
+      border-radius: 8px;
+      padding: 0.8rem;
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+    }
+
+    .cart-item-img {
+      width: 55px;
+      height: 55px;
+      background: #fff;
+      border-radius: 6px;
+      padding: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-gray);
+      flex-shrink: 0;
+    }
+
+    .cart-item-img img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .cart-item-info {
+      flex: 1;
+    }
+
+    .cart-item-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+
+    .cart-item-price-unit {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .cart-item-subtotal {
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+      margin-top: 3px;
+    }
+
+    .cart-qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 6px;
+    }
+
+    .btn-qty {
+      width: 24px;
+      height: 24px;
+      background: #ffffff;
+      border: 1px solid var(--border-gray);
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 800;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-dark);
+    }
+
+    .btn-qty:hover {
+      background: #e2e8f0;
+    }
+
+    .qty-display-number {
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    .btn-remove-item {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+      width: 30px;
+      height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .btn-remove-item:hover {
+      background: #fee2e2;
+    }
+
+    .cart-drawer-footer {
+      padding: 1.2rem;
+      background: #f8fafc;
+      border-top: 2px solid var(--border-gray);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .cart-total-row.final-total {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+      border-top: 1px dashed var(--border-gray);
+      padding-top: 0.6rem;
+      margin-top: 0.2rem;
+    }
+
+    .btn-confirm-purchase {
+      width: 100%;
+      background: var(--vet-green);
+      color: #ffffff;
+      border: none;
+      padding: 0.85rem;
+      border-radius: 8px;
+      font-family: var(--font-heading);
+      font-weight: 800;
+      font-size: 0.95rem;
+      cursor: pointer;
+      text-align: center;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.4rem;
+      box-shadow: 0 4px 12px rgba(90, 150, 41, 0.3);
+    }
+
+    .btn-confirm-purchase:hover {
+      background: var(--vet-green-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-clear-cart {
+      background: transparent;
+      border: none;
+      color: #dc2626;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: center;
+      margin-top: 0.2rem;
+    }
+
+    .btn-clear-cart:hover {
+      text-decoration: underline;
+    }
+
+    /* ================= PORTAL CLINICO ================= */
+    .portal-section-wrap {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.8rem;
+      border: 1px solid var(--border-gray);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+      margin-bottom: 2rem;
+    }
+
+    .portal-nav-bar {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .portal-tab-btn {
+      background: transparent;
+      border: none;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+    }
+
+    .portal-tab-btn.active {
+      background: var(--vet-green);
+      color: #ffffff;
+    }
+
+    .portal-view-panel { display: none; }
+    .portal-view-panel.active { display: block; }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .card-clean-form {
+      background: #f8fafc;
+      border: 1px solid var(--border-gray);
+      border-radius: 8px;
+      padding: 1.4rem;
+    }
+
+    .card-clean-form h3 {
+      font-family: var(--font-heading);
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+      margin-bottom: 1rem;
+    }
+
+    .form-field {
+      margin-bottom: 0.85rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.9rem;
+      color: var(--text-dark);
+      outline: none;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--vet-green);
+      box-shadow: 0 0 0 3px rgba(90, 150, 41, 0.15);
+    }
+
+    .btn-green-solid {
+      width: 100%;
+      background: var(--vet-green);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.2rem;
+      border-radius: 6px;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+
+    .btn-green-solid:hover {
+      background: var(--vet-green-dark);
+    }
+
+    .patient-clinical-header {
+      background: #eef7e6;
+      border-left: 5px solid var(--vet-green);
+      border-radius: 6px;
+      padding: 1.1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .clinical-name {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: var(--vet-green-dark);
+    }
+
+    .badge-allergy {
+      background: #fee2e2;
+      color: #b91c1c;
+      border: 1px solid #f87171;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+    }
+
+    .history-card-item {
+      background: #ffffff;
+      border: 1px solid var(--border-gray);
+      border-left: 4px solid var(--vet-green);
+      border-radius: 6px;
+      padding: 1rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .history-top-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .btn-act {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 0.4rem 0.75rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-act:hover { background: #e2e8f0; }
+
+    .btn-act-danger {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #dc2626;
+    }
+
+    .btn-act-danger:hover { background: #fee2e2; }
+
+    /* ================= MODALES ================= */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 1rem;
+    }
+
+    .modal-backdrop.hidden { display: none; }
+
+    .modal-white-card {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 1.8rem;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    .modal-btn-row {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .modal-btn-row button {
+      flex: 1;
+      padding: 0.65rem;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .btn-cancel-modal {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+    }
+
+    .btn-delete-modal {
+      background: #dc2626;
+      border: none;
+      color: #ffffff;
+    }
+
+    .receta-paper-clean {
+      background: #ffffff;
+      border: 2px solid var(--vet-green);
+      border-radius: 12px;
+      padding: 1.8rem;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .receta-hdr {
+      text-align: center;
+      border-bottom: 2px dashed #cbd5e1;
+      padding-bottom: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .receta-hdr h2 {
+      font-family: var(--font-heading);
+      color: var(--vet-green-dark);
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+
+    @media (max-width: 768px) {
+      .services-banner-grid { grid-template-columns: 1fr; }
+      .top-strip { display: none; }
+      .site-header { flex-wrap: wrap; gap: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="top-strip">
+    <div class="top-strip-left">
+      <span>📍 Monseñor Lezcano, Managua</span>
+      <span>📞 (505) 2266-0000 / 8888-1234</span>
+      <span>🕒 Lunes a Sábado: 8:00 AM - 6:00 PM</span>
+    </div>
+    <div class="top-strip-right">
+      <span>🇳🇮 Managua, Nicaragua</span>
+    </div>
+  </div>
+
+  <header class="site-header">
+    <div class="brand-group">
+      <div class="brand-logo-badge">🐾</div>
+      <div class="brand-title">
+        <h1>VETERINARIA PEPE & PEPITO</h1>
+        <span>CLÍNICA MÉDICA & FARMACIA ANIMAL</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn-toggle-portal" onclick="togglePortalClinico()">
+        <span>🩺</span> Portal Clínico
+      </button>
+
+      <!-- BOTON PARA ABRIR EL CARRITO INTERACTIVO -->
+      <button class="cart-indicator-btn" onclick="abrirCarrito()">
+        🛒 Carrito <span class="cart-badge-count" id="cartBadgeCount">0</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+
+    <section class="services-banner-grid">
+      <div class="service-banner-box" onclick="abrirPortalEnTab('expedientes')">
+        <div class="service-banner-title">SALUD ANIMAL</div>
+        <div class="service-banner-icon">💉</div>
+        <small style="opacity: 0.9; font-weight: 600;">Vacunación, Cirugías y Consultas</small>
+      </div>
+
+      <div class="service-banner-box" onclick="alert('Servicios de Control Sanitario, Desinfección y Control de Plagas Ambientales')">
+        <div class="service-banner-title">SALUD AMBIENTAL</div>
+        <div class="service-banner-icon">👨‍🌾</div>
+        <small style="opacity: 0.9; font-weight: 600;">Desinfección & Control Sanitario</small>
+      </div>
+
+      <div class="service-banner-box" onclick="abrirPortalEnTab('pacientes')">
+        <div class="service-banner-title">MASCOTAS</div>
+        <div class="service-banner-icon">🐕‍🦺</div>
+        <small style="opacity: 0.9; font-weight: 600;">Expedientes Digitales & Control de Peso</small>
+      </div>
+    </section>
+
+    <!-- PORTAL DE EXPEDIENTES -->
+    <section class="portal-section-wrap" id="portalClinicoWrap" style="display: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
+        <h2 style="font-family: var(--font-heading); color: var(--vet-green-dark); font-size: 1.3rem;">
+          🏥 Sistema Clínico Digital — Pepe & Pepito
+        </h2>
+        <button class="btn-act" onclick="togglePortalClinico()">✕ Cerrar Portal</button>
+      </div>
+
+      <div class="portal-nav-bar">
+        <button class="portal-tab-btn active" onclick="cambiarPortalTab('registro', this)">
+          👥 Registro Propietario / Mascota
+        </button>
+        <button class="portal-tab-btn" onclick="cambiarPortalTab('expediente', this)">
+          📖 Expediente Clínico & Recetas
+        </button>
+        <button class="portal-tab-btn" onclick="cambiarPortalTab('consulta', this)">
+          ➕ Nueva Consulta Médica
+        </button>
+      </div>
+
+      <!-- VISTA: REGISTRO -->
+      <div id="pview-registro" class="portal-view-panel active">
+        <div class="form-grid-2">
+          <div class="card-clean-form">
+            <h3>👤 Registrar Propietario</h3>
+            <form id="formPropietario">
+              <div class="form-field">
+                <label>Cédula de Identidad</label>
+                <input type="text" id="propCedula" placeholder="001-000000-0000X" required />
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label>Nombre</label>
+                  <input type="text" id="propNombre" placeholder="Jhonny" required />
+                </div>
+                <div class="form-field">
+                  <label>Apellido</label>
+                  <input type="text" id="propApellido" placeholder="Garay" required />
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Teléfono</label>
+                <input type="tel" id="propTel" placeholder="8888-8888" required />
+              </div>
+              <button type="submit" class="btn-green-solid">Guardar Propietario</button>
+            </form>
+          </div>
+
+          <div class="card-clean-form">
+            <h3>🐕 Registrar Mascota</h3>
+            <form id="formMascota">
+              <div class="form-field">
+                <label>Dueño Asignado</label>
+                <select id="selectDuenoAsignado" required></select>
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label>Nombre Mascota</label>
+                  <input type="text" id="mascotaNombre" placeholder="Jerry" required />
+                </div>
+                <div class="form-field">
+                  <label>Especie</label>
+                  <select id="mascotaEspecie">
+                    <option value="Canino">Canino</option>
+                    <option value="Felino">Felino</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label>Raza</label>
+                  <input type="text" id="mascotaRaza" placeholder="Criollo" />
+                </div>
+                <div class="form-field">
+                  <label>Sexo</label>
+                  <select id="mascotaSexo">
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field">
+                <label>Alergias Conocidas</label>
+                <input type="text" id="mascotaAlergias" placeholder="Ej. Alérgico a penicilina" />
+              </div>
+              <button type="submit" class="btn-green-solid">Registrar Mascota & Expediente</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA: EXPEDIENTES -->
+      <div id="pview-expediente" class="portal-view-panel">
+        <div class="card-clean-form" style="margin-bottom: 1.2rem;">
+          <div class="form-field" style="margin-bottom: 0;">
+            <label>Seleccionar Expediente del Paciente:</label>
+            <select id="selectExpediente" onchange="renderExpedienteSeleccionado(this.value)"></select>
+          </div>
+        </div>
+
+        <div class="patient-clinical-header">
+          <div>
+            <div class="clinical-name" id="expNombreMascota">Jerry</div>
+            <p id="expDetallesMascota" style="font-size: 0.85rem; color: #475569;">Canino • Criollo • Macho</p>
+            <p id="expDuenoMascota" style="font-size: 0.85rem; color: var(--vet-green-dark); font-weight: 700;">
+              Dueño: Jhonny Garay (Tel: 8888-1234)
+            </p>
+          </div>
+          <div>
+            <span class="badge-allergy" id="expAlergiaMascota">⚠️ Alérgico a Penicilina</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.6rem; margin-bottom: 1.5rem;">
+          <button class="btn-act" onclick="abrirModalEditarPaciente()">✏️ Editar Datos (Dueño & Mascota)</button>
+          <button class="btn-act btn-act-danger" onclick="solicitarEliminarPaciente()">🗑️ Eliminar Paciente</button>
+        </div>
+
+        <h4 style="font-family: var(--font-heading); color: var(--vet-green-dark); margin-bottom: 0.8rem;">
+          📋 Historial de Atenciones Médicas
+        </h4>
+        <div id="timelineConsultas"></div>
+      </div>
+
+      <!-- VISTA: NUEVA CONSULTA -->
+      <div id="pview-consulta" class="portal-view-panel">
+        <div class="card-clean-form">
+          <h3>🩺 Registrar Consulta y Emitir Receta</h3>
+          <form id="formNuevaConsulta">
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>Paciente</label>
+                <select id="selectPacienteConsulta" required></select>
+              </div>
+              <div class="form-field">
+                <label>Peso Actual (Kg) — <em>Dosificación</em></label>
+                <input type="number" step="0.01" id="consultaPeso" placeholder="Ej. 14.50" required />
+              </div>
+            </div>
+            <div class="form-field">
+              <label>Motivo de Consulta</label>
+              <input type="text" id="consultaMotivo" placeholder="Ej. Control preventivo y vacunación" required />
+            </div>
+            <div class="form-field">
+              <label>Diagnóstico</label>
+              <textarea rows="2" id="consultaDiagnostico" placeholder="Evaluación clínica..." required></textarea>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-gray); margin: 1rem 0;" />
+            <h4 style="font-size: 0.95rem; color: var(--vet-green-dark); margin-bottom: 0.6rem;">Prescripción Médica</h4>
+
+            <div class="form-field">
+              <label>Medicamento</label>
+              <input type="text" id="recetaFarmaco" placeholder="Ej. Multivitamínico Canino" required />
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label>Dosis</label>
+                <input type="text" id="recetaDosis" placeholder="1 tableta cada 24 hrs" required />
+              </div>
+              <div class="form-field">
+                <label>Duración (Días)</label>
+                <input type="number" id="recetaDuracion" placeholder="30" required />
+              </div>
+            </div>
+            <button type="submit" class="btn-green-solid">Guardar Consulta & Generar Receta</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRODUCTOS DESTACADOS: TUS FOTOS REALES -->
+    <h2 class="section-headline">Productos Destacados</h2>
+
+    <div class="products-grid">
+      
+      <!-- FOTO 1: TALCO ECTOMEVE -->
+      <div class="product-card">
+        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Talco Antipulgas Ectomeve 100g', 103.24, 'talco.jpg')">🛒</button>
+        <div class="product-img-box">
+          <img src="talco.jpg" alt="Talco Antipulgas Ectomeve" />
+        </div>
+        <div class="product-body">
+          <div class="product-name">TALCO ANTIPULGAS ECTOMEVE 100G</div>
+          <div class="product-price">C$103.24 <span>+IVA</span></div>
+          <button class="btn-detail" onclick="alert('Talco antipulgas, carrapaticida y piojicida para perros y gatos.')">Ver detalle</button>
+        </div>
+      </div>
+
+      <!-- FOTO 2: PURINA CAT CHOW GATITOS -->
+      <div class="product-card">
+        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Cat Chow Gatitos Defense Plus', 168.00, 'purina.jpg')">🛒</button>
+        <div class="product-img-box">
+          <img src="purina.jpg" alt="Purina Cat Chow Gatitos" />
+        </div>
+        <div class="product-body">
+          <div class="product-name">PURINA CAT CHOW GATITOS DEFENSE PLUS</div>
+          <div class="product-price">C$168.00 <span>+IVA</span></div>
+          <button class="btn-detail" onclick="alert('Alimento 100% completo y balanceado con prebiótico natural para gatitos.')">Ver detalle</button>
+        </div>
+      </div>
+
+      <!-- FOTO 3: PURINA DOG CHOW ADULTOS MIX POLLO Y CARNE -->
+      <div class="product-card">
+        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Dog Chow Adultos Pollo y Carne 100g', 35.81, 'perro.jpg')">🛒</button>
+        <div class="product-img-box">
+          <img src="perro.jpg" alt="Purina Dog Chow Adultos" />
+        </div>
+        <div class="product-body">
+          <div class="product-name">PURINA DOG CHOW ADULTOS POLLO Y CARNE 100G</div>
+          <div class="product-price">C$35.81 <span>+IVA</span></div>
+          <button class="btn-detail" onclick="alert('Pouch húmedo con mix de pollo y carne para perros adultos de todos los tamaños.')">Ver detalle</button>
+        </div>
+      </div>
+
+      <!-- FOTO 4: ALIMENTO PRO PET ADULTO 30 KG -->
+      <div class="product-card">
+        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Alimento Pro Pet Perro Adulto 30 Kg', 1744.06, '100kg.jpg')">🛒</button>
+        <div class="product-img-box">
+          <img src="100kg.jpg" alt="Alimento Pro Pet Perro Adulto 30 Kg" />
+        </div>
+        <div class="product-body">
+          <div class="product-name">ALIMENTO PRO-PET ADULTO 30 KG</div>
+          <div class="product-price">C$1744.06 <span>+IVA</span></div>
+          <button class="btn-detail" onclick="alert('Saco de 30 kg con fórmula mejorada libre de soya y alto valor proteico.')">Ver detalle</button>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================= DRAWER LATERAL DEL CARRITO ================= -->
+  <div class="cart-drawer-backdrop" id="cartBackdrop" onclick="cerrarCarrito()"></div>
+
+  <div class="cart-drawer" id="cartDrawer">
+    <div class="cart-drawer-header">
+      <h3>🛒 Mi Carrito</h3>
+      <button class="cart-btn-close" onclick="cerrarCarrito()">✕</button>
+    </div>
+
+    <div class="cart-items-container" id="cartItemsList">
+      <!-- Los productos se inyectan dinámicamente con JS -->
+    </div>
+
+    <div class="cart-drawer-footer" id="cartFooterArea">
+      <div class="cart-total-row">
+        <span>Subtotal:</span>
+        <strong id="cartSubtotalText">C$0.00</strong>
+      </div>
+      <div class="cart-total-row">
+        <span>IVA (15%):</span>
+        <strong id="cartIvaText">C$0.00</strong>
+      </div>
+      <div class="cart-total-row final-total">
+        <span>Total a Pagar:</span>
+        <strong id="cartTotalText">C$0.00</strong>
+      </div>
+
+      <button class="btn-confirm-purchase" onclick="abrirModalConfirmarCompra()">
+        ¿Desea confirmar su compra?
+      </button>
+
+      <button class="btn-clear-cart" onclick="vaciarCarrito()">
+        Vaciar Carrito
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: ¿DESEA CONFIRMAR SU COMPRA? -->
+  <div id="modalConfirmarCompra" class="modal-backdrop hidden">
+    <div class="modal-white-card" style="max-width: 460px; text-align: left;">
+      <div style="text-align: center; margin-bottom: 0.8rem;">
+        <span style="font-size: 2.4rem;">🛍️</span>
+        <h3 style="color: var(--vet-green-dark); margin-top: 4px;">Confirmación de Pedido</h3>
+        <p style="font-size: 0.82rem; color: var(--text-muted);">Por favor, revise el resumen de su pedido antes de proceder.</p>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.8rem; max-height: 180px; overflow-y: auto; margin-bottom: 1rem;" id="checkoutSummaryList">
+        <!-- Resumen de productos -->
+      </div>
+
+      <div style="border-top: 2px dashed #cbd5e1; padding-top: 0.6rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--vet-green-dark);">
+        <span>Total Final (con IVA):</span>
+        <span id="checkoutModalTotal">C$0.00</span>
+      </div>
+
+      <div class="modal-btn-row">
+        <button type="button" class="btn-cancel-modal" onclick="cerrarModalConfirmarCompra()">Seguir Comprando</button>
+        <button type="button" class="btn-green-solid" style="margin-top: 0;" onclick="finalizarPedidoConfirmado()">Sí, Confirmar Pedido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CONFIRMACION GENERICO -->
+  <div id="modalConfirmacion" class="modal-backdrop hidden">
+    <div class="modal-white-card">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚠️</div>
+      <h3 id="confirmTitle">¿Eliminar registro?</h3>
+      <p id="confirmMessage">Esta acción removerá el expediente del sistema.</p>
+      <div class="modal-btn-row">
+        <button class="btn-cancel-modal" onclick="cerrarModalConfirmacion()">Cancelar</button>
+        <button class="btn-delete-modal" id="btnEjecutarConfirmacion">Eliminar Definitivamente</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PACIENTE -->
+  <div id="modalEditarPaciente" class="modal-backdrop hidden">
+    <div class="modal-white-card" style="max-width: 520px; text-align: left;">
+      <h3 style="color: var(--vet-green-dark); margin-bottom: 1rem;">✏️ Modificar Paciente & Dueño</h3>
+      <form id="formModalEditarPaciente">
+        <input type="hidden" id="editMascotaId" />
+        <input type="hidden" id="editDuenoId" />
+
+        <div class="form-field-row">
+          <div class="form-field">
+            <label>Nombre Dueño</label>
+            <input type="text" id="editDuenoNombre" required />
+          </div>
+          <div class="form-field">
+            <label>Apellido Dueño</label>
+            <input type="text" id="editDuenoApellido" required />
+          </div>
+        </div>
+        <div class="form-field-row">
+          <div class="form-field">
+            <label>Cédula</label>
+            <input type="text" id="editDuenoCedula" required />
+          </div>
+          <div class="form-field">
+            <label>Teléfono</label>
+            <input type="tel" id="editDuenoTel" required />
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border-gray); margin: 0.8rem 0;" />
+
+        <div class="form-field-row">
+          <div class="form-field">
+            <label>Nombre Mascota</label>
+            <input type="text" id="editMascotaNombre" required />
+          </div>
+          <div class="form-field">
+            <label>Especie</label>
+            <select id="editMascotaEspecie">
+              <option value="Canino">Canino</option>
+              <option value="Felino">Felino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label>Alergias / Condiciones</label>
+          <input type="text" id="editMascotaAlergias" />
+        </div>
+
+        <div class="modal-btn-row" style="margin-top: 1.2rem;">
+          <button type="submit" class="btn-green-solid" style="margin-top: 0;">Guardar Cambios</button>
+          <button type="button" class="btn-cancel-modal" onclick="cerrarModalEditarPaciente()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RECETA IMPRIMIBLE -->
+  <div id="modalReceta" class="modal-backdrop hidden">
+    <div class="receta-paper-clean">
+      <div class="receta-hdr">
+        <h2>VETERINARIA PEPE & PEPITO</h2>
+        <p style="font-size: 0.78rem; color: #64748b;">Monseñor Lezcano, Managua • Tel: 2266-0000</p>
+        <strong style="color: var(--vet-green-dark); font-size: 0.85rem; display: block; margin-top: 6px;">
+          RECETA MÉDICA VETERINARIA OFICIAL
+        </strong>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.82rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 6px;">
+        <div><strong>Paciente:</strong> <span id="recetaModalMascota">—</span></div>
+        <div><strong>Propietario:</strong> <span id="recetaModalDueno">—</span></div>
+        <div><strong>Fecha:</strong> <span id="recetaModalFecha">—</span></div>
+        <div><strong>Peso:</strong> <span id="recetaModalPeso">—</span></div>
+      </div>
+
+      <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.8rem; margin-bottom: 1rem;">
+        <h4 id="recetaModalFarmaco" style="color: var(--vet-green-dark); font-size: 1rem;">—</h4>
+        <p style="font-size: 0.85rem; margin-top: 4px;"><strong>Indicación:</strong> <span id="recetaModalDosis">—</span></p>
+        <p style="font-size: 0.85rem;"><strong>Duración del tratamiento:</strong> <span id="recetaModalDuracion">—</span> días</p>
+      </div>
+
+      <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 0.8rem; margin-bottom: 1.2rem;">
+        <small style="color: #64748b;">Firma del Médico Veterinario Responsable</small>
+      </div>
+
+      <div class="modal-btn-row">
+        <button class="btn-green-solid" style="margin-top: 0;" onclick="window.print()">🖨️ Imprimir Receta</button>
+        <button class="btn-cancel-modal" onclick="cerrarModalReceta()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================= DATOS PERSISTENTES DEL PORTAL =================
+    const DEFAULT_PROPIETARIOS = [
+      { id: "p1", nombre: "Jhonny", apellido: "Garay", cedula: "001-160107-1000U", tel: "8888-1234" },
+      { id: "p2", nombre: "Carlos", apellido: "Espinoza", cedula: "001-200502-1001A", tel: "7777-5678" }
+    ];
+
+    const DEFAULT_MASCOTAS = [
+      { 
+        id: "m1", 
+        duenoId: "p1", 
+        nombre: "Jerry", 
+        especie: "Canino", 
+        raza: "Criollo", 
+        sexo: "Macho", 
+        alergias: "Alérgico a Penicilina",
+        consultas: [
+          {
+            fecha: "15/Ago/2026",
+            peso: "14.50 kg",
+            motivo: "Consulta General / Vacunación",
+            diagnostico: "Paciente sano, vacunación preventiva al día.",
+            farmaco: "Multivitamínico Canino",
+            dosis: "1 tableta cada 24 hrs",
+            duracion: "30"
+          }
+        ]
+      }
+    ];
+
+    let propietarios = JSON.parse(localStorage.getItem('pepe_propietarios')) || DEFAULT_PROPIETARIOS;
+    let mascotas = JSON.parse(localStorage.getItem('pepe_mascotas')) || DEFAULT_MASCOTAS;
+    let mascotaActualId = null;
+    let accionConfirmadaCallback = null;
+
+    // ================= LÓGICA DEL CARRITO DE COMPRAS =================
+    let carrito = JSON.parse(localStorage.getItem('pepe_carrito')) || [];
+
+    function guardarCarrito() {
+      localStorage.setItem('pepe_carrito', JSON.stringify(carrito));
+      renderCarrito();
+    }
+
+    function abrirCarrito() {
+      document.getElementById('cartBackdrop').classList.add('active');
+      document.getElementById('cartDrawer').classList.add('active');
+    }
+
+    function cerrarCarrito() {
+      document.getElementById('cartBackdrop').classList.remove('active');
+      document.getElementById('cartDrawer').classList.remove('active');
+    }
+
+    function agregarAlCarrito(nombre, precio, img) {
+      const itemExistente = carrito.find(item => item.nombre === nombre);
+      if (itemExistente) {
+        itemExistente.cantidad += 1;
+      } else {
+        carrito.push({ nombre, precio, img, cantidad: 1 });
+      }
+      guardarCarrito();
+      abrirCarrito();
+    }
+
+    function modificarCantidad(index, cambio) {
+      carrito[index].cantidad += cambio;
+      if (carrito[index].cantidad <= 0) {
+        carrito.splice(index, 1);
+      }
+      guardarCarrito();
+    }
+
+    function eliminarDelCarrito(index) {
+      carrito.splice(index, 1);
+      guardarCarrito();
+    }
+
+    function vaciarCarrito() {
+      if (carrito.length === 0) return;
+      abrirModalConfirmacion("¿Vaciar carrito?", "Se quitarán todos los productos seleccionados.", () => {
+        carrito = [];
+        guardarCarrito();
+      });
+    }
+
+    function renderCarrito() {
+      const container = document.getElementById('cartItemsList');
+      const badge = document.getElementById('cartBadgeCount');
+      const footerArea = document.getElementById('cartFooterArea');
+
+      const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
+      badge.textContent = totalItems;
+
+      container.innerHTML = '';
+
+      if (carrito.length === 0) {
+        container.innerHTML = `
+          <div class="cart-empty-state">
+            <span style="font-size: 3rem; display: block; margin-bottom: 0.5rem;">🛒</span>
+            <p style="font-weight: 700; color: #475569;">Su carrito está vacío</p>
+            <small>Agregue productos desde el catálogo para iniciar su compra.</small>
+          </div>
+        `;
+        footerArea.style.opacity = '0.4';
+        footerArea.style.pointerEvents = 'none';
+        document.getElementById('cartSubtotalText').textContent = 'C$0.00';
+        document.getElementById('cartIvaText').textContent = 'C$0.00';
+        document.getElementById('cartTotalText').textContent = 'C$0.00';
+        return;
+      }
+
+      footerArea.style.opacity = '1';
+      footerArea.style.pointerEvents = 'auto';
+
+      let subtotal = 0;
+
+      carrito.forEach((item, index) => {
+        const itemSubtotal = item.precio * item.cantidad;
+        subtotal += itemSubtotal;
+
+        const card = document.createElement('div');
+        card.className = 'cart-item-card';
+        card.innerHTML = `
+          <div class="cart-item-img">
+            <img src="${item.img}" alt="${item.nombre}" />
+          </div>
+          <div class="cart-item-info">
+            <div class="cart-item-title">${item.nombre}</div>
+            <div class="cart-item-price-unit">C$${item.precio.toFixed(2)} c/u</div>
+            <div class="cart-item-subtotal">C$${itemSubtotal.toFixed(2)}</div>
+            <div class="cart-qty-controls">
+              <button class="btn-qty" title="Restar 1" onclick="modificarCantidad(${index}, -1)">-</button>
+              <span class="qty-display-number">${item.cantidad}</span>
+              <button class="btn-qty" title="Sumar 1" onclick="modificarCantidad(${index}, 1)">+</button>
+            </div>
+          </div>
+          <button class="btn-remove-item" title="Eliminar producto" onclick="eliminarDelCarrito(${index})">🗑️</button>
+        `;
+        container.appendChild(card);
+      });
+
+      const iva = subtotal * 0.15;
+      const total = subtotal + iva;
+
+      document.getElementById('cartSubtotalText').textContent = `C$${subtotal.toFixed(2)}`;
+      document.getElementById('cartIvaText').textContent = `C$${iva.toFixed(2)}`;
+      document.getElementById('cartTotalText').textContent = `C$${total.toFixed(2)}`;
+    }
+
+    // Modal de confirmación de compra
+    function abrirModalConfirmarCompra() {
+      if (carrito.length === 0) return;
+
+      const summaryList = document.getElementById('checkoutSummaryList');
+      summaryList.innerHTML = '';
+
+      let subtotal = 0;
+      carrito.forEach(item => {
+        const lineTotal = item.precio * item.cantidad;
+        subtotal += lineTotal;
+        const row = document.createElement('div');
+        row.style.display = 'flex';
+        row.style.justifyContent = 'space-between';
+        row.style.fontSize = '0.82rem';
+        row.style.marginBottom = '6px';
+        row.innerHTML = `
+          <span><strong>${item.cantidad}x</strong> ${item.nombre}</span>
+          <span>C$${lineTotal.toFixed(2)}</span>
+        `;
+        summaryList.appendChild(row);
+      });
+
+      const total = subtotal + (subtotal * 0.15);
+      document.getElementById('checkoutModalTotal').textContent = `C$${total.toFixed(2)}`;
+      document.getElementById('modalConfirmarCompra').classList.remove('hidden');
+    }
+
+    function cerrarModalConfirmarCompra() {
+      document.getElementById('modalConfirmarCompra').classList.add('hidden');
+    }
+
+    function finalizarPedidoConfirmado() {
+      cerrarModalConfirmarCompra();
+      cerrarCarrito();
+      alert('🎉 ¡Muchas gracias por su compra en Veterinaria Pepe & Pepito!\nSu pedido ha sido registrado con éxito.');
+      carrito = [];
+      guardarCarrito();
+    }
+
+    // ================= FUNCIONES DEL PORTAL CLÍNICO =================
+    function guardarEstado() {
+      localStorage.setItem('pepe_propietarios', JSON.stringify(propietarios));
+      localStorage.setItem('pepe_mascotas', JSON.stringify(mascotas));
+    }
+
+    function togglePortalClinico() {
+      const portal = document.getElementById('portalClinicoWrap');
+      if (portal.style.display === 'none' || portal.style.display === '') {
+        portal.style.display = 'block';
+        portal.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        portal.style.display = 'none';
+      }
+    }
+
+    function abrirPortalEnTab(tabName) {
+      const portal = document.getElementById('portalClinicoWrap');
+      portal.style.display = 'block';
+      portal.scrollIntoView({ behavior: 'smooth' });
+      
+      const tabBtns = document.querySelectorAll('.portal-tab-btn');
+      if (tabName === 'pacientes') {
+        cambiarPortalTab('registro', tabBtns[0]);
+      } else {
+        cambiarPortalTab('expediente', tabBtns[1]);
+      }
+    }
+
+    function cambiarPortalTab(panelId, btnElement) {
+      document.querySelectorAll('.portal-tab-btn').forEach(btn => btn.classList.remove('active'));
+      btnElement.classList.add('active');
+
+      document.querySelectorAll('.portal-view-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`pview-${panelId}`).classList.add('active');
+    }
+
+    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
+      document.getElementById('confirmTitle').textContent = titulo;
+      document.getElementById('confirmMessage').textContent = mensaje;
+      accionConfirmadaCallback = onConfirm;
+      document.getElementById('modalConfirmacion').classList.remove('hidden');
+    }
+
+    function cerrarModalConfirmacion() {
+      document.getElementById('modalConfirmacion').classList.add('hidden');
+      accionConfirmadaCallback = null;
+    }
+
+    document.getElementById('btnEjecutarConfirmacion').addEventListener('click', () => {
+      if (accionConfirmadaCallback) accionConfirmadaCallback();
+      cerrarModalConfirmacion();
+    });
+
+    function actualizarSelectores() {
+      const selDuenoAsignado = document.getElementById('selectDuenoAsignado');
+      const selExpediente = document.getElementById('selectExpediente');
+      const selPacienteConsulta = document.getElementById('selectPacienteConsulta');
+
+      selDuenoAsignado.innerHTML = '';
+      propietarios.forEach(p => {
+        selDuenoAsignado.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido} (${p.cedula})</option>`;
+      });
+
+      selExpediente.innerHTML = '';
+      selPacienteConsulta.innerHTML = '';
+      mascotas.forEach(m => {
+        const dueno = propietarios.find(p => p.id === m.duenoId);
+        const duenoTxt = dueno ? `${dueno.nombre} ${dueno.apellido}` : 'Sin dueño';
+        const opt = `<option value="${m.id}">${m.nombre} (${m.especie}) — Propietario: ${duenoTxt}</option>`;
+        selExpediente.innerHTML += opt;
+        selPacienteConsulta.innerHTML += opt;
+      });
+
+      if (mascotas.length > 0) {
+        if (!mascotaActualId || !mascotas.some(m => m.id === mascotaActualId)) {
+          mascotaActualId = mascotas[0].id;
+        }
+        selExpediente.value = mascotaActualId;
+        renderExpedienteSeleccionado(mascotaActualId);
+      }
+    }
+
+    function renderExpedienteSeleccionado(mascotaId) {
+      const mascota = mascotas.find(m => m.id === mascotaId);
+      if (!mascota) return;
+
+      mascotaActualId = mascota.id;
+      const dueno = propietarios.find(p => p.id === mascota.duenoId);
+
+      document.getElementById('expNombreMascota').textContent = mascota.nombre;
+      document.getElementById('expDetallesMascota').textContent = `${mascota.especie} • Raza: ${mascota.raza || 'N/A'} • ${mascota.sexo}`;
+      document.getElementById('expDuenoMascota').textContent = dueno 
+        ? `Dueño: ${dueno.nombre} ${dueno.apellido} (Cédula: ${dueno.cedula} | Tel: ${dueno.tel})`
+        : 'Dueño no registrado';
+
+      const alertBadge = document.getElementById('expAlergiaMascota');
+      if (mascota.alergias && mascota.alergias.trim() !== '') {
+        alertBadge.textContent = `⚠️ ${mascota.alergias}`;
+        alertBadge.style.display = 'inline-block';
+      } else {
+        alertBadge.textContent = '✓ Sin alergias registradas';
+        alertBadge.style.display = 'inline-block';
+      }
+
+      const timeline = document.getElementById('timelineConsultas');
+      timeline.innerHTML = '';
+
+      if (!mascota.consultas || mascota.consultas.length === 0) {
+        timeline.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">No hay consultas médicas registradas para este paciente aún.</p>';
+        return;
+      }
+
+      mascota.consultas.forEach((c, idx) => {
+        const item = document.createElement('div');
+        item.className = 'history-card-item';
+        item.innerHTML = `
+          <div class="history-top-row">
+            <strong>${c.motivo}</strong>
+            <small style="color: #64748b;">${c.fecha}</small>
+          </div>
+          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Peso en consulta:</strong> ${c.peso}</p>
+          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Diagnóstico:</strong> ${c.diagnostico}</p>
+          <p style="font-size: 0.85rem; color: #475569;"><strong>Prescripción:</strong> ${c.farmaco} (${c.dosis}) por ${c.duracion} días.</p>
+          <div class="history-actions">
+            <button class="btn-act" onclick="abrirModalReceta('${mascota.nombre}', '${dueno ? dueno.nombre + ' ' + dueno.apellido : ''}', '${c.peso}', '${c.fecha}', '${c.farmaco}', '${c.dosis}', '${c.duracion}')">
+              📄 Ver Receta
+            </button>
+            <button class="btn-act btn-act-danger" onclick="eliminarConsulta(${idx})">
+              🗑️ Eliminar
+            </button>
+          </div>
+        `;
+        timeline.appendChild(item);
+      });
+    }
+
+    function solicitarEliminarPaciente() {
+      if (!mascotaActualId) return;
+      const mascota = mascotas.find(m => m.id === mascotaActualId);
+      if (!mascota) return;
+
+      abrirModalConfirmacion(
+        `¿Eliminar a "${mascota.nombre}"?`,
+        `Se borrará a "${mascota.nombre}" junto con todas sus consultas médicas y recetas emitidas.`,
+        () => {
+          mascotas = mascotas.filter(m => m.id !== mascotaActualId);
+          guardarEstado();
+          actualizarSelectores();
+        }
+      );
+    }
+
+    function eliminarConsulta(index) {
+      abrirModalConfirmacion(
+        "¿Eliminar Consulta?",
+        "Esta atención médica se borrará del historial de la mascota.",
+        () => {
+          const mascota = mascotas.find(m => m.id === mascotaActualId);
+          if (mascota) {
+            mascota.consultas.splice(index, 1);
+            guardarEstado();
+            renderExpedienteSeleccionado(mascotaActualId);
+          }
+        }
+      );
+    }
+
+    function abrirModalEditarPaciente() {
+      const mascota = mascotas.find(m => m.id === mascotaActualId);
+      if (!mascota) return;
+      const dueno = propietarios.find(p => p.id === mascota.duenoId);
+
+      document.getElementById('editMascotaId').value = mascota.id;
+      document.getElementById('editDuenoId').value = dueno ? dueno.id : '';
+
+      document.getElementById('editDuenoNombre').value = dueno ? dueno.nombre : '';
+      document.getElementById('editDuenoApellido').value = dueno ? dueno.apellido : '';
+      document.getElementById('editDuenoCedula').value = dueno ? dueno.cedula : '';
+      document.getElementById('editDuenoTel').value = dueno ? dueno.tel : '';
+
+      document.getElementById('editMascotaNombre').value = mascota.nombre;
+      document.getElementById('editMascotaEspecie').value = mascota.especie;
+      document.getElementById('editMascotaAlergias').value = mascota.alergias || '';
+
+      document.getElementById('modalEditarPaciente').classList.remove('hidden');
+    }
+
+    function cerrarModalEditarPaciente() {
+      document.getElementById('modalEditarPaciente').classList.add('hidden');
+    }
+
+    document.getElementById('formModalEditarPaciente').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const mId = document.getElementById('editMascotaId').value;
+      const dId = document.getElementById('editDuenoId').value;
+
+      const mascota = mascotas.find(m => m.id === mId);
+      const dueno = propietarios.find(p => p.id === dId);
+
+      if (dueno) {
+        dueno.nombre = document.getElementById('editDuenoNombre').value.trim();
+        dueno.apellido = document.getElementById('editDuenoApellido').value.trim();
+        dueno.cedula = document.getElementById('editDuenoCedula').value.trim();
+        dueno.tel = document.getElementById('editDuenoTel').value.trim();
+      }
+
+      if (mascota) {
+        mascota.nombre = document.getElementById('editMascotaNombre').value.trim();
+        mascota.especie = document.getElementById('editMascotaEspecie').value;
+        mascota.alergias = document.getElementById('editMascotaAlergias').value.trim();
+      }
+
+      guardarEstado();
+      actualizarSelectores();
+      renderExpedienteSeleccionado(mId);
+      cerrarModalEditarPaciente();
+    });
+
+    document.getElementById('formPropietario').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nuevoPropietario = {
+        id: "p_" + Date.now(),
+        nombre: document.getElementById('propNombre').value.trim(),
+        apellido: document.getElementById('propApellido').value.trim(),
+        cedula: document.getElementById('propCedula').value.trim(),
+        tel: document.getElementById('propTel').value.trim()
+      };
+
+      propietarios.push(nuevoPropietario);
+      guardarEstado();
+      actualizarSelectores();
+      alert(`✅ Propietario ${nuevoPropietario.nombre} ${nuevoPropietario.apellido} registrado.`);
+      e.target.reset();
+    });
+
+    document.getElementById('formMascota').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nuevaMascota = {
+        id: "m_" + Date.now(),
+        duenoId: document.getElementById('selectDuenoAsignado').value,
+        nombre: document.getElementById('mascotaNombre').value.trim(),
+        especie: document.getElementById('mascotaEspecie').value,
+        raza: document.getElementById('mascotaRaza').value.trim() || 'Criollo',
+        sexo: document.getElementById('mascotaSexo').value,
+        alergias: document.getElementById('mascotaAlergias').value.trim(),
+        consultas: []
+      };
+
+      mascotas.push(nuevaMascota);
+      mascotaActualId = nuevaMascota.id;
+      guardarEstado();
+      actualizarSelectores();
+
+      alert(`🐾 Mascota "${nuevaMascota.nombre}" registrada. Abriendo su expediente.`);
+      cambiarPortalTab('expediente', document.querySelectorAll('.portal-tab-btn')[1]);
+      e.target.reset();
+    });
+
+    document.getElementById('formNuevaConsulta').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const mascotaId = document.getElementById('selectPacienteConsulta').value;
+      const mascota = mascotas.find(m => m.id === mascotaId);
+      if (!mascota) return;
+
+      const nuevaConsulta = {
+        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
+        peso: document.getElementById('consultaPeso').value + " kg",
+        motivo: document.getElementById('consultaMotivo').value.trim(),
+        diagnostico: document.getElementById('consultaDiagnostico').value.trim(),
+        farmaco: document.getElementById('recetaFarmaco').value.trim(),
+        dosis: document.getElementById('recetaDosis').value.trim(),
+        duracion: document.getElementById('recetaDuracion').value.trim()
+      };
+
+      if (!mascota.consultas) mascota.consultas = [];
+      mascota.consultas.unshift(nuevaConsulta);
+
+      mascotaActualId = mascotaId;
+      guardarEstado();
+      actualizarSelectores();
+      cambiarPortalTab('expediente', document.querySelectorAll('.portal-tab-btn')[1]);
+      e.target.reset();
+    });
+
+    function abrirModalReceta(mascota, dueno, peso, fecha, farmaco, dosis, dias) {
+      document.getElementById('recetaModalMascota').textContent = mascota;
+      document.getElementById('recetaModalDueno').textContent = dueno;
+      document.getElementById('recetaModalPeso').textContent = peso;
+      document.getElementById('recetaModalFecha').textContent = fecha;
+      document.getElementById('recetaModalFarmaco').textContent = farmaco;
+      document.getElementById('recetaModalDosis').textContent = dosis;
+      document.getElementById('recetaModalDuracion').textContent = dias;
+      document.getElementById('modalReceta').classList.remove('hidden');
+    }
+
+    function cerrarModalReceta() {
+      document.getElementById('modalReceta').classList.add('hidden');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      actualizarSelectores();
+      renderCarrito();
+    });
+  </script>
+</body>
+</html>
