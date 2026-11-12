@@ -9,6 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
   <style>
     :root {
       --vet-green: #5a9629;
@@ -841,23 +843,21 @@
   </div>
 
   <header class="site-header">
-    <div class="brand-group">
-      <div class="brand-logo-badge">🐾</div>
-      <div class="brand-title">
-        <h1>VETERINARIA PEPE & PEPITO</h1>
-        <span>CLÍNICA MÉDICA & FARMACIA ANIMAL</span>
-      </div>
-    </div>
-
     <div class="header-actions">
+      <!-- Mostramos datos del usuario desde Flask Jinja2 -->
+      <div style="text-align: right; margin-right: 15px; line-height: 1.2;">
+          <strong style="display: block; font-size: 0.9rem; color: var(--vet-green-dark);">Hola, {{ session['user_nombre'] }}</strong>
+          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Rol: {{ session['user_rol'] }}</span>
+      </div>
+
       <button class="btn-toggle-portal" onclick="togglePortalClinico()">
         <span>🩺</span> Portal Clínico
       </button>
 
-      <!-- BOTON PARA ABRIR EL CARRITO INTERACTIVO -->
-      <button class="cart-indicator-btn" onclick="abrirCarrito()">
-        🛒 Carrito <span class="cart-badge-count" id="cartBadgeCount">0</span>
-      </button>
+      <!-- Botón de Cerrar Sesión (Apunta a la ruta logout de Flask) -->
+      <a href="{{ url_for('logout') }}" class="cart-indicator-btn" style="text-decoration: none; color: #dc2626;">
+        🚪 Salir
+      </a>
     </div>
   </header>
 
@@ -1065,7 +1065,7 @@
       <div class="product-card">
         <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Talco Antipulgas Ectomeve 100g', 103.24, 'talco.jpg')">🛒</button>
         <div class="product-img-box">
-          <img src="talco.jpg" alt="Talco Antipulgas Ectomeve" />
+          <img src="\static\img\talco.jpg" alt="Talco Antipulgas Ectomeve" />
         </div>
         <div class="product-body">
           <div class="product-name">TALCO ANTIPULGAS ECTOMEVE 100G</div>
@@ -1078,7 +1078,7 @@
       <div class="product-card">
         <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Cat Chow Gatitos Defense Plus', 168.00, 'purina.jpg')">🛒</button>
         <div class="product-img-box">
-          <img src="purina.jpg" alt="Purina Cat Chow Gatitos" />
+          <img src="\static\img\purina.jpg" alt="Purina Cat Chow Gatitos" />
         </div>
         <div class="product-body">
           <div class="product-name">PURINA CAT CHOW GATITOS DEFENSE PLUS</div>
@@ -1091,7 +1091,7 @@
       <div class="product-card">
         <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Dog Chow Adultos Pollo y Carne 100g', 35.81, 'perro.jpg')">🛒</button>
         <div class="product-img-box">
-          <img src="perro.jpg" alt="Purina Dog Chow Adultos" />
+          <img src="\static\img\perro.jpg" alt="Purina Dog Chow Adultos" />
         </div>
         <div class="product-body">
           <div class="product-name">PURINA DOG CHOW ADULTOS POLLO Y CARNE 100G</div>
@@ -1104,7 +1104,7 @@
       <div class="product-card">
         <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Alimento Pro Pet Perro Adulto 30 Kg', 1744.06, '100kg.jpg')">🛒</button>
         <div class="product-img-box">
-          <img src="100kg.jpg" alt="Alimento Pro Pet Perro Adulto 30 Kg" />
+          <img src="\static\img\100kg.jpg" alt="Alimento Pro Pet Perro Adulto 30 Kg" />
         </div>
         <div class="product-body">
           <div class="product-name">ALIMENTO PRO-PET ADULTO 30 KG</div>
@@ -1285,499 +1285,12 @@
     </div>
   </div>
 
-  <script>
-    // ================= DATOS PERSISTENTES DEL PORTAL =================
-    const DEFAULT_PROPIETARIOS = [
-      { id: "p1", nombre: "Jhonny", apellido: "Garay", cedula: "001-160107-1000U", tel: "8888-1234" },
-      { id: "p2", nombre: "Carlos", apellido: "Espinoza", cedula: "001-200502-1001A", tel: "7777-5678" }
-    ];
-
-    const DEFAULT_MASCOTAS = [
-      { 
-        id: "m1", 
-        duenoId: "p1", 
-        nombre: "Jerry", 
-        especie: "Canino", 
-        raza: "Criollo", 
-        sexo: "Macho", 
-        alergias: "Alérgico a Penicilina",
-        consultas: [
-          {
-            fecha: "15/Ago/2026",
-            peso: "14.50 kg",
-            motivo: "Consulta General / Vacunación",
-            diagnostico: "Paciente sano, vacunación preventiva al día.",
-            farmaco: "Multivitamínico Canino",
-            dosis: "1 tableta cada 24 hrs",
-            duracion: "30"
-          }
-        ]
-      }
-    ];
-
-    let propietarios = JSON.parse(localStorage.getItem('pepe_propietarios')) || DEFAULT_PROPIETARIOS;
-    let mascotas = JSON.parse(localStorage.getItem('pepe_mascotas')) || DEFAULT_MASCOTAS;
-    let mascotaActualId = null;
-    let accionConfirmadaCallback = null;
-
-    // ================= LÓGICA DEL CARRITO DE COMPRAS =================
-    let carrito = JSON.parse(localStorage.getItem('pepe_carrito')) || [];
-
-    function guardarCarrito() {
-      localStorage.setItem('pepe_carrito', JSON.stringify(carrito));
-      renderCarrito();
-    }
-
-    function abrirCarrito() {
-      document.getElementById('cartBackdrop').classList.add('active');
-      document.getElementById('cartDrawer').classList.add('active');
-    }
-
-    function cerrarCarrito() {
-      document.getElementById('cartBackdrop').classList.remove('active');
-      document.getElementById('cartDrawer').classList.remove('active');
-    }
-
-    function agregarAlCarrito(nombre, precio, img) {
-      const itemExistente = carrito.find(item => item.nombre === nombre);
-      if (itemExistente) {
-        itemExistente.cantidad += 1;
-      } else {
-        carrito.push({ nombre, precio, img, cantidad: 1 });
-      }
-      guardarCarrito();
-      abrirCarrito();
-    }
-
-    function modificarCantidad(index, cambio) {
-      carrito[index].cantidad += cambio;
-      if (carrito[index].cantidad <= 0) {
-        carrito.splice(index, 1);
-      }
-      guardarCarrito();
-    }
-
-    function eliminarDelCarrito(index) {
-      carrito.splice(index, 1);
-      guardarCarrito();
-    }
-
-    function vaciarCarrito() {
-      if (carrito.length === 0) return;
-      abrirModalConfirmacion("¿Vaciar carrito?", "Se quitarán todos los productos seleccionados.", () => {
-        carrito = [];
-        guardarCarrito();
-      });
-    }
-
-    function renderCarrito() {
-      const container = document.getElementById('cartItemsList');
-      const badge = document.getElementById('cartBadgeCount');
-      const footerArea = document.getElementById('cartFooterArea');
-
-      const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
-      badge.textContent = totalItems;
-
-      container.innerHTML = '';
-
-      if (carrito.length === 0) {
-        container.innerHTML = `
-          <div class="cart-empty-state">
-            <span style="font-size: 3rem; display: block; margin-bottom: 0.5rem;">🛒</span>
-            <p style="font-weight: 700; color: #475569;">Su carrito está vacío</p>
-            <small>Agregue productos desde el catálogo para iniciar su compra.</small>
-          </div>
-        `;
-        footerArea.style.opacity = '0.4';
-        footerArea.style.pointerEvents = 'none';
-        document.getElementById('cartSubtotalText').textContent = 'C$0.00';
-        document.getElementById('cartIvaText').textContent = 'C$0.00';
-        document.getElementById('cartTotalText').textContent = 'C$0.00';
-        return;
-      }
-
-      footerArea.style.opacity = '1';
-      footerArea.style.pointerEvents = 'auto';
-
-      let subtotal = 0;
-
-      carrito.forEach((item, index) => {
-        const itemSubtotal = item.precio * item.cantidad;
-        subtotal += itemSubtotal;
-
-        const card = document.createElement('div');
-        card.className = 'cart-item-card';
-        card.innerHTML = `
-          <div class="cart-item-img">
-            <img src="${item.img}" alt="${item.nombre}" />
-          </div>
-          <div class="cart-item-info">
-            <div class="cart-item-title">${item.nombre}</div>
-            <div class="cart-item-price-unit">C$${item.precio.toFixed(2)} c/u</div>
-            <div class="cart-item-subtotal">C$${itemSubtotal.toFixed(2)}</div>
-            <div class="cart-qty-controls">
-              <button class="btn-qty" title="Restar 1" onclick="modificarCantidad(${index}, -1)">-</button>
-              <span class="qty-display-number">${item.cantidad}</span>
-              <button class="btn-qty" title="Sumar 1" onclick="modificarCantidad(${index}, 1)">+</button>
-            </div>
-          </div>
-          <button class="btn-remove-item" title="Eliminar producto" onclick="eliminarDelCarrito(${index})">🗑️</button>
-        `;
-        container.appendChild(card);
-      });
-
-      const iva = subtotal * 0.15;
-      const total = subtotal + iva;
-
-      document.getElementById('cartSubtotalText').textContent = `C$${subtotal.toFixed(2)}`;
-      document.getElementById('cartIvaText').textContent = `C$${iva.toFixed(2)}`;
-      document.getElementById('cartTotalText').textContent = `C$${total.toFixed(2)}`;
-    }
-
-    // Modal de confirmación de compra
-    function abrirModalConfirmarCompra() {
-      if (carrito.length === 0) return;
-
-      const summaryList = document.getElementById('checkoutSummaryList');
-      summaryList.innerHTML = '';
-
-      let subtotal = 0;
-      carrito.forEach(item => {
-        const lineTotal = item.precio * item.cantidad;
-        subtotal += lineTotal;
-        const row = document.createElement('div');
-        row.style.display = 'flex';
-        row.style.justifyContent = 'space-between';
-        row.style.fontSize = '0.82rem';
-        row.style.marginBottom = '6px';
-        row.innerHTML = `
-          <span><strong>${item.cantidad}x</strong> ${item.nombre}</span>
-          <span>C$${lineTotal.toFixed(2)}</span>
-        `;
-        summaryList.appendChild(row);
-      });
-
-      const total = subtotal + (subtotal * 0.15);
-      document.getElementById('checkoutModalTotal').textContent = `C$${total.toFixed(2)}`;
-      document.getElementById('modalConfirmarCompra').classList.remove('hidden');
-    }
-
-    function cerrarModalConfirmarCompra() {
-      document.getElementById('modalConfirmarCompra').classList.add('hidden');
-    }
-
-    function finalizarPedidoConfirmado() {
-      cerrarModalConfirmarCompra();
-      cerrarCarrito();
-      alert('🎉 ¡Muchas gracias por su compra en Veterinaria Pepe & Pepito!\nSu pedido ha sido registrado con éxito.');
-      carrito = [];
-      guardarCarrito();
-    }
-
-    // ================= FUNCIONES DEL PORTAL CLÍNICO =================
-    function guardarEstado() {
-      localStorage.setItem('pepe_propietarios', JSON.stringify(propietarios));
-      localStorage.setItem('pepe_mascotas', JSON.stringify(mascotas));
-    }
-
-    function togglePortalClinico() {
-      const portal = document.getElementById('portalClinicoWrap');
-      if (portal.style.display === 'none' || portal.style.display === '') {
-        portal.style.display = 'block';
-        portal.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        portal.style.display = 'none';
-      }
-    }
-
-    function abrirPortalEnTab(tabName) {
-      const portal = document.getElementById('portalClinicoWrap');
-      portal.style.display = 'block';
-      portal.scrollIntoView({ behavior: 'smooth' });
-      
-      const tabBtns = document.querySelectorAll('.portal-tab-btn');
-      if (tabName === 'pacientes') {
-        cambiarPortalTab('registro', tabBtns[0]);
-      } else {
-        cambiarPortalTab('expediente', tabBtns[1]);
-      }
-    }
-
-    function cambiarPortalTab(panelId, btnElement) {
-      document.querySelectorAll('.portal-tab-btn').forEach(btn => btn.classList.remove('active'));
-      btnElement.classList.add('active');
-
-      document.querySelectorAll('.portal-view-panel').forEach(panel => panel.classList.remove('active'));
-      document.getElementById(`pview-${panelId}`).classList.add('active');
-    }
-
-    function abrirModalConfirmacion(titulo, mensaje, onConfirm) {
-      document.getElementById('confirmTitle').textContent = titulo;
-      document.getElementById('confirmMessage').textContent = mensaje;
-      accionConfirmadaCallback = onConfirm;
-      document.getElementById('modalConfirmacion').classList.remove('hidden');
-    }
-
-    function cerrarModalConfirmacion() {
-      document.getElementById('modalConfirmacion').classList.add('hidden');
-      accionConfirmadaCallback = null;
-    }
-
-    document.getElementById('btnEjecutarConfirmacion').addEventListener('click', () => {
-      if (accionConfirmadaCallback) accionConfirmadaCallback();
-      cerrarModalConfirmacion();
-    });
-
-    function actualizarSelectores() {
-      const selDuenoAsignado = document.getElementById('selectDuenoAsignado');
-      const selExpediente = document.getElementById('selectExpediente');
-      const selPacienteConsulta = document.getElementById('selectPacienteConsulta');
-
-      selDuenoAsignado.innerHTML = '';
-      propietarios.forEach(p => {
-        selDuenoAsignado.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido} (${p.cedula})</option>`;
-      });
-
-      selExpediente.innerHTML = '';
-      selPacienteConsulta.innerHTML = '';
-      mascotas.forEach(m => {
-        const dueno = propietarios.find(p => p.id === m.duenoId);
-        const duenoTxt = dueno ? `${dueno.nombre} ${dueno.apellido}` : 'Sin dueño';
-        const opt = `<option value="${m.id}">${m.nombre} (${m.especie}) — Propietario: ${duenoTxt}</option>`;
-        selExpediente.innerHTML += opt;
-        selPacienteConsulta.innerHTML += opt;
-      });
-
-      if (mascotas.length > 0) {
-        if (!mascotaActualId || !mascotas.some(m => m.id === mascotaActualId)) {
-          mascotaActualId = mascotas[0].id;
-        }
-        selExpediente.value = mascotaActualId;
-        renderExpedienteSeleccionado(mascotaActualId);
-      }
-    }
-
-    function renderExpedienteSeleccionado(mascotaId) {
-      const mascota = mascotas.find(m => m.id === mascotaId);
-      if (!mascota) return;
-
-      mascotaActualId = mascota.id;
-      const dueno = propietarios.find(p => p.id === mascota.duenoId);
-
-      document.getElementById('expNombreMascota').textContent = mascota.nombre;
-      document.getElementById('expDetallesMascota').textContent = `${mascota.especie} • Raza: ${mascota.raza || 'N/A'} • ${mascota.sexo}`;
-      document.getElementById('expDuenoMascota').textContent = dueno 
-        ? `Dueño: ${dueno.nombre} ${dueno.apellido} (Cédula: ${dueno.cedula} | Tel: ${dueno.tel})`
-        : 'Dueño no registrado';
-
-      const alertBadge = document.getElementById('expAlergiaMascota');
-      if (mascota.alergias && mascota.alergias.trim() !== '') {
-        alertBadge.textContent = `⚠️ ${mascota.alergias}`;
-        alertBadge.style.display = 'inline-block';
-      } else {
-        alertBadge.textContent = '✓ Sin alergias registradas';
-        alertBadge.style.display = 'inline-block';
-      }
-
-      const timeline = document.getElementById('timelineConsultas');
-      timeline.innerHTML = '';
-
-      if (!mascota.consultas || mascota.consultas.length === 0) {
-        timeline.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">No hay consultas médicas registradas para este paciente aún.</p>';
-        return;
-      }
-
-      mascota.consultas.forEach((c, idx) => {
-        const item = document.createElement('div');
-        item.className = 'history-card-item';
-        item.innerHTML = `
-          <div class="history-top-row">
-            <strong>${c.motivo}</strong>
-            <small style="color: #64748b;">${c.fecha}</small>
-          </div>
-          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Peso en consulta:</strong> ${c.peso}</p>
-          <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Diagnóstico:</strong> ${c.diagnostico}</p>
-          <p style="font-size: 0.85rem; color: #475569;"><strong>Prescripción:</strong> ${c.farmaco} (${c.dosis}) por ${c.duracion} días.</p>
-          <div class="history-actions">
-            <button class="btn-act" onclick="abrirModalReceta('${mascota.nombre}', '${dueno ? dueno.nombre + ' ' + dueno.apellido : ''}', '${c.peso}', '${c.fecha}', '${c.farmaco}', '${c.dosis}', '${c.duracion}')">
-              📄 Ver Receta
-            </button>
-            <button class="btn-act btn-act-danger" onclick="eliminarConsulta(${idx})">
-              🗑️ Eliminar
-            </button>
-          </div>
-        `;
-        timeline.appendChild(item);
-      });
-    }
-
-    function solicitarEliminarPaciente() {
-      if (!mascotaActualId) return;
-      const mascota = mascotas.find(m => m.id === mascotaActualId);
-      if (!mascota) return;
-
-      abrirModalConfirmacion(
-        `¿Eliminar a "${mascota.nombre}"?`,
-        `Se borrará a "${mascota.nombre}" junto con todas sus consultas médicas y recetas emitidas.`,
-        () => {
-          mascotas = mascotas.filter(m => m.id !== mascotaActualId);
-          guardarEstado();
-          actualizarSelectores();
-        }
-      );
-    }
-
-    function eliminarConsulta(index) {
-      abrirModalConfirmacion(
-        "¿Eliminar Consulta?",
-        "Esta atención médica se borrará del historial de la mascota.",
-        () => {
-          const mascota = mascotas.find(m => m.id === mascotaActualId);
-          if (mascota) {
-            mascota.consultas.splice(index, 1);
-            guardarEstado();
-            renderExpedienteSeleccionado(mascotaActualId);
-          }
-        }
-      );
-    }
-
-    function abrirModalEditarPaciente() {
-      const mascota = mascotas.find(m => m.id === mascotaActualId);
-      if (!mascota) return;
-      const dueno = propietarios.find(p => p.id === mascota.duenoId);
-
-      document.getElementById('editMascotaId').value = mascota.id;
-      document.getElementById('editDuenoId').value = dueno ? dueno.id : '';
-
-      document.getElementById('editDuenoNombre').value = dueno ? dueno.nombre : '';
-      document.getElementById('editDuenoApellido').value = dueno ? dueno.apellido : '';
-      document.getElementById('editDuenoCedula').value = dueno ? dueno.cedula : '';
-      document.getElementById('editDuenoTel').value = dueno ? dueno.tel : '';
-
-      document.getElementById('editMascotaNombre').value = mascota.nombre;
-      document.getElementById('editMascotaEspecie').value = mascota.especie;
-      document.getElementById('editMascotaAlergias').value = mascota.alergias || '';
-
-      document.getElementById('modalEditarPaciente').classList.remove('hidden');
-    }
-
-    function cerrarModalEditarPaciente() {
-      document.getElementById('modalEditarPaciente').classList.add('hidden');
-    }
-
-    document.getElementById('formModalEditarPaciente').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const mId = document.getElementById('editMascotaId').value;
-      const dId = document.getElementById('editDuenoId').value;
-
-      const mascota = mascotas.find(m => m.id === mId);
-      const dueno = propietarios.find(p => p.id === dId);
-
-      if (dueno) {
-        dueno.nombre = document.getElementById('editDuenoNombre').value.trim();
-        dueno.apellido = document.getElementById('editDuenoApellido').value.trim();
-        dueno.cedula = document.getElementById('editDuenoCedula').value.trim();
-        dueno.tel = document.getElementById('editDuenoTel').value.trim();
-      }
-
-      if (mascota) {
-        mascota.nombre = document.getElementById('editMascotaNombre').value.trim();
-        mascota.especie = document.getElementById('editMascotaEspecie').value;
-        mascota.alergias = document.getElementById('editMascotaAlergias').value.trim();
-      }
-
-      guardarEstado();
-      actualizarSelectores();
-      renderExpedienteSeleccionado(mId);
-      cerrarModalEditarPaciente();
-    });
-
-    document.getElementById('formPropietario').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const nuevoPropietario = {
-        id: "p_" + Date.now(),
-        nombre: document.getElementById('propNombre').value.trim(),
-        apellido: document.getElementById('propApellido').value.trim(),
-        cedula: document.getElementById('propCedula').value.trim(),
-        tel: document.getElementById('propTel').value.trim()
-      };
-
-      propietarios.push(nuevoPropietario);
-      guardarEstado();
-      actualizarSelectores();
-      alert(`✅ Propietario ${nuevoPropietario.nombre} ${nuevoPropietario.apellido} registrado.`);
-      e.target.reset();
-    });
-
-    document.getElementById('formMascota').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const nuevaMascota = {
-        id: "m_" + Date.now(),
-        duenoId: document.getElementById('selectDuenoAsignado').value,
-        nombre: document.getElementById('mascotaNombre').value.trim(),
-        especie: document.getElementById('mascotaEspecie').value,
-        raza: document.getElementById('mascotaRaza').value.trim() || 'Criollo',
-        sexo: document.getElementById('mascotaSexo').value,
-        alergias: document.getElementById('mascotaAlergias').value.trim(),
-        consultas: []
-      };
-
-      mascotas.push(nuevaMascota);
-      mascotaActualId = nuevaMascota.id;
-      guardarEstado();
-      actualizarSelectores();
-
-      alert(`🐾 Mascota "${nuevaMascota.nombre}" registrada. Abriendo su expediente.`);
-      cambiarPortalTab('expediente', document.querySelectorAll('.portal-tab-btn')[1]);
-      e.target.reset();
-    });
-
-    document.getElementById('formNuevaConsulta').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const mascotaId = document.getElementById('selectPacienteConsulta').value;
-      const mascota = mascotas.find(m => m.id === mascotaId);
-      if (!mascota) return;
-
-      const nuevaConsulta = {
-        fecha: new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }),
-        peso: document.getElementById('consultaPeso').value + " kg",
-        motivo: document.getElementById('consultaMotivo').value.trim(),
-        diagnostico: document.getElementById('consultaDiagnostico').value.trim(),
-        farmaco: document.getElementById('recetaFarmaco').value.trim(),
-        dosis: document.getElementById('recetaDosis').value.trim(),
-        duracion: document.getElementById('recetaDuracion').value.trim()
-      };
-
-      if (!mascota.consultas) mascota.consultas = [];
-      mascota.consultas.unshift(nuevaConsulta);
-
-      mascotaActualId = mascotaId;
-      guardarEstado();
-      actualizarSelectores();
-      cambiarPortalTab('expediente', document.querySelectorAll('.portal-tab-btn')[1]);
-      e.target.reset();
-    });
-
-    function abrirModalReceta(mascota, dueno, peso, fecha, farmaco, dosis, dias) {
-      document.getElementById('recetaModalMascota').textContent = mascota;
-      document.getElementById('recetaModalDueno').textContent = dueno;
-      document.getElementById('recetaModalPeso').textContent = peso;
-      document.getElementById('recetaModalFecha').textContent = fecha;
-      document.getElementById('recetaModalFarmaco').textContent = farmaco;
-      document.getElementById('recetaModalDosis').textContent = dosis;
-      document.getElementById('recetaModalDuracion').textContent = dias;
-      document.getElementById('modalReceta').classList.remove('hidden');
-    }
-
-    function cerrarModalReceta() {
-      document.getElementById('modalReceta').classList.add('hidden');
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      actualizarSelectores();
-      renderCarrito();
-    });
-  </script>
+  <div id="server-data" 
+      data-clientes="{{ clientes | tojson | forceescape }}" 
+      data-mascotas="{{ mascotas | tojson | forceescape }}" 
+      style="display: none;">
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Veterinaria Pepe y Pepito</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body { justify-content: center; align-items: center; background-color: #f1f5f9; }
+        .login-card { 
+            max-width: 400px; 
+            width: 100%; 
+            margin: 2rem; 
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+        .login-logo { font-size: 3.5rem; text-align: center; margin-bottom: 0.5rem; }
+        .error-msg { 
+            background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
+            padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 1rem; 
+        }
+        .login-card label { color: #475569; }
+        .login-card input { background: #f8fafc; color: #1e293b; border-color: #cbd5e1; }
+        .login-card input:focus { border-color: #5a9629; box-shadow: 0 0 0 3px rgba(90, 150, 41, 0.15); }
+        .btn-ingresar { background: #5a9629; color: white; width: 100%; border-radius: 6px; padding: 0.85rem; font-weight: bold; border:none; cursor:pointer;}
+        .btn-ingresar:hover { background: #46791e; }
+    </style>
+</head>
+<body>
+    <div class="card login-card">
+        <div class="login-logo">🐾</div>
+        <h3 style="text-align: center; margin-bottom: 0.2rem; color: #46791e;">Veterinaria Pepe & Pepito</h3>
+        <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Sistema Clínico Digital</p>
+        
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <div class="error-msg">{{ messages[0] }}</div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label>Correo Electrónico</label>
+                <input type="email" name="correo" required placeholder="Ej: admin@pepe.com">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" name="contrasena" required placeholder="******">
+            </div>
+            <button type="submit" class="btn-ingresar" style="margin-top: 1rem;">Ingresar al Sistema</button>
+        </form>
+    </div>
+</body>
+</html>
