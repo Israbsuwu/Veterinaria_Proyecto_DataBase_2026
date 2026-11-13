@@ -325,6 +325,9 @@ def dashboard():
 def dashboard_proveedor():
     if not _es_personal():
         return redirect(url_for("login"))
+    if session.get("rol") not in ("Administrador", "Cajero"):
+        flash("No tienes permisos para registrar proveedores.", "danger")
+        return redirect(url_for("dashboard"))
 
     datos = {
         "nombre": _limpiar(request.form.get("nombre")),
@@ -368,6 +371,9 @@ def dashboard_proveedor():
 def dashboard_producto():
     if not _es_personal():
         return redirect(url_for("login"))
+    if session.get("rol") != "Administrador":
+        flash("No tienes permisos para crear productos.", "danger")
+        return redirect(url_for("dashboard"))
 
     datos = {
         "nombre": _limpiar(request.form.get("nombre")),
@@ -461,6 +467,9 @@ def dashboard_producto_imagen(id_producto):
 def dashboard_movimiento():
     if not _es_personal():
         return redirect(url_for("login"))
+    if session.get("rol") not in ("Administrador", "Cajero"):
+        flash("No tienes permisos para registrar movimientos.", "danger")
+        return redirect(url_for("dashboard"))
 
     try:
         id_lote = int(request.form.get("id_lote") or 0)

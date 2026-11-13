@@ -99,7 +99,7 @@ def role_required(*roles: str) -> Callable:
                 if _wants_json():
                     return jsonify({"success": False, "error": "No tienes permisos para esta acción."}), 403
                 flash("No tienes permisos para acceder a esa sección.", "danger")
-                return redirect(url_for("admin.dashboard"))
+                return redirect(url_for("dashboard"))
             return view(*args, **kwargs)
 
         return wrapper

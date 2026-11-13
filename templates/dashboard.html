@@ -68,11 +68,13 @@
           <span class="nav-count">{{ kpis.productos }}</span>
         </button>
 
+        {% if usuario.rol == 'Administrador' %}
         <button type="button" class="nav-item {% if vista_inicial == 'productos' %}active{% endif %}" data-view="productos">
           <span class="nav-ico"><svg class="ico"><use href="#i-store"/></svg></span>
           <span class="nav-text"><strong>Productos</strong><small>Tienda e imágenes</small></span>
           <span class="nav-count">{{ kpis.productos }}</span>
         </button>
+        {% endif %}
 
         <button type="button" class="nav-item {% if vista_inicial == 'vencimientos' %}active{% endif %}" data-view="vencimientos">
           <span class="nav-ico"><svg class="ico"><use href="#i-hourglass"/></svg></span>
@@ -94,11 +96,13 @@
           <span class="nav-count">{{ kpis.proveedores }}</span>
         </button>
 
+        {% if usuario.rol in ('Administrador', 'Cajero') %}
         <button type="button" class="nav-item {% if vista_inicial == 'facturas' %}active{% endif %}" data-view="facturas">
           <span class="nav-ico"><svg class="ico"><use href="#i-receipt"/></svg></span>
           <span class="nav-text"><strong>Facturas</strong><small>Ventas y cobros</small></span>
           <span class="nav-count">{{ kpis.facturas }}</span>
         </button>
+        {% endif %}
 
         <button type="button" class="nav-item {% if vista_inicial == 'clientes' %}active{% endif %}" data-view="clientes">
           <span class="nav-ico"><svg class="ico"><use href="#i-users"/></svg></span>
@@ -106,11 +110,13 @@
           <span class="nav-count">{{ kpis.clientes }}</span>
         </button>
 
+        {% if usuario.rol == 'Administrador' %}
         <button type="button" class="nav-item {% if vista_inicial == 'equipo' %}active{% endif %}" data-view="equipo">
           <span class="nav-ico"><svg class="ico"><use href="#i-badge"/></svg></span>
           <span class="nav-text"><strong>Equipo</strong><small>Personal y roles</small></span>
           <span class="nav-count">{{ kpis.personal }}</span>
         </button>
+        {% endif %}
       </nav>
 
       <div class="side-foot">
@@ -530,6 +536,7 @@
         <!-- ============================================================
              VISTA: PRODUCTOS (TIENDA)
              ============================================================ -->
+        {% if usuario.rol == 'Administrador' %}
         <section class="view {% if vista_inicial == 'productos' %}active{% endif %}" id="view-productos"
                  data-view="productos" data-title="Productos">
           <div class="view-head">
@@ -595,6 +602,7 @@
             <p class="empty-state" id="vacioProductos" hidden>No hay productos que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: VENCIMIENTOS
@@ -864,6 +872,7 @@
         <!-- ============================================================
              VISTA: FACTURAS
              ============================================================ -->
+        {% if usuario.rol in ('Administrador', 'Cajero') %}
         <section class="view {% if vista_inicial == 'facturas' %}active{% endif %}" id="view-facturas"
                  data-view="facturas" data-title="Facturas">
           <div class="view-head">
@@ -937,6 +946,7 @@
             <p class="empty-state" id="vacioFacturas" hidden>No hay facturas que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: CLIENTES
@@ -1002,6 +1012,7 @@
         <!-- ============================================================
              VISTA: EQUIPO
              ============================================================ -->
+        {% if usuario.rol == 'Administrador' %}
         <section class="view {% if vista_inicial == 'equipo' %}active{% endif %}" id="view-equipo"
                  data-view="equipo" data-title="Equipo">
           <div class="view-head">
@@ -1057,6 +1068,7 @@
             <p class="empty-state" id="vacioEquipo" hidden>No hay cuentas que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
       </main>
     </div>
