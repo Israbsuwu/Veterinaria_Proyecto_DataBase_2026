@@ -1,0 +1,224 @@
+{% extends "admin/base.html" %}
+{% block title %}Expediente · {{ data.mascota.Nombre }}{% endblock %}
+{% block content %}
+{% set m = data.mascota %}
+{% set exp = data.expediente %}
+
+<div class="page-head">
+  <div>
+    <h2>{{ m.Nombre }} <span class="muted" style="font-size:1rem;">· {{ m.Especie }}{% if m.Raza %} / {{ m.Raza }}{% endif %}</span></h2>
+    <p>Expediente {{ '#' ~ exp.IdExp if exp else 'sin abrir' }} · Dueño: {{ m.ClienteNombre }} {{ m.ClienteApellido }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.expedientes') }}" class="btn btn-ghost btn-sm">← Volver</a>
+    <button class="btn btn-secondary btn-sm" data-modal-open="modal-editar">✏ Editar ficha</button>
+    <a href="{{ url_for('admin.triaje') }}" class="btn btn-primary btn-sm">🩺 Ir a consulta</a>
+  </div>
+</div>
+
+<div class="two-col reverse">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <h3>Datos del paciente</h3>
+        <span class="badge badge-{{ exp.EstadoReg|badge if exp else 'info' }}">{{ exp.EstadoReg if exp else 'Sin expediente' }}</span>
+      </div>
+      <div class="info-list">
+        <div class="info-row"><span>Especie / raza</span><strong>{{ m.Especie }}{% if m.Raza %} · {{ m.Raza }}{% endif %}</strong></div>
+        <div class="info-row"><span>Sexo</span><strong>{{ m.Sexo or '—' }}</strong></div>
+        <div class="info-row"><span>Color</span><strong>{{ m.Color or '—' }}</strong></div>
+        <div class="info-row"><span>Nacimiento</span><strong>{{ m.FechaNac|fecha }}</strong></div>
+        <div class="info-row"><span>Señas</span><strong>{{ m.Senas or '—' }}</strong></div>
+        <div class="info-row"><span>Alergias</span><strong class="{{ 'text-warning' if exp and exp.Alergias }}">{{ exp.Alergias if exp and exp.Alergias else 'Ninguna registrada' }}</strong></div>
+        <div class="info-row"><span>Condiciones</span><strong>{{ exp.Condiciones if exp and exp.Condiciones else '—' }}</strong></div>
+        <div class="info-row"><span>Apertura</span><strong>{{ exp.FechaApertura|fecha if exp else '—' }}</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>Dueño</h3></div>
+      <div class="info-list">
+        <div class="info-row"><span>Nombre</span><strong>{{ m.ClienteNombre }} {{ m.ClienteApellido }}</strong></div>
+        <div class="info-row"><span>Teléfono</span><strong>{{ m.ClienteTelefono or '—' }}</strong></div>
+        <div class="info-row"><span>Correo</span><strong>{{ m.ClienteCorreo or '—' }}</strong></div>
+      </div>
+      <a class="btn btn-ghost btn-sm mt-2 btn-block" href="{{ url_for('admin.cliente_detalle', cliente_id=m.IdCliente) }}">Ver ficha del cliente</a>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Evolución de peso</h3>
+        <span class="chip">{{ data.pesos|length }} registro(s)</span>
+      </div>
+      {% if data.pesos %}
+      {% set max_peso = data.pesos|max %}
+      <div class="bar-chart" style="height:130px;">
+        {% for peso in data.pesos[-10:] %}
+        <div class="bar" title="{{ peso }} kg">
+          <span class="bar-value">{{ peso }}</span>
+          <div class="bar-fill" style="height: {{ ((peso / max_peso) * 100)|round|int if max_peso else 2 }}%"></div>
+        </div>
+        {% endfor %}
+      </div>
+      <p class="tiny muted mt-1">Últimos {{ [data.pesos|length, 10]|min }} registros · kg</p>
+      {% else %}
+      <div class="empty-state"><span class="emoji">📉</span>Sin registros de peso.</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Registros preventivos</h3>
+        <span class="chip">{{ data.vacunas|length }}</span>
+      </div>
+      {% if data.vacunas %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Lote</th><th>Próxima</th></tr></thead>
+          <tbody>
+            {% for v in data.vacunas %}
+            <tr>
+              <td class="nowrap">{{ v.FechaAplic|fecha }}</td>
+              <td>{{ v.TipoProc }}</td>
+              <td>{{ v.NombreProd }}</td>
+              <td class="mono">{{ v.CodigoLote or '—' }}</td>
+              <td class="nowrap">{{ v.ProxAplic|fecha }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">💉</span>Sin vacunas ni desparasitaciones.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3>Historial de consultas</h3>
+          <p class="card-sub">{{ data.consultas|length }} consulta(s) registrada(s)</p>
+        </div>
+      </div>
+      {% if data.consultas %}
+      <div class="timeline">
+        {% for c in data.consultas %}
+        <div class="timeline-item">
+          <h4>
+            <span>Consulta #{{ c.IdConsulta }} · {{ c.Motivo or 'Consulta' }}</span>
+            <small>{{ c.FechaCons|fecha_hora }}</small>
+          </h4>
+          <div class="ti-body">
+            <p><strong>Veterinario:</strong> {{ c.Veterinario }} · <strong>Peso:</strong> {{ c.Peso }} kg</p>
+            <p><strong>Diagnóstico:</strong> {{ c.Diagnostico }}</p>
+            <p><strong>Tratamiento:</strong> {{ c.Tratamiento }}</p>
+            {% if c.Obs %}<p><strong>Observaciones:</strong> {{ c.Obs }}</p>{% endif %}
+            {% if c.receta %}
+            <p><strong>Receta #{{ c.receta.IdReceta }}</strong> · {{ c.receta.Estado }}
+              {% if c.receta.IndGral %}<br><em>{{ c.receta.IndGral }}</em>{% endif %}
+            </p>
+            <ul class="receta-list">
+              {% for d in c.receta.detalles %}
+              <li>{{ d.NombreMed }} — {{ d.Dosis }} · {{ d.Frecuencia }} · {{ d.Duracion }} · {{ d.Via }}{% if d.Ind %} <span class="muted">({{ d.Ind }})</span>{% endif %}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+            {% if c.preventivos %}
+            <p><strong>Preventivos aplicados:</strong></p>
+            <ul class="receta-list">
+              {% for p in c.preventivos %}
+              <li>{{ p.TipoProc }}: {{ p.NombreProd }}{% if p.CodigoLote %} · lote {{ p.CodigoLote }}{% endif %} · {{ p.FechaAplic|fecha }}{% if p.ProxAplic %} → próxima {{ p.ProxAplic|fecha }}{% endif %}</li>
+              {% endfor %}
+            </ul>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🩺</span>Aún no hay consultas registradas.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-editar">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Editar ficha del paciente</h3>
+        <p>{{ m.Nombre }}</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-editar">×</button>
+    </div>
+    <form id="form-editar">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="e-nombre">Nombre</label>
+          <input type="text" id="e-nombre" name="nombre" value="{{ m.Nombre }}" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="e-especie">Especie</label>
+          <input type="text" id="e-especie" name="especie" value="{{ m.Especie }}" required>
+        </div>
+        <div class="form-group">
+          <label for="e-raza">Raza</label>
+          <input type="text" id="e-raza" name="raza" value="{{ m.Raza or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="e-sexo">Sexo</label>
+          <select id="e-sexo" name="sexo">
+            <option value="" {{ 'selected' if not m.Sexo }}>No definido</option>
+            <option value="Macho" {{ 'selected' if m.Sexo == 'Macho' }}>Macho</option>
+            <option value="Hembra" {{ 'selected' if m.Sexo == 'Hembra' }}>Hembra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="e-color">Color</label>
+          <input type="text" id="e-color" name="color" value="{{ m.Color or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="e-nac">Fecha de nacimiento</label>
+          <input type="date" id="e-nac" name="fecha_nac" value="{{ m.FechaNac.strftime('%Y-%m-%d') if m.FechaNac else '' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="e-senas">Señas particulares</label>
+        <input type="text" id="e-senas" name="senas" value="{{ m.Senas or '' }}">
+      </div>
+      <div class="form-group">
+        <label for="e-alergias">Alergias</label>
+        <input type="text" id="e-alergias" name="alergias" value="{{ exp.Alergias if exp and exp.Alergias else '' }}">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-editar">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  document.getElementById("form-editar").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api("/api/mascotas/{{ data.mascota.IdMascota }}", { method: "PATCH", body: App.formData(form) });
+      App.toast("Ficha actualizada.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

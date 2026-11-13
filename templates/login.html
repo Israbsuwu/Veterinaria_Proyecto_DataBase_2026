@@ -1,56 +1,83 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>Login - Veterinaria Pepe y Pepito</title>
-
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-    <style>
-        body { justify-content: center; align-items: center; background-color: #f1f5f9; }
-        .login-card { 
-            max-width: 400px; 
-            width: 100%; 
-            margin: 2rem; 
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-        }
-        .login-logo { font-size: 3.5rem; text-align: center; margin-bottom: 0.5rem; }
-        .error-msg { 
-            background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;
-            padding: 0.75rem; border-radius: 6px; font-size: 0.85rem; text-align: center; margin-bottom: 1rem; 
-        }
-        .login-card label { color: #475569; }
-        .login-card input { background: #f8fafc; color: #1e293b; border-color: #cbd5e1; }
-        .login-card input:focus { border-color: #5a9629; box-shadow: 0 0 0 3px rgba(90, 150, 41, 0.15); }
-        .btn-ingresar { background: #5a9629; color: white; width: 100%; border-radius: 6px; padding: 0.85rem; font-weight: bold; border:none; cursor:pointer;}
-        .btn-ingresar:hover { background: #46791e; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceso interno · {{ clinic_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <style>
+    body { align-items: center; justify-content: center; padding: 2rem 1rem; background:
+      radial-gradient(circle at 20% 20%, rgba(2,132,199,.18), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(16,185,129,.12), transparent 40%), var(--bg-dark); }
+    .login-shell { display: grid; grid-template-columns: 1.05fr .95fr; max-width: 920px; width: 100%;
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45); }
+    .login-side { padding: 2.6rem; background: linear-gradient(150deg, #0b3f5e, #0f172a 70%); display: flex; flex-direction: column; justify-content: space-between; gap: 2rem; }
+    .login-side .logo { font-size: 2.4rem; }
+    .login-side h1 { color: #fff; font-size: 1.6rem; line-height: 1.25; margin: .8rem 0 .5rem; }
+    .login-side p { color: #bae6fd; font-size: .9rem; line-height: 1.6; }
+    .login-side ul { list-style: none; display: grid; gap: .55rem; margin-top: 1.2rem; }
+    .login-side li { color: #cbd5e1; font-size: .84rem; }
+    .login-side li::before { content: "✓"; color: #34d399; margin-right: .5rem; font-weight: 800; }
+    .login-form { padding: 2.6rem; display: flex; flex-direction: column; justify-content: center; }
+    .login-form h2 { color: #fff; font-size: 1.25rem; margin-bottom: .25rem; }
+    .login-form .sub { color: var(--text-muted); font-size: .84rem; margin-bottom: 1.5rem; }
+    .login-form input { background: #090d16; }
+    .login-form .btn { margin-top: .4rem; }
+    .flash { padding: .7rem .85rem; border-radius: 7px; font-size: .82rem; margin-bottom: 1rem; }
+    .flash-danger { background: rgba(239,68,68,.14); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+    .flash-success { background: rgba(16,185,129,.14); color: #6ee7b7; border: 1px solid rgba(16,185,129,.3); }
+    .flash-info { background: rgba(2,132,199,.14); color: #7dd3fc; border: 1px solid rgba(2,132,199,.3); }
+    .login-footer { margin-top: 1.4rem; font-size: .78rem; color: var(--text-muted); text-align: center; }
+    .login-footer a { color: #38bdf8; text-decoration: none; }
+    .demo { margin-top: 1.2rem; background: #090d16; border: 1px dashed var(--card-border); border-radius: 8px; padding: .7rem .85rem; font-size: .74rem; color: var(--text-muted); line-height: 1.7; }
+    @media (max-width: 760px) { .login-shell { grid-template-columns: 1fr; } .login-side { display: none; } .login-form { padding: 1.8rem; } }
+  </style>
 </head>
 <body>
-    <div class="card login-card">
-        <div class="login-logo">🐾</div>
-        <h3 style="text-align: center; margin-bottom: 0.2rem; color: #46791e;">Veterinaria Pepe & Pepito</h3>
-        <p style="text-align: center; color: #64748b; font-size: 0.85rem; margin-bottom: 1.5rem;">Sistema Clínico Digital</p>
-        
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <div class="error-msg">{{ messages[0] }}</div>
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('login') }}">
-            <div class="form-group">
-                <label>Correo Electrónico</label>
-                <input type="email" name="correo" required placeholder="Ej: admin@pepe.com">
-            </div>
-            <div class="form-group">
-                <label>Contraseña</label>
-                <input type="password" name="contrasena" required placeholder="******">
-            </div>
-            <button type="submit" class="btn-ingresar" style="margin-top: 1rem;">Ingresar al Sistema</button>
-        </form>
+  <div class="login-shell">
+    <aside class="login-side">
+      <div>
+        <div class="logo">🐾</div>
+        <h1>{{ clinic_name }}</h1>
+        <p>Sistema clínico y ERP interno. Gestiona citas, expedientes, inventario y facturación desde un solo lugar.</p>
+        <ul>
+          <li>Agenda y flujo clínico completo</li>
+          <li>Inventario con lotes y vencimientos</li>
+          <li>Caja, POS y tienda en línea</li>
+        </ul>
+      </div>
+      <p style="font-size:.75rem;">{{ clinic_address }} · Tel. {{ clinic_phone }}</p>
+    </aside>
+    <div class="login-form">
+      <h2>Acceso del personal</h2>
+      <p class="sub">Ingresa con tu correo institucional.</p>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      <form method="POST" action="{{ url_for('auth.login') }}">
+        <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+        <div class="form-group">
+          <label for="correo">Correo electrónico</label>
+          <input type="email" id="correo" name="correo" required placeholder="admin@pepe.com" autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="contrasena">Contraseña</label>
+          <input type="password" id="contrasena" name="contrasena" required placeholder="••••••" autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Ingresar al sistema</button>
+      </form>
+      <div class="demo">
+        <strong>Demo:</strong> admin@pepe.com / 123456<br>
+        Veterinario: fer@pepe.com · Cajero: caja@pepe.com
+      </div>
+      <p class="login-footer">¿Eres cliente? <a href="{{ url_for('auth.shop_login') }}">Entra a la tienda</a></p>
     </div>
+  </div>
 </body>
 </html>

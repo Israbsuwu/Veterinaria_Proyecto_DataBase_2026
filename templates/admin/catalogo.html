@@ -1,0 +1,281 @@
+{% extends "admin/base.html" %}
+{% block title %}Catálogo{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Catálogo facturable</h2>
+    <p>Conceptos de venta para POS y tienda, servicios clínicos y categorías.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" data-modal-open="modal-categoria">＋ Categoría</button>
+    <button class="btn btn-secondary btn-sm" data-modal-open="modal-servicio">＋ Servicio</button>
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-concepto">＋ Concepto</button>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="stat-icon">🏷️</span><span class="stat-value">{{ conceptos|length }}</span><span class="stat-label">Conceptos</span></div>
+  <div class="stat-card green"><span class="stat-icon">🩺</span><span class="stat-value">{{ servicios|length }}</span><span class="stat-label">Servicios clínicos</span></div>
+  <div class="stat-card"><span class="stat-icon">📦</span><span class="stat-value">{{ productos|length }}</span><span class="stat-label">Productos</span></div>
+  <div class="stat-card"><span class="stat-icon">🗂️</span><span class="stat-value">{{ categorias|length }}</span><span class="stat-label">Categorías</span></div>
+</div>
+
+<div class="tabs" data-tabs="#cat-panels">
+  <button class="tab-btn active" data-tab="conceptos">Conceptos</button>
+  <button class="tab-btn" data-tab="servicios">Servicios</button>
+  <button class="tab-btn" data-tab="productos">Productos</button>
+  <button class="tab-btn" data-tab="categorias">Categorías</button>
+</div>
+
+<div id="cat-panels">
+  <div data-panel="conceptos" class="tab-panel active">
+    <section class="card">
+      <div class="card-head"><h3>Conceptos facturables</h3></div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Nombre</th><th>Tipo</th><th>Descripción</th><th class="num">Precio</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            {% for c in conceptos %}
+            <tr>
+              <td><strong>{{ c.Nombre }}</strong></td>
+              <td><span class="badge badge-{{ 'info' if c.TipoConcepto == 'Servicio' else 'success' }}">{{ c.TipoConcepto }}</span></td>
+              <td>{{ c.Descripcion or '—' }}</td>
+              <td class="num">{{ c.Precio|money }}</td>
+              <td><span class="badge badge-{{ c.Estado|badge }}">{{ c.Estado }}</span></td>
+              <td>
+                <button class="btn btn-ghost btn-xs" data-editar="{{ c.IdConcepto }}"
+                  data-nombre="{{ c.Nombre|e }}" data-desc="{{ (c.Descripcion or '')|e }}"
+                  data-precio="{{ c.Precio }}" data-estado="{{ c.Estado }}">Editar</button>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="table-empty">Sin conceptos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div data-panel="servicios" class="tab-panel">
+    <section class="card">
+      <div class="card-head"><h3>Servicios clínicos</h3><span class="chip">Vinculados a un concepto facturable</span></div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Servicio</th><th>Descripción</th><th class="num">Duración</th><th class="num">Precio</th><th>Indicaciones</th><th>Estado</th></tr></thead>
+          <tbody>
+            {% for s in servicios %}
+            <tr>
+              <td><strong>{{ s.Nombre }}</strong></td>
+              <td>{{ s.Descripcion or '—' }}</td>
+              <td class="num">{{ s.DuracionMin ~ ' min' if s.DuracionMin else '—' }}</td>
+              <td class="num">{{ s.Precio|money }}</td>
+              <td>{{ s.Ind or '—' }}</td>
+              <td><span class="badge badge-{{ s.Estado|badge }}">{{ s.Estado }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="table-empty">Sin servicios.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div data-panel="productos" class="tab-panel">
+    <section class="card">
+      <div class="card-head">
+        <h3>Productos</h3>
+        <a href="{{ url_for('admin.inventario') }}" class="btn btn-ghost btn-xs">Gestionar inventario</a>
+      </div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Producto</th><th>Categoría</th><th class="num">Stock</th><th class="num">Precio venta</th><th>Concepto</th></tr></thead>
+          <tbody>
+            {% for p in productos %}
+            <tr>
+              <td>{{ p.Nombre }}</td>
+              <td>{{ p.Categoria or '—' }}</td>
+              <td class="num">{{ p.Stock }}</td>
+              <td class="num">{{ p.PrecioVenta|money if p.PrecioVenta is not none else '—' }}</td>
+              <td>{% if p.IdConcepto %}<span class="badge badge-success">#{{ p.IdConcepto }}</span>{% else %}<span class="badge badge-warning">Sin concepto</span>{% endif %}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="table-empty">Sin productos.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div data-panel="categorias" class="tab-panel">
+    <section class="card">
+      <div class="card-head"><h3>Categorías</h3></div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Categoría</th><th>Descripción</th><th class="num">Productos</th></tr></thead>
+          <tbody>
+            {% for c in categorias %}
+            <tr><td><strong>{{ c.Nombre }}</strong></td><td>{{ c.Descripcion or '—' }}</td><td class="num">{{ c.Productos }}</td></tr>
+            {% else %}
+            <tr><td colspan="3" class="table-empty">Sin categorías.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-concepto">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nuevo concepto</h3><p>Producto o servicio facturable.</p></div>
+      <button class="modal-close" data-modal-close="modal-concepto">×</button>
+    </div>
+    <form id="form-concepto">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="c-tipo">Tipo</label>
+          <select id="c-tipo" name="tipo_concepto" required>
+            <option value="Producto">Producto</option>
+            <option value="Servicio">Servicio</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="required" for="c-nombre">Nombre</label><input type="text" id="c-nombre" name="nombre" required></div>
+        <div class="form-group"><label class="required" for="c-precio">Precio</label><input type="number" min="0" step="0.01" id="c-precio" name="precio" required></div>
+        <div class="form-group">
+          <label for="c-estado">Estado</label>
+          <select id="c-estado" name="estado"><option>Activo</option><option>Inactivo</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label for="c-desc">Descripción</label><textarea id="c-desc" name="descripcion" rows="2"></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-concepto">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear concepto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-editar-concepto">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Editar concepto</h3></div>
+      <button class="modal-close" data-modal-close="modal-editar-concepto">×</button>
+    </div>
+    <form id="form-editar-concepto">
+      <input type="hidden" id="ec-id">
+      <div class="form-grid-2">
+        <div class="form-group"><label class="required" for="ec-nombre">Nombre</label><input type="text" id="ec-nombre" name="nombre" required></div>
+        <div class="form-group"><label class="required" for="ec-precio">Precio</label><input type="number" min="0" step="0.01" id="ec-precio" name="precio" required></div>
+        <div class="form-group">
+          <label for="ec-estado">Estado</label>
+          <select id="ec-estado" name="estado"><option>Activo</option><option>Inactivo</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label for="ec-desc">Descripción</label><textarea id="ec-desc" name="descripcion" rows="2"></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-editar-concepto">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar cambios</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-servicio">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nuevo servicio clínico</h3><p>Crea el concepto y el servicio en un solo paso.</p></div>
+      <button class="modal-close" data-modal-close="modal-servicio">×</button>
+    </div>
+    <form id="form-servicio">
+      <div class="form-grid-2">
+        <div class="form-group"><label class="required" for="s-nombre">Nombre</label><input type="text" id="s-nombre" name="nombre" required></div>
+        <div class="form-group"><label class="required" for="s-precio">Precio</label><input type="number" min="0" step="0.01" id="s-precio" name="precio" required></div>
+        <div class="form-group"><label for="s-dur">Duración (min)</label><input type="number" min="5" step="5" id="s-dur" name="duracion_min" value="30"></div>
+        <div class="form-group">
+          <label for="s-estado">Estado</label>
+          <select id="s-estado" name="estado"><option>Activo</option><option>Inactivo</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label for="s-desc">Descripción</label><textarea id="s-desc" name="descripcion" rows="2"></textarea></div>
+      <div class="form-group"><label for="s-ind">Indicaciones</label><input type="text" id="s-ind" name="indicaciones"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-servicio">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear servicio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-categoria">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Nueva categoría</h3></div>
+      <button class="modal-close" data-modal-close="modal-categoria">×</button>
+    </div>
+    <form id="form-categoria">
+      <div class="form-group"><label class="required" for="cat-nombre">Nombre</label><input type="text" id="cat-nombre" name="nombre" required></div>
+      <div class="form-group"><label for="cat-desc">Descripción</label><input type="text" id="cat-desc" name="descripcion"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-categoria">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  async function submitForm(form, url, method, success) {
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api(url, { method: method, body: App.formData(form) });
+      App.toast(success);
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  }
+
+  document.getElementById("form-concepto").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitForm(event.currentTarget, "/api/conceptos", "POST", "Concepto creado.");
+  });
+
+  document.getElementById("form-servicio").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitForm(event.currentTarget, "/api/servicios", "POST", "Servicio creado.");
+  });
+
+  document.getElementById("form-categoria").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitForm(event.currentTarget, "/api/categorias", "POST", "Categoría creada.");
+  });
+
+  document.querySelectorAll("[data-editar]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("ec-id").value = button.dataset.editar;
+      document.getElementById("ec-nombre").value = button.dataset.nombre;
+      document.getElementById("ec-desc").value = button.dataset.desc;
+      document.getElementById("ec-precio").value = button.dataset.precio;
+      document.getElementById("ec-estado").value = button.dataset.estado;
+      App.openModal("modal-editar-concepto");
+    });
+  });
+
+  document.getElementById("form-editar-concepto").addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitForm(event.currentTarget, "/api/conceptos/" + document.getElementById("ec-id").value, "PATCH", "Concepto actualizado.");
+  });
+})();
+</script>
+{% endblock %}

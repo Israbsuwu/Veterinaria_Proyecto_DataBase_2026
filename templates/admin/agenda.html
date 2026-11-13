@@ -1,0 +1,278 @@
+{% extends "admin/base.html" %}
+{% block title %}Agenda{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Agenda de citas</h2>
+    <p>Reserva, confirma y registra la llegada de los pacientes.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-reserva">＋ Nueva cita</button>
+  </div>
+</div>
+
+<form class="toolbar card" method="GET" action="{{ url_for('admin.agenda') }}">
+  <div class="form-group">
+    <label for="fecha">Fecha</label>
+    <input type="date" id="fecha" name="fecha" value="{{ fecha.isoformat() }}">
+  </div>
+  <div class="form-group">
+    <label for="estado">Estado</label>
+    <select id="estado" name="estado">
+      <option value="">Todos</option>
+      {% for opcion in ['Pendiente', 'Confirmada', 'Completada', 'Cancelada'] %}
+      <option value="{{ opcion }}" {{ 'selected' if estado == opcion }}>{{ opcion }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-secondary btn-sm">Filtrar</button>
+  <a href="{{ url_for('admin.agenda') }}" class="btn btn-ghost btn-sm">Hoy</a>
+</form>
+
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h3>{{ reservas|length }} cita(s) · {{ fecha|fecha }}</h3>
+      <p class="card-sub">Ordenadas por fecha de inicio</p>
+    </div>
+  </div>
+  {% if reservas %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Fecha / hora</th>
+          <th>Cliente y mascota</th>
+          <th>Motivo</th>
+          <th>Veterinario</th>
+          <th>Canal</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in reservas %}
+        <tr>
+          <td class="nowrap">{{ r.FechaIni|fecha_hora }}</td>
+          <td>
+            <strong>{{ r.Cliente }}</strong>
+            <br><small class="muted">{{ r.Mascota or 'Sin mascota' }}{% if r.Especie %} · {{ r.Especie }}{% endif %}</small>
+          </td>
+          <td>{{ r.Motivo or 'Consulta general' }}</td>
+          <td>{{ r.Veterinario or 'Por asignar' }}</td>
+          <td><span class="badge badge-{{ r.Canal|badge }}">{{ r.Canal }}</span></td>
+          <td><span class="badge badge-{{ r.Estado|badge }}">{{ r.Estado }}</span></td>
+          <td>
+            <div class="table-actions">
+              {% if r.Estado == 'Pendiente' %}
+              <button class="btn btn-success btn-xs" data-estado="{{ r.IdReserva }}" data-nuevo="Confirmada">Confirmar</button>
+              {% endif %}
+              {% if r.Estado in ['Pendiente', 'Confirmada'] %}
+              <button class="btn btn-primary btn-xs" data-checkin="{{ r.IdReserva }}" data-mascota="{{ r.Mascota or '' }}">Check-in</button>
+              <button class="btn btn-ghost btn-xs" data-estado="{{ r.IdReserva }}" data-nuevo="Cancelada">Cancelar</button>
+              {% endif %}
+              {% if r.Atenciones %}
+              <span class="chip ok">{{ r.Atenciones }} atención(es)</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">📅</span>No hay citas para este filtro.</div>
+  {% endif %}
+</section>
+
+<!-- Nueva reserva -->
+<div class="modal-backdrop" id="modal-reserva">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Nueva cita</h3>
+        <p>Registra una reserva presencial para un cliente.</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-reserva">×</button>
+    </div>
+    <form id="form-reserva">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="r-cliente">Cliente</label>
+          <select id="r-cliente" name="id_cliente" required>
+            <option value="">Seleccione…</option>
+            {% for c in clientes %}
+            <option value="{{ c.IdCliente }}">{{ c.Nombre }} {{ c.Apellido }} · {{ c.Cedula }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="r-mascota">Mascota</label>
+          <select id="r-mascota" name="id_mascota">
+            <option value="">Sin mascota / por definir</option>
+            {% for m in mascotas %}
+            <option value="{{ m.IdMascota }}" data-cliente="{{ m.IdCliente }}">{{ m.Nombre }} ({{ m.Especie }}) · {{ m.Dueno }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="r-vet">Veterinario</label>
+          <select id="r-vet" name="id_veterinario">
+            <option value="">Asignar automáticamente</option>
+            {% for v in vets %}
+            <option value="{{ v.IdVeterinario }}">{{ v.Nombre }} {{ v.Apellido }} · {{ v.NumRegistro }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required" for="r-fecha">Fecha y hora</label>
+          <input type="datetime-local" id="r-fecha" name="fecha_ini" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="r-motivo">Motivo</label>
+        <input type="text" id="r-motivo" name="motivo" maxlength="255" placeholder="Consulta general, vacunación, control…">
+      </div>
+      <div class="form-group">
+        <label for="r-obs">Observaciones</label>
+        <textarea id="r-obs" name="obs" rows="2" maxlength="500"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-reserva">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar cita</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Check-in -->
+<div class="modal-backdrop" id="modal-checkin">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div>
+        <h3>Registrar llegada</h3>
+        <p id="checkin-sub">Se creará una atención en sala de espera.</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-checkin">×</button>
+    </div>
+    <form id="form-checkin">
+      <input type="hidden" id="c-reserva" name="id_reserva">
+      <div class="form-group">
+        <label for="c-tipo">Tipo de atención</label>
+        <select id="c-tipo" name="tipo_atencion">
+          {% for t in ['Rutina', 'Emergencia', 'Procedimiento'] %}
+          <option value="{{ t }}">{{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="c-prioridad">Prioridad</label>
+        <select id="c-prioridad" name="prioridad">
+          {% for p in ['Baja', 'Media', 'Alta'] %}
+          <option value="{{ p }}" {{ 'selected' if p == 'Media' }}>{{ p }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-checkin">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Enviar a triaje</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  const clienteSelect = document.getElementById("r-cliente");
+  const mascotaSelect = document.getElementById("r-mascota");
+  const mascotas = Array.from(mascotaSelect.querySelectorAll("option[data-cliente]"));
+
+  function filtrarMascotas() {
+    const cliente = clienteSelect.value;
+    mascotas.forEach((opt) => {
+      const visible = !cliente || opt.dataset.cliente === cliente;
+      opt.hidden = !visible;
+      opt.disabled = !visible;
+    });
+    if (mascotaSelect.selectedOptions[0] && mascotaSelect.selectedOptions[0].hidden) {
+      mascotaSelect.value = "";
+    }
+  }
+  clienteSelect.addEventListener("change", filtrarMascotas);
+  filtrarMascotas();
+
+  const fecha = document.getElementById("r-fecha");
+  if (fecha && !fecha.value) {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset() + 30);
+    fecha.value = now.toISOString().slice(0, 16);
+  }
+
+  document.getElementById("form-reserva").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api("/api/reservas", { method: "POST", body: App.formData(form) });
+      App.toast("Cita registrada correctamente.");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.querySelectorAll("[data-estado]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (button.dataset.nuevo === "Cancelada" && !window.confirm("¿Cancelar esta cita?")) return;
+      App.setLoading(button, true, "…");
+      try {
+        await App.api("/api/reservas/" + button.dataset.estado + "/estado", {
+          method: "PATCH",
+          body: { estado: button.dataset.nuevo },
+        });
+        App.toast("Estado actualizado a " + button.dataset.nuevo + ".");
+        setTimeout(() => window.location.reload(), 600);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+  });
+
+  document.querySelectorAll("[data-checkin]").forEach((button) => {
+    button.addEventListener("click", () => {
+      document.getElementById("c-reserva").value = button.dataset.checkin;
+      document.getElementById("checkin-sub").textContent =
+        "Paciente: " + (button.dataset.mascota || "sin mascota") + ". Se creará una atención en sala de espera.";
+      App.openModal("modal-checkin");
+    });
+  });
+
+  document.getElementById("form-checkin").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Registrando…");
+    try {
+      await App.api("/api/reservas/" + document.getElementById("c-reserva").value + "/checkin", {
+        method: "POST",
+        body: App.formData(form),
+      });
+      App.toast("Paciente en sala de espera.");
+      setTimeout(() => (window.location.href = "{{ url_for('admin.triaje') }}"), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

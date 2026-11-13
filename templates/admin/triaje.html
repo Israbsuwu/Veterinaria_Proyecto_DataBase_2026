@@ -1,0 +1,424 @@
+{% extends "admin/base.html" %}
+{% block title %}Triaje{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Triaje y consulta</h2>
+    <p>Sala de espera, prioridades y registro clínico de la atención.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-atencion">＋ Registrar llegada</button>
+  </div>
+</div>
+
+<form class="toolbar card" method="GET" action="{{ url_for('admin.triaje') }}">
+  <div class="form-group">
+    <label for="estado">Estado</label>
+    <select id="estado" name="estado">
+      <option value="">Todos</option>
+      {% for opcion in ['En Espera', 'En Consulta', 'Finalizada'] %}
+      <option value="{{ opcion }}" {{ 'selected' if estado == opcion }}>{{ opcion }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-secondary btn-sm">Filtrar</button>
+  <a href="{{ url_for('admin.triaje') }}" class="btn btn-ghost btn-sm">Ver todo</a>
+</form>
+
+<div class="stat-grid">
+  <div class="stat-card amber">
+    <span class="stat-icon">⏳</span>
+    <span class="stat-value">{{ atenciones|selectattr('Estado', 'equalto', 'En Espera')|list|length }}</span>
+    <span class="stat-label">En espera</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">🩺</span>
+    <span class="stat-value">{{ atenciones|selectattr('Estado', 'equalto', 'En Consulta')|list|length }}</span>
+    <span class="stat-label">En consulta</span>
+  </div>
+  <div class="stat-card green">
+    <span class="stat-icon">✅</span>
+    <span class="stat-value">{{ atenciones|selectattr('Estado', 'equalto', 'Finalizada')|list|length }}</span>
+    <span class="stat-label">Finalizadas</span>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h3>Atenciones</h3>
+    <span class="chip">{{ atenciones|length }} registro(s)</span>
+  </div>
+  {% if atenciones %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead>
+        <tr>
+          <th>Llegada</th>
+          <th>Paciente</th>
+          <th>Motivo</th>
+          <th>Tipo</th>
+          <th>Prioridad</th>
+          <th>Veterinario</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in atenciones %}
+        <tr>
+          <td class="nowrap">{{ a.FechaLleg|fecha_hora }}</td>
+          <td>
+            <strong>{{ a.Mascota }}</strong>
+            <br><small class="muted">{{ a.Cliente }} · {{ a.Especie }}{% if a.Raza %} / {{ a.Raza }}{% endif %}</small>
+          </td>
+          <td>{{ a.MotivoRep or '—' }}</td>
+          <td>{{ a.TipoAtencion }}</td>
+          <td><span class="badge badge-{{ a.Prioridad|badge }}">{{ a.Prioridad }}</span></td>
+          <td>{{ a.Veterinario }}</td>
+          <td><span class="badge badge-{{ a.Estado|badge }}">{{ a.Estado }}</span></td>
+          <td>
+            <div class="table-actions">
+              {% if a.Estado == 'En Espera' %}
+              <button class="btn btn-primary btn-xs" data-iniciar="{{ a.IdAtencion }}"
+                      data-paciente="{{ a.Mascota }}" data-cliente="{{ a.Cliente }}"
+                      data-motivo="{{ a.MotivoRep or '' }}">Iniciar consulta</button>
+              {% elif a.Estado == 'En Consulta' %}
+              <button class="btn btn-success btn-xs" data-iniciar="{{ a.IdAtencion }}"
+                      data-paciente="{{ a.Mascota }}" data-cliente="{{ a.Cliente }}"
+                      data-motivo="{{ a.MotivoRep or '' }}">Continuar consulta</button>
+              {% else %}
+              <a class="btn btn-ghost btn-xs" href="{{ url_for('admin.expediente_detalle', mascota_id=a.IdMascota) }}">Ver expediente</a>
+              {% endif %}
+              {% if a.IdConsulta %}
+              <span class="chip ok">Consulta #{{ a.IdConsulta }}</span>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">🩺</span>No hay atenciones para este filtro.</div>
+  {% endif %}
+</section>
+
+<!-- Registrar llegada -->
+<div class="modal-backdrop" id="modal-atencion">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Registrar llegada</h3>
+        <p>Ingreso directo sin cita previa.</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-atencion">×</button>
+    </div>
+    <form id="form-atencion">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="a-cliente">Cliente</label>
+          <select id="a-cliente" required>
+            <option value="">Seleccione…</option>
+            {% for c in clientes %}
+            <option value="{{ c.IdCliente }}">{{ c.Nombre }} {{ c.Apellido }} · {{ c.Cedula }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required" for="a-mascota">Mascota</label>
+          <select id="a-mascota" name="id_mascota" required>
+            <option value="">Seleccione cliente…</option>
+            {% for m in mascotas %}
+            <option value="{{ m.IdMascota }}" data-cliente="{{ m.IdCliente }}">{{ m.Nombre }} ({{ m.Especie }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="a-vet">Veterinario</label>
+          <select id="a-vet" name="id_veterinario">
+            <option value="">Asignar automáticamente</option>
+            {% for v in vets %}
+            <option value="{{ v.IdVeterinario }}">{{ v.Nombre }} {{ v.Apellido }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="a-tipo">Tipo de atención</label>
+          <select id="a-tipo" name="tipo_atencion">
+            {% for t in ['Rutina', 'Emergencia', 'Procedimiento'] %}
+            <option value="{{ t }}">{{ t }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="a-prioridad">Prioridad</label>
+          <select id="a-prioridad" name="prioridad">
+            {% for p in ['Baja', 'Media', 'Alta'] %}
+            <option value="{{ p }}" {{ 'selected' if p == 'Media' }}>{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="required" for="a-motivo">Motivo de la visita</label>
+        <input type="text" id="a-motivo" name="motivo" maxlength="255" required placeholder="Ej. decaimiento, vacunación, control…">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-atencion">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Registrar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Consulta médica -->
+<div class="modal-backdrop" id="modal-consulta">
+  <div class="modal lg">
+    <div class="modal-head">
+      <div>
+        <h3>Consulta médica</h3>
+        <p id="consulta-sub">Paciente</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-consulta">×</button>
+    </div>
+    <form id="form-consulta">
+      <input type="hidden" id="co-atencion" name="id_atencion">
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="required" for="co-peso">Peso (kg)</label>
+          <input type="number" step="0.01" min="0.01" id="co-peso" name="peso" required>
+        </div>
+        <div class="form-group">
+          <label for="co-vet">Veterinario</label>
+          <select id="co-vet" name="id_veterinario">
+            {% for v in vets %}
+            <option value="{{ v.IdVeterinario }}">{{ v.Nombre }} {{ v.Apellido }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="co-motivo">Motivo</label>
+          <input type="text" id="co-motivo" name="motivo" maxlength="255">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="required" for="co-diagnostico">Diagnóstico</label>
+        <textarea id="co-diagnostico" name="diagnostico" rows="2" required></textarea>
+      </div>
+      <div class="form-group">
+        <label class="required" for="co-tratamiento">Tratamiento</label>
+        <textarea id="co-tratamiento" name="tratamiento" rows="2" required></textarea>
+      </div>
+      <div class="form-group">
+        <label for="co-obs">Observaciones</label>
+        <textarea id="co-obs" name="obs" rows="2"></textarea>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-head">
+          <div>
+            <h3>Receta médica</h3>
+            <p class="card-sub">Opcional. Se emite una receta con los medicamentos indicados.</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-xs" id="add-receta">＋ Medicamento</button>
+        </div>
+        <div class="dynamic-rows" id="receta-rows"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem;">
+        <div class="card-head">
+          <div>
+            <h3>Registro preventivo</h3>
+            <p class="card-sub">Vacunas, desparasitación o vitaminas. Descuenta inventario con FEFO.</p>
+          </div>
+          <button type="button" class="btn btn-ghost btn-xs" id="add-preventivo">＋ Preventivo</button>
+        </div>
+        <div class="dynamic-rows" id="preventivo-rows"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="co-indgral">Indicaciones generales de la receta</label>
+        <textarea id="co-indgral" name="indicaciones_generales" rows="2"></textarea>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-consulta">Cancelar</button>
+        <button type="submit" class="btn btn-success btn-sm">Finalizar consulta</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  const productos = {{ productos|tojson }};
+  const lotes = {{ lotes|tojson }};
+  const mascotas = Array.from(document.querySelectorAll("#a-mascota option[data-cliente]"));
+  const clienteSelect = document.getElementById("a-cliente");
+  const mascotaSelect = document.getElementById("a-mascota");
+
+  function filtrarMascotas() {
+    const cliente = clienteSelect.value;
+    mascotas.forEach((opt) => {
+      const visible = !cliente || opt.dataset.cliente === cliente;
+      opt.hidden = !visible;
+      opt.disabled = !visible;
+    });
+    if (mascotaSelect.selectedOptions[0] && mascotaSelect.selectedOptions[0].hidden) mascotaSelect.value = "";
+  }
+  clienteSelect.addEventListener("change", filtrarMascotas);
+  filtrarMascotas();
+
+  function productOptions(selected) {
+    return '<option value="">— Sin producto —</option>' + productos.map((p) =>
+      '<option value="' + p.IdProducto + '"' + (String(selected) === String(p.IdProducto) ? " selected" : "") +
+      ">" + App.escapeHtml(p.Nombre) + "</option>").join("");
+  }
+
+  document.getElementById("form-atencion").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    if (!clienteSelect.value) { App.toast("Selecciona un cliente.", "error"); return; }
+    App.setLoading(button, true, "Registrando…");
+    try {
+      const data = App.formData(form);
+      await App.api("/api/atenciones", { method: "POST", body: data });
+      App.toast("Atención registrada en sala de espera.");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  let atencionActual = null;
+
+  document.querySelectorAll("[data-iniciar]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      atencionActual = button.dataset.iniciar;
+      document.getElementById("co-atencion").value = atencionActual;
+      document.getElementById("consulta-sub").textContent =
+        button.dataset.paciente + " · " + button.dataset.cliente;
+      document.getElementById("co-motivo").value = button.dataset.motivo || "";
+      document.getElementById("receta-rows").innerHTML = "";
+      document.getElementById("preventivo-rows").innerHTML = "";
+      App.openModal("modal-consulta");
+      try {
+        await App.api("/api/atenciones/" + atencionActual + "/estado", {
+          method: "PATCH", body: { estado: "En Consulta" },
+        });
+      } catch (error) {
+        App.toast(error.message, "error");
+      }
+    });
+  });
+
+  function addReceta() {
+    const row = document.createElement("div");
+    row.className = "dynamic-row";
+    row.innerHTML =
+      '<button type="button" class="remove-row" title="Quitar">✕</button>' +
+      '<div class="form-grid-3">' +
+        '<div class="form-group"><label>Producto (opcional)</label><select class="rec-producto">' + productOptions() + '</select></div>' +
+        '<div class="form-group"><label class="required">Medicamento</label><input type="text" class="rec-nombre" placeholder="Nombre del fármaco"></div>' +
+        '<div class="form-group"><label>Dosis</label><input type="text" class="rec-dosis" placeholder="Ej. 1 ml"></div>' +
+        '<div class="form-group"><label>Frecuencia</label><input type="text" class="rec-frecuencia" placeholder="Ej. cada 12 h"></div>' +
+        '<div class="form-group"><label>Duración</label><input type="text" class="rec-duracion" placeholder="Ej. 5 días"></div>' +
+        '<div class="form-group"><label>Vía</label><select class="rec-via"><option>Oral</option><option>Inyectable</option><option>Tópica</option><option>Oftálmica</option><option>Otra</option></select></div>' +
+      '</div>' +
+      '<div class="form-group"><label>Indicaciones</label><input type="text" class="rec-ind" placeholder="Con alimentos, etc."></div>';
+    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    row.querySelector(".rec-producto").addEventListener("change", (e) => {
+      const p = productos.find((x) => String(x.IdProducto) === e.target.value);
+      if (p) row.querySelector(".rec-nombre").value = p.Nombre;
+    });
+    document.getElementById("receta-rows").appendChild(row);
+  }
+
+  function addPreventivo() {
+    const row = document.createElement("div");
+    row.className = "dynamic-row";
+    row.innerHTML =
+      '<button type="button" class="remove-row" title="Quitar">✕</button>' +
+      '<div class="form-grid-3">' +
+        '<div class="form-group"><label>Tipo</label><select class="prev-tipo">' +
+          '<option>Vacuna</option><option>Desparasitacion</option><option>Vitaminas</option></select></div>' +
+        '<div class="form-group"><label>Producto</label><select class="prev-producto">' + productOptions() + '</select></div>' +
+        '<div class="form-group"><label>Lote</label><select class="prev-lote"><option value="">FEFO automático</option></select></div>' +
+        '<div class="form-group"><label class="required">Nombre del producto</label><input type="text" class="prev-nombre" placeholder="Ej. Vacuna antirrábica"></div>' +
+        '<div class="form-group"><label>Cantidad</label><input type="number" min="1" value="1" class="prev-cantidad"></div>' +
+        '<div class="form-group"><label>Dosis</label><input type="text" class="prev-dosis" placeholder="Ej. 1 dosis"></div>' +
+        '<div class="form-group"><label>Fecha aplicación</label><input type="date" class="prev-fecha"></div>' +
+        '<div class="form-group"><label>Próxima aplicación</label><input type="date" class="prev-prox"></div>' +
+        '<div class="form-group"><label>Observaciones</label><input type="text" class="prev-obs"></div>' +
+      '</div>' +
+      '<label class="checkbox-row"><input type="checkbox" class="prev-descontar" checked> Descontar del inventario</label>';
+    const prod = row.querySelector(".prev-producto");
+    const lote = row.querySelector(".prev-lote");
+    const nombre = row.querySelector(".prev-nombre");
+    const today = App.todayISO();
+    row.querySelector(".prev-fecha").value = today;
+
+    prod.addEventListener("change", () => {
+      const p = productos.find((x) => String(x.IdProducto) === prod.value);
+      if (p) nombre.value = p.Nombre;
+      const disponibles = lotes.filter((l) => String(l.IdProducto) === prod.value);
+      lote.innerHTML = '<option value="">FEFO automático</option>' + disponibles.map((l) =>
+        '<option value="' + l.IdLote + '">' + App.escapeHtml(l.CodigoLote) + " · vence " + (l.FechaVenc || "").slice(0, 10) + " · " + l.StockLote + " u.</option>").join("");
+    });
+    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    document.getElementById("preventivo-rows").appendChild(row);
+  }
+
+  document.getElementById("add-receta").addEventListener("click", addReceta);
+  document.getElementById("add-preventivo").addEventListener("click", addPreventivo);
+
+  document.getElementById("form-consulta").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    const payload = App.formData(form);
+
+    payload.receta = Array.from(document.querySelectorAll("#receta-rows .dynamic-row")).map((row) => ({
+      id_producto: row.querySelector(".rec-producto").value || null,
+      nombre_med: row.querySelector(".rec-nombre").value.trim(),
+      dosis: row.querySelector(".rec-dosis").value.trim(),
+      frecuencia: row.querySelector(".rec-frecuencia").value.trim(),
+      duracion: row.querySelector(".rec-duracion").value.trim(),
+      via: row.querySelector(".rec-via").value,
+      indicaciones: row.querySelector(".rec-ind").value.trim(),
+    })).filter((r) => r.nombre_med);
+
+    payload.preventivos = Array.from(document.querySelectorAll("#preventivo-rows .dynamic-row")).map((row) => ({
+      tipo_proc: row.querySelector(".prev-tipo").value,
+      id_producto: row.querySelector(".prev-producto").value || null,
+      id_lote: row.querySelector(".prev-lote").value || null,
+      nombre_prod: row.querySelector(".prev-nombre").value.trim(),
+      cantidad: row.querySelector(".prev-cantidad").value || 1,
+      dosis: row.querySelector(".prev-dosis").value.trim(),
+      fecha_aplic: row.querySelector(".prev-fecha").value,
+      prox_aplic: row.querySelector(".prev-prox").value,
+      obs: row.querySelector(".prev-obs").value.trim(),
+      descontar_inventario: row.querySelector(".prev-descontar").checked,
+    })).filter((r) => r.nombre_prod);
+
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api("/api/consultas", { method: "POST", body: payload });
+      App.toast("Consulta finalizada y expediente actualizado.");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

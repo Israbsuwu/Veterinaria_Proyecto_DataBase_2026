@@ -1,0 +1,38 @@
+{% set categoria = (product.Categoria or '')|lower %}
+{% set icono = '🍖' if 'alimento' in categoria else ('💊' if 'medic' in categoria or 'farmac' in categoria else ('🎾' if 'acces' in categoria else ('🧼' if 'higiene' in categoria or 'aseo' in categoria else '📦'))) %}
+<article class="product-card">
+  <div class="product-thumb">{{ '🩺' if product.TipoConcepto == 'Servicio' else icono }}</div>
+  <div class="product-body">
+    <span class="p-cat">{{ product.Categoria or product.TipoConcepto }}</span>
+    <h3>{{ product.Nombre }}</h3>
+    <p>{{ product.Descripcion or 'Producto disponible en nuestra clínica veterinaria.' }}</p>
+    <div class="product-foot">
+      <div>
+        <div class="product-price">{{ product.Precio|money }}</div>
+        {% if product.TipoConcepto == 'Producto' %}
+          {% set stock = product.Stock|int %}
+          {% if stock <= 0 %}
+          <div class="product-stock out">Agotado</div>
+          {% elif stock <= 5 %}
+          <div class="product-stock low">{{ stock }} disponibles</div>
+          {% else %}
+          <div class="product-stock">{{ stock }} disponibles</div>
+          {% endif %}
+        {% else %}
+          <div class="product-stock">{{ product.DuracionMin or 30 }} min aprox.</div>
+        {% endif %}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:.3rem;align-items:flex-end;">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          data-add-concept="{{ product.IdConcepto }}"
+          {% if product.TipoConcepto == 'Producto' and (product.Stock|int) <= 0 %}disabled{% endif %}
+        >Agregar</button>
+        {% if product.TipoConcepto == 'Servicio' %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('shop.reservar') }}">Reservar</a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,254 @@
+{% extends "admin/base.html" %}
+{% block title %}Cliente · {{ cliente.Nombre }}{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>{{ cliente.Nombre }} {{ cliente.Apellido }}</h2>
+    <p>Cédula {{ cliente.Cedula }} · {{ mascotas|length }} mascota(s) registrada(s)</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.clientes') }}" class="btn btn-ghost btn-sm">← Volver</a>
+    <button class="btn btn-secondary btn-sm" data-modal-open="modal-editar">✏ Editar</button>
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-mascota">＋ Nueva mascota</button>
+    {% if not cliente.IdUsuario %}
+    <button class="btn btn-success btn-sm" data-modal-open="modal-cuenta">🔐 Crear cuenta web</button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="two-col reverse">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <h3>Datos de contacto</h3>
+        {% if cliente.IdUsuario %}<span class="badge badge-success">Cuenta web vinculada</span>
+        {% else %}<span class="badge badge-muted">Sin cuenta web</span>{% endif %}
+      </div>
+      <div class="info-list">
+        <div class="info-row"><span>Nombre completo</span><strong>{{ cliente.Nombre }} {{ cliente.Apellido }}</strong></div>
+        <div class="info-row"><span>Cédula</span><strong class="mono">{{ cliente.Cedula }}</strong></div>
+        <div class="info-row"><span>Teléfono</span><strong>{{ cliente.Telefono or '—' }}</strong></div>
+        <div class="info-row"><span>Correo</span><strong>{{ cliente.Correo or '—' }}</strong></div>
+        <div class="info-row"><span>Dirección</span><strong>{{ cliente.Direccion or '—' }}</strong></div>
+        <div class="info-row"><span>Notificaciones</span><strong>{{ 'Sí' if cliente.AceptaNotif else 'No' }}</strong></div>
+      </div>
+      <a class="btn btn-ghost btn-sm mt-2 btn-block" href="{{ url_for('admin.agenda') }}">📅 Agendar cita</a>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3>Mascotas</h3>
+          <p class="card-sub">Cada mascota cuenta con su expediente clínico.</p>
+        </div>
+      </div>
+      {% if mascotas %}
+      <div class="patient-grid">
+        {% for m in mascotas %}
+        <a class="patient-card" href="{{ url_for('admin.expediente_detalle', mascota_id=m.IdMascota) }}">
+          <div class="pc-head">
+            <div class="pc-avatar">{{ '🐶' if m.Especie == 'Perro' else '🐱' if m.Especie == 'Gato' else '🐾' }}</div>
+            <div>
+              <h4>{{ m.Nombre }}</h4>
+              <small>{{ m.Especie }}{% if m.Raza %} · {{ m.Raza }}{% endif %}</small>
+            </div>
+          </div>
+          <div class="pc-meta">
+            <span><b>Sexo</b>{{ m.Sexo or '—' }}</span>
+            <span><b>Edad</b>{{ m.EdadAnios if m.EdadAnios is not none else '—' }} año(s)</span>
+            <span><b>Expediente</b>{{ '#' ~ m.IdExp if m.IdExp else 'Sin abrir' }}</span>
+          </div>
+          {% if m.Alergias %}<p class="tiny text-warning mt-1">⚠ {{ m.Alergias }}</p>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🐾</span>Este cliente aún no tiene mascotas registradas.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-editar">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Editar cliente</h3><p>{{ cliente.Cedula }}</p></div>
+      <button class="modal-close" data-modal-close="modal-editar">×</button>
+    </div>
+    <form id="form-editar">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="e-nombre">Nombre</label>
+          <input type="text" id="e-nombre" name="nombre" value="{{ cliente.Nombre }}" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="e-apellido">Apellido</label>
+          <input type="text" id="e-apellido" name="apellido" value="{{ cliente.Apellido }}" required>
+        </div>
+        <div class="form-group">
+          <label for="e-telefono">Teléfono</label>
+          <input type="text" id="e-telefono" name="telefono" value="{{ cliente.Telefono or '' }}">
+        </div>
+        <div class="form-group">
+          <label for="e-correo">Correo</label>
+          <input type="email" id="e-correo" name="correo" value="{{ cliente.Correo or '' }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="e-direccion">Dirección</label>
+        <input type="text" id="e-direccion" name="direccion" value="{{ cliente.Direccion or '' }}">
+      </div>
+      <label class="checkbox-row">
+        <input type="checkbox" id="e-notif" name="acepta_notif" {{ 'checked' if cliente.AceptaNotif }}> Acepta notificaciones
+      </label>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-editar">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-mascota">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nueva mascota</h3><p>Dueño: {{ cliente.Nombre }} {{ cliente.Apellido }}</p></div>
+      <button class="modal-close" data-modal-close="modal-mascota">×</button>
+    </div>
+    <form id="form-mascota">
+      <input type="hidden" name="id_cliente" value="{{ cliente.IdCliente }}">
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="m-nombre">Nombre</label>
+          <input type="text" id="m-nombre" name="nombre" required>
+        </div>
+        <div class="form-group">
+          <label class="required" for="m-especie">Especie</label>
+          <select id="m-especie" name="especie" required>
+            <option value="Perro">Perro</option>
+            <option value="Gato">Gato</option>
+            <option value="Ave">Ave</option>
+            <option value="Conejo">Conejo</option>
+            <option value="Reptil">Reptil</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="m-raza">Raza</label>
+          <input type="text" id="m-raza" name="raza">
+        </div>
+        <div class="form-group">
+          <label for="m-sexo">Sexo</label>
+          <select id="m-sexo" name="sexo">
+            <option value="">No definido</option>
+            <option value="Macho">Macho</option>
+            <option value="Hembra">Hembra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="m-color">Color</label>
+          <input type="text" id="m-color" name="color">
+        </div>
+        <div class="form-group">
+          <label for="m-nac">Fecha de nacimiento</label>
+          <input type="date" id="m-nac" name="fecha_nac">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="m-alergias">Alergias</label>
+        <input type="text" id="m-alergias" name="alergias">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-mascota">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear mascota</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if not cliente.IdUsuario %}
+<div class="modal-backdrop" id="modal-cuenta">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Crear cuenta web</h3><p>Acceso a la tienda y al área de cliente.</p></div>
+      <button class="modal-close" data-modal-close="modal-cuenta">×</button>
+    </div>
+    <form id="form-cuenta">
+      <div class="form-group">
+        <label class="required" for="cu-correo">Correo de acceso</label>
+        <input type="email" id="cu-correo" name="correo" value="{{ cliente.Correo or '' }}" required>
+      </div>
+      <div class="form-group">
+        <label class="required" for="cu-password">Contraseña temporal</label>
+        <input type="text" id="cu-password" name="contrasena" value="123456" required minlength="6">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-cuenta">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear cuenta</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  document.getElementById("form-editar").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    const data = App.formData(form);
+    data.acepta_notif = document.getElementById("e-notif").checked;
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api("/api/clientes/{{ cliente.IdCliente }}", { method: "PATCH", body: data });
+      App.toast("Cliente actualizado.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.getElementById("form-mascota").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      const result = await App.api("/api/mascotas", { method: "POST", body: App.formData(form) });
+      App.toast("Mascota registrada.");
+      setTimeout(() => (window.location.href = "/admin/expedientes/" + result.id_mascota), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  const cuentaForm = document.getElementById("form-cuenta");
+  if (cuentaForm) {
+    cuentaForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = cuentaForm.querySelector("button[type=submit]");
+      App.setLoading(button, true, "Creando…");
+      try {
+        await App.api("/api/clientes/{{ cliente.IdCliente }}/cuenta", {
+          method: "POST", body: App.formData(cuentaForm),
+        });
+        App.toast("Cuenta web creada.");
+        setTimeout(() => window.location.reload(), 600);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

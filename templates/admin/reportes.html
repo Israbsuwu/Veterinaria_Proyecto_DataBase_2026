@@ -1,0 +1,116 @@
+{% extends "admin/base.html" %}
+{% block title %}Reportes{% endblock %}
+{% block content %}
+
+<div class="page-head no-print">
+  <div>
+    <h2>Reportes y cierre</h2>
+    <p>Indicadores de ventas, inventario y sesiones de caja.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Imprimir reporte</button>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card green"><span class="stat-icon">💵</span><span class="stat-value">{{ datos.ventas_hoy.Total|money }}</span><span class="stat-label">Ventas de hoy</span><span class="stat-hint">{{ datos.ventas_hoy.Ventas }} factura(s)</span></div>
+  <div class="stat-card"><span class="stat-icon">📈</span><span class="stat-value">{{ datos.ventas_mes.Total|money }}</span><span class="stat-label">Facturado del mes</span><span class="stat-hint">POS {{ datos.ventas_pos_mes.Total|money }} · Web {{ datos.ventas_web_mes.Total|money }}</span></div>
+  <div class="stat-card amber"><span class="stat-icon">📅</span><span class="stat-value">{{ datos.reservas_hoy }}</span><span class="stat-label">Citas de hoy</span><span class="stat-hint">{{ datos.reservas_pendientes }} pendientes</span></div>
+  <div class="stat-card red"><span class="stat-icon">⚠</span><span class="stat-value">{{ datos.alertas_inventario.stock_bajo|length }}</span><span class="stat-label">Productos bajo mínimo</span><span class="stat-hint">{{ datos.alertas_inventario.por_vencer|length }} lotes por vencer</span></div>
+</div>
+
+<div class="two-col">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div><h3>Facturación últimos 7 días</h3><p class="card-sub">Total por día</p></div>
+      </div>
+      {% set max_serie = (datos.serie_dias|map(attribute='total')|max) or 1 %}
+      <div class="bar-chart">
+        {% for dia in datos.serie_dias %}
+        <div class="bar" title="{{ dia.etiqueta }}: {{ dia.total|money }}">
+          <span class="bar-value">{{ dia.total|money if dia.total else '—' }}</span>
+          <div class="bar-fill" style="height: {{ ((dia.total / max_serie) * 100)|round|int if dia.total else 2 }}%"></div>
+          <span class="bar-label">{{ dia.etiqueta }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>Ventas recientes</h3></div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Factura</th><th>Fecha</th><th>Cliente</th><th>Origen</th><th class="num">Total</th><th>Estado</th></tr></thead>
+          <tbody>
+            {% for v in ventas %}
+            <tr>
+              <td class="mono">{{ v.Factura }}</td>
+              <td class="nowrap">{{ v.FechaVenta|fecha_hora }}</td>
+              <td>{{ v.Cliente }}</td>
+              <td><span class="badge badge-{{ v.Origen|badge }}">{{ v.Origen }}</span></td>
+              <td class="num">{{ v.Total|money }}</td>
+              <td><span class="badge badge-{{ v.Estado|badge }}">{{ v.Estado }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="table-empty">Sin ventas.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h3>Top productos (30 días)</h3></div>
+      {% if datos.top_productos %}
+      <div class="info-list">
+        {% for p in datos.top_productos %}
+        <div class="info-row">
+          <span>{{ p.Nombre }}<br><small class="tiny">{{ p.Unidades }} u. · {{ p.TipoConcepto }}</small></span>
+          <strong>{{ p.Total|money }}</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🛍️</span>Sin datos.</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>Inventario crítico</h3></div>
+      <div class="info-list">
+        <div class="info-row"><span>Bajo stock mínimo</span><strong class="text-danger">{{ datos.alertas_inventario.stock_bajo|length }}</strong></div>
+        <div class="info-row"><span>Lotes por vencer</span><strong class="text-warning">{{ datos.alertas_inventario.por_vencer|length }}</strong></div>
+        <div class="info-row"><span>Lotes vencidos con stock</span><strong class="text-danger">{{ datos.alertas_inventario.vencidos|length }}</strong></div>
+        <div class="info-row"><span>Productos sin precio</span><strong>{{ datos.alertas_inventario.sin_concepto|length }}</strong></div>
+      </div>
+      <a href="{{ url_for('admin.inventario') }}" class="btn btn-ghost btn-sm btn-block mt-2 no-print">Ver inventario</a>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h3>Sesiones de caja</h3><a href="{{ url_for('admin.caja') }}" class="btn btn-ghost btn-xs no-print">Ir a caja</a></div>
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Sesión</th><th>Apertura</th><th>Usuario</th><th class="num">Ventas</th><th class="num">Total</th><th>Estado</th></tr></thead>
+          <tbody>
+            {% for s in sesiones %}
+            <tr>
+              <td>#{{ s.IdSesion }}</td>
+              <td class="nowrap">{{ s.FechaApert|fecha_hora }}</td>
+              <td>{{ s.Usuario }}</td>
+              <td class="num">{{ s.Ventas }}</td>
+              <td class="num">{{ s.Total|money }}</td>
+              <td><span class="badge badge-{{ s.Estado|badge }}">{{ s.Estado }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="table-empty">Sin sesiones.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

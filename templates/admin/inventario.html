@@ -1,0 +1,352 @@
+{% extends "admin/base.html" %}
+{% block title %}Inventario{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Inventario</h2>
+    <p>Stock por producto, lotes con vencimiento y movimientos (FEFO).</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" data-modal-open="modal-categoria">＋ Categoría</button>
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-producto">＋ Producto</button>
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.compras') }}">🚚 Registrar compra</a>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="stat-icon">📦</span><span class="stat-value">{{ productos|length }}</span><span class="stat-label">Productos</span></div>
+  <div class="stat-card red"><span class="stat-icon">⚠</span><span class="stat-value">{{ alertas.stock_bajo|length }}</span><span class="stat-label">Bajo stock mínimo</span></div>
+  <div class="stat-card amber"><span class="stat-icon">⏰</span><span class="stat-value">{{ alertas.por_vencer|length }}</span><span class="stat-label">Por vencer (30 d)</span></div>
+  <div class="stat-card red"><span class="stat-icon">⛔</span><span class="stat-value">{{ alertas.vencidos|length }}</span><span class="stat-label">Lotes vencidos con stock</span></div>
+</div>
+
+{% if alertas.stock_bajo or alertas.por_vencer or alertas.vencidos %}
+<div class="card">
+  <div class="card-head"><h3>Alertas</h3></div>
+  <div class="kv">
+    {% for p in alertas.stock_bajo %}<span class="chip danger">{{ p.Nombre }}: {{ p.Stock }}/{{ p.StockMin }}</span>{% endfor %}
+    {% for l in alertas.por_vencer %}<span class="chip warn">{{ l.Producto }} · lote {{ l.CodigoLote }} vence en {{ l.Dias }} d</span>{% endfor %}
+    {% for l in alertas.vencidos %}<span class="chip danger">{{ l.Producto }} · lote {{ l.CodigoLote }} VENCIDO ({{ l.StockLote }} u.)</span>{% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="tabs" data-tabs="#inv-panels">
+  <button class="tab-btn active" data-tab="productos">Productos</button>
+  <button class="tab-btn" data-tab="lotes">Lotes</button>
+  <button class="tab-btn" data-tab="movimientos">Movimientos</button>
+</div>
+
+<div id="inv-panels">
+  <div data-panel="productos" class="tab-panel active">
+    <section class="card">
+      <div class="card-head"><h3>Stock por producto</h3></div>
+      {% if productos %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead>
+            <tr><th>Producto</th><th>Categoría</th><th>Unidad</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Precio venta</th><th>Concepto</th><th>Acciones</th></tr>
+          </thead>
+          <tbody>
+            {% for p in productos %}
+            <tr>
+              <td><strong>{{ p.Nombre }}</strong>{% if p.ControlVenc %} <span class="chip">Vence</span>{% endif %}</td>
+              <td>{{ p.Categoria or '—' }}</td>
+              <td>{{ p.UnidadMedida }}</td>
+              <td class="num"><strong class="{{ 'text-danger' if p.Stock <= p.StockMin else 'text-success' }}">{{ p.Stock }}</strong></td>
+              <td class="num">{{ p.StockMin }}</td>
+              <td class="num">{{ p.PrecioVenta|money if p.PrecioVenta is not none else '—' }}</td>
+              <td>{% if p.IdConcepto %}<span class="badge badge-success">Vinculado</span>{% else %}<span class="badge badge-warning">Sin precio</span>{% endif %}</td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-ghost btn-xs" data-salida="{{ p.IdProducto }}">Salida</button>
+                  <button class="btn btn-ghost btn-xs" data-ajuste-producto="{{ p.IdProducto }}">Ajustar</button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">📦</span>No hay productos. Registra una compra para ingresar stock.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div data-panel="lotes" class="tab-panel">
+    <section class="card">
+      <div class="card-head"><h3>Lotes y vencimientos</h3><span class="chip">{{ lotes|length }}</span></div>
+      {% if lotes %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Producto</th><th>Lote</th><th>Ingreso</th><th>Vence</th><th class="num">Días</th><th class="num">Stock lote</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody>
+            {% for l in lotes %}
+            <tr>
+              <td>{{ l.Producto }}</td>
+              <td class="mono">{{ l.CodigoLote }}</td>
+              <td class="nowrap">{{ l.FechaIng|fecha }}</td>
+              <td class="nowrap">{{ l.FechaVenc|fecha }}</td>
+              <td class="num {{ 'text-danger' if l.DiasParaVencer is not none and l.DiasParaVencer < 0 else 'text-warning' if l.DiasParaVencer is not none and l.DiasParaVencer <= 30 }}">{{ l.DiasParaVencer if l.DiasParaVencer is not none else '—' }}</td>
+              <td class="num">{{ l.StockLote }}</td>
+              <td><span class="badge badge-{{ l.Estado|badge }}">{{ l.Estado }}</span></td>
+              <td><button class="btn btn-ghost btn-xs" data-ajuste="{{ l.IdLote }}">Ajustar</button></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🏷️</span>Sin lotes registrados.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div data-panel="movimientos" class="tab-panel">
+    <section class="card">
+      <div class="card-head"><h3>Últimos movimientos</h3></div>
+      {% if movimientos %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Fecha</th><th>Producto</th><th>Lote</th><th>Tipo</th><th class="num">Cantidad</th><th>Motivo</th><th>Usuario</th></tr></thead>
+          <tbody>
+            {% for m in movimientos %}
+            <tr>
+              <td class="nowrap">{{ m.FechaMov|fecha_hora }}</td>
+              <td>{{ m.Producto }}</td>
+              <td class="mono">{{ m.CodigoLote }}</td>
+              <td><span class="badge badge-{{ 'success' if m.TipoMov == 'Entrada' else 'danger' if m.TipoMov == 'Salida' else 'warning' }}">{{ m.TipoMov }}</span></td>
+              <td class="num">{{ '+' if m.TipoMov == 'Entrada' }}{{ m.Cantidad }}</td>
+              <td>{{ m.Motivo or '—' }}</td>
+              <td>{{ m.Usuario }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🔄</span>Sin movimientos.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-producto">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nuevo producto</h3><p>Crea el producto y su concepto facturable.</p></div>
+      <button class="modal-close" data-modal-close="modal-producto">×</button>
+    </div>
+    <form id="form-producto">
+      <div class="form-grid-2">
+        <div class="form-group"><label class="required" for="p-nombre">Nombre</label><input type="text" id="p-nombre" name="nombre" required></div>
+        <div class="form-group">
+          <label class="required" for="p-categoria">Categoría</label>
+          <select id="p-categoria" name="id_categoria" required>
+            <option value="">Seleccione…</option>
+            {% for c in categorias %}<option value="{{ c.IdCategoria }}">{{ c.Nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label for="p-unidad">Unidad de medida</label><input type="text" id="p-unidad" name="unidad_medida" value="Unidad"></div>
+        <div class="form-group"><label for="p-stockmin">Stock mínimo</label><input type="number" min="0" id="p-stockmin" name="stock_min" value="5"></div>
+        <div class="form-group"><label for="p-precio">Precio de venta</label><input type="number" min="0" step="0.01" id="p-precio" name="precio" value="0.00"></div>
+        <div class="form-group"><label class="checkbox-row" style="margin-top:1.6rem;"><input type="checkbox" id="p-venc" name="control_venc" value="1" checked> Controlar vencimiento</label></div>
+      </div>
+      <div class="form-group"><label for="p-desc">Descripción</label><textarea id="p-desc" name="descripcion" rows="2"></textarea></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-producto">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear producto</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-categoria">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Nueva categoría</h3></div>
+      <button class="modal-close" data-modal-close="modal-categoria">×</button>
+    </div>
+    <form id="form-categoria">
+      <div class="form-group"><label class="required" for="cat-nombre">Nombre</label><input type="text" id="cat-nombre" name="nombre" required></div>
+      <div class="form-group"><label for="cat-desc">Descripción</label><input type="text" id="cat-desc" name="descripcion"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-categoria">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-salida">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Salida de inventario</h3><p>Consumo interno, merma o pérdida.</p></div>
+      <button class="modal-close" data-modal-close="modal-salida">×</button>
+    </div>
+    <form id="form-salida">
+      <div class="form-group">
+        <label class="required" for="s-producto">Producto</label>
+        <select id="s-producto" name="id_producto" required>
+          <option value="">Seleccione…</option>
+          {% for p in productos %}<option value="{{ p.IdProducto }}">{{ p.Nombre }} · {{ p.Stock }} u.</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="s-lote">Lote</label>
+        <select id="s-lote" name="id_lote"><option value="">FEFO automático</option></select>
+      </div>
+      <div class="form-group"><label class="required" for="s-cantidad">Cantidad</label><input type="number" min="1" id="s-cantidad" name="cantidad" value="1" required></div>
+      <div class="form-group"><label for="s-motivo">Motivo</label><input type="text" id="s-motivo" name="motivo" value="Salida manual de inventario"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-salida">Cancelar</button>
+        <button type="submit" class="btn btn-danger btn-sm">Registrar salida</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-ajuste">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Ajuste de inventario</h3><p>Fija la cantidad real contada en el lote.</p></div>
+      <button class="modal-close" data-modal-close="modal-ajuste">×</button>
+    </div>
+    <form id="form-ajuste">
+      <div class="form-group">
+        <label class="required" for="a-lote">Lote</label>
+        <select id="a-lote" name="id_lote" required>
+          <option value="">Seleccione…</option>
+          {% for l in lotes %}<option value="{{ l.IdLote }}" data-stock="{{ l.StockLote }}">{{ l.Producto }} · {{ l.CodigoLote }} · {{ l.StockLote }} u.</option>{% endfor %}
+        </select>
+      </div>
+      <div class="form-group"><label class="required" for="a-cantidad">Cantidad contada</label><input type="number" min="0" id="a-cantidad" name="nueva_cantidad" required></div>
+      <div class="form-group"><label for="a-motivo">Motivo</label><input type="text" id="a-motivo" name="motivo" value="Ajuste por conteo físico"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-ajuste">Cancelar</button>
+        <button type="submit" class="btn btn-warning btn-sm">Guardar ajuste</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const productos = {{ productos|tojson }};
+  const lotes = {{ lotes|tojson }};
+
+  const salidaProducto = document.getElementById("s-producto");
+  const salidaLote = document.getElementById("s-lote");
+
+  function llenarLotes() {
+    const disponibles = lotes.filter((l) => String(l.IdProducto) === salidaProducto.value && l.StockLote > 0);
+    salidaLote.innerHTML = '<option value="">FEFO automático</option>' + disponibles.map((l) =>
+      '<option value="' + l.IdLote + '">' + App.escapeHtml(l.CodigoLote) + " · " + (l.FechaVenc || "").slice(0, 10) + " · " + l.StockLote + " u.</option>").join("");
+  }
+  salidaProducto.addEventListener("change", llenarLotes);
+
+  document.querySelectorAll("[data-salida]").forEach((button) => {
+    button.addEventListener("click", () => {
+      salidaProducto.value = button.dataset.salida;
+      llenarLotes();
+      App.openModal("modal-salida");
+    });
+  });
+
+  const ajusteLote = document.getElementById("a-lote");
+  const ajusteCantidad = document.getElementById("a-cantidad");
+
+  document.querySelectorAll("[data-ajuste]").forEach((button) => {
+    button.addEventListener("click", () => {
+      ajusteLote.value = button.dataset.ajuste;
+      const opt = ajusteLote.selectedOptions[0];
+      ajusteCantidad.value = opt ? opt.dataset.stock : "";
+      App.openModal("modal-ajuste");
+    });
+  });
+
+  document.querySelectorAll("[data-ajuste-producto]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const lote = lotes.find((l) => String(l.IdProducto) === button.dataset.ajusteProducto && l.StockLote > 0) ||
+                   lotes.find((l) => String(l.IdProducto) === button.dataset.ajusteProducto);
+      if (!lote) { App.toast("Este producto no tiene lotes registrados.", "info"); return; }
+      ajusteLote.value = lote.IdLote;
+      ajusteCantidad.value = lote.StockLote;
+      App.openModal("modal-ajuste");
+    });
+  });
+
+  ajusteLote.addEventListener("change", () => {
+    const opt = ajusteLote.selectedOptions[0];
+    if (opt && opt.dataset.stock !== undefined) ajusteCantidad.value = opt.dataset.stock;
+  });
+
+  document.getElementById("form-producto").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    const data = App.formData(form);
+    data.control_venc = document.getElementById("p-venc").checked;
+    App.setLoading(button, true, "Creando…");
+    try {
+      await App.api("/api/productos", { method: "POST", body: data });
+      App.toast("Producto creado.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.getElementById("form-categoria").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Creando…");
+    try {
+      await App.api("/api/categorias", { method: "POST", body: App.formData(form) });
+      App.toast("Categoría creada.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.getElementById("form-salida").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Registrando…");
+    try {
+      await App.api("/api/inventario/salida", { method: "POST", body: App.formData(form) });
+      App.toast("Salida registrada.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.getElementById("form-ajuste").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      await App.api("/api/inventario/ajuste", { method: "POST", body: App.formData(form) });
+      App.toast("Inventario ajustado.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

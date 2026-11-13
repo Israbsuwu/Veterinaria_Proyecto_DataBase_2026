@@ -1,0 +1,55 @@
+{% extends "shop/base.html" %}
+{% block title %}Catálogo{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2>Catálogo</h2>
+    <p>Productos y servicios disponibles en la clínica.</p>
+  </div>
+  <a href="{{ url_for('shop.catalogo') }}">Limpiar filtros</a>
+</div>
+
+<form class="filter-bar" method="GET" action="{{ url_for('shop.catalogo') }}">
+  <div class="form-group grow">
+    <label for="q">Buscar</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Nombre o descripción…">
+  </div>
+  <div class="form-group">
+    <label for="tipo">Tipo</label>
+    <select id="tipo" name="tipo">
+      <option value="">Todos</option>
+      <option value="Producto" {{ 'selected' if tipo == 'Producto' }}>Productos</option>
+      <option value="Servicio" {{ 'selected' if tipo == 'Servicio' }}>Servicios</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="categoria">Categoría</label>
+    <select id="categoria" name="categoria">
+      <option value="">Todas</option>
+      {% for item in categorias %}
+      <option value="{{ item.IdCategoria }}" {{ 'selected' if categoria and categoria|int == item.IdCategoria }}>{{ item.Nombre }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+</form>
+
+<div class="result-info">
+  {{ productos|length }} resultado{{ '' if productos|length == 1 else 's' }}
+  {% if search %} para “{{ search }}”{% endif %}
+</div>
+
+{% if productos %}
+<div class="product-grid">
+  {% for product in productos %}
+    {% include "shop/_product_card.html" %}
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <span class="emoji">🔍</span>
+  No encontramos resultados con esos filtros. <a href="{{ url_for('shop.catalogo') }}">Ver todo el catálogo</a>.
+</div>
+{% endif %}
+{% endblock %}

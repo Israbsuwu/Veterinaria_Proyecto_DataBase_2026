@@ -1,0 +1,112 @@
+{% extends "admin/base.html" %}
+{% block title %}Ventas{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Ventas y facturación</h2>
+    <p>Historial unificado de ventas POS y de la tienda en línea.</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.caja') }}" class="btn btn-primary btn-sm">💵 Ir a caja</a>
+  </div>
+</div>
+
+<form class="toolbar card" method="GET" action="{{ url_for('admin.ventas') }}">
+  <div class="form-group">
+    <label for="desde">Desde</label>
+    <input type="date" id="desde" name="desde" value="{{ desde.isoformat() if desde else '' }}">
+  </div>
+  <div class="form-group">
+    <label for="hasta">Hasta</label>
+    <input type="date" id="hasta" name="hasta" value="{{ hasta.isoformat() if hasta else '' }}">
+  </div>
+  <div class="form-group">
+    <label for="origen">Origen</label>
+    <select id="origen" name="origen">
+      <option value="">Todos</option>
+      <option value="POS" {{ 'selected' if origen == 'POS' }}>POS</option>
+      <option value="Web" {{ 'selected' if origen == 'Web' }}>Web</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="estado">Estado</label>
+    <select id="estado" name="estado">
+      <option value="">Todos</option>
+      <option value="Pagada" {{ 'selected' if estado == 'Pagada' }}>Pagada</option>
+      <option value="Anulada" {{ 'selected' if estado == 'Anulada' }}>Anulada</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-secondary btn-sm">Filtrar</button>
+  <a href="{{ url_for('admin.ventas') }}" class="btn btn-ghost btn-sm">Limpiar</a>
+</form>
+
+{% set total_filtrado = ventas|map(attribute='Total')|sum %}
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h3>{{ ventas|length }} venta(s)</h3>
+      <p class="card-sub">Monto facturado en el filtro: {{ total_filtrado|money }}</p>
+    </div>
+  </div>
+  {% if ventas %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead>
+        <tr><th>Factura</th><th>Fecha</th><th>Cliente</th><th>Origen</th><th>Método</th><th class="num">Líneas</th><th class="num">Total</th><th>Estado</th><th>Acciones</th></tr>
+      </thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr>
+          <td class="mono">{{ v.Factura }}</td>
+          <td class="nowrap">{{ v.FechaVenta|fecha_hora }}</td>
+          <td>{{ v.Cliente }}</td>
+          <td><span class="badge badge-{{ v.Origen|badge }}">{{ v.Origen }}</span></td>
+          <td>{{ v.Metodo or '—' }}</td>
+          <td class="num">{{ v.Lineas }}</td>
+          <td class="num"><strong>{{ v.Total|money }}</strong></td>
+          <td><span class="badge badge-{{ v.Estado|badge }}">{{ v.Estado }}</span></td>
+          <td>
+            <div class="table-actions">
+              <a class="btn btn-ghost btn-xs" href="{{ url_for('admin.venta_detalle', venta_id=v.IdVenta) }}">Ver</a>
+              {% if v.Estado == 'Pagada' %}
+              <button class="btn btn-danger btn-xs" data-anular="{{ v.IdVenta }}" data-factura="{{ v.Factura }}">Anular</button>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">🧾</span>No hay ventas para este filtro.</div>
+  {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  document.querySelectorAll("[data-anular]").forEach((button) => {
+    // El atributo data-confirm ya es manejado por admin.js, aquí solo la llamada.
+    button.addEventListener("click", async (event) => {
+      if (!window.confirm("¿Anular la factura " + button.dataset.factura + "? Se devolverá el stock al inventario.")) {
+        event.preventDefault();
+        return;
+      }
+      App.setLoading(button, true, "Anulando…");
+      try {
+        await App.api("/api/ventas/" + button.dataset.anular + "/anular", { method: "POST" });
+        App.toast("Factura anulada y stock restituido.");
+        setTimeout(() => window.location.reload(), 700);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% extends "admin/base.html" %}
+{% block title %}Compras{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Compras y proveedores</h2>
+    <p>Cada compra genera lotes, entradas de inventario y actualiza el stock.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-ghost btn-sm" data-modal-open="modal-proveedor">＋ Proveedor</button>
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-compra">＋ Registrar compra</button>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="stat-icon">🚚</span><span class="stat-value">{{ compras|length }}</span><span class="stat-label">Compras registradas</span></div>
+  <div class="stat-card green"><span class="stat-icon">🏭</span><span class="stat-value">{{ proveedores|length }}</span><span class="stat-label">Proveedores</span></div>
+  <div class="stat-card"><span class="stat-icon">📦</span><span class="stat-value">{{ productos|length }}</span><span class="stat-label">Productos del catálogo</span></div>
+</div>
+
+<section class="card">
+  <div class="card-head"><h3>Historial de compras</h3></div>
+  {% if compras %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead><tr><th>Fecha</th><th>Documento</th><th>Proveedor</th><th class="num">Líneas</th><th class="num">Total</th><th>Estado</th><th>Registró</th></tr></thead>
+      <tbody>
+        {% for c in compras %}
+        <tr>
+          <td class="nowrap">{{ c.FechaCompra|fecha }}</td>
+          <td class="mono">{{ c.NumDoc }}</td>
+          <td>{{ c.Proveedor }}</td>
+          <td class="num">{{ c.Lineas }}</td>
+          <td class="num">{{ c.Total|money }}</td>
+          <td><span class="badge badge-{{ c.Estado|badge }}">{{ c.Estado }}</span></td>
+          <td>{{ c.Usuario }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">🚚</span>Aún no hay compras registradas.</div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-head"><h3>Proveedores</h3></div>
+  {% if proveedores %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead><tr><th>Proveedor</th><th>Teléfono</th><th>Correo</th><th>Dirección</th><th>Estado</th></tr></thead>
+      <tbody>
+        {% for p in proveedores %}
+        <tr>
+          <td><strong>{{ p.Nombre }}</strong></td>
+          <td>{{ p.Telefono or '—' }}</td>
+          <td>{{ p.Correo or '—' }}</td>
+          <td>{{ p.Direccion or '—' }}</td>
+          <td><span class="badge badge-{{ p.Estado|badge }}">{{ p.Estado }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">🏭</span>No hay proveedores registrados.</div>
+  {% endif %}
+</section>
+
+<div class="modal-backdrop" id="modal-compra">
+  <div class="modal lg">
+    <div class="modal-head">
+      <div><h3>Registrar compra</h3><p>Los productos se ingresan a lotes y stock disponible.</p></div>
+      <button class="modal-close" data-modal-close="modal-compra">×</button>
+    </div>
+    <form id="form-compra">
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="required" for="co-proveedor">Proveedor</label>
+          <select id="co-proveedor" name="id_proveedor" required>
+            <option value="">Seleccione…</option>
+            {% for p in proveedores %}<option value="{{ p.IdProveedor }}">{{ p.Nombre }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="required" for="co-doc">N° documento</label><input type="text" id="co-doc" name="num_doc" required placeholder="FAC-Prov-001"></div>
+        <div class="form-group"><label class="required" for="co-fecha">Fecha</label><input type="date" id="co-fecha" name="fecha_compra" required></div>
+      </div>
+
+      <div class="card" style="background:#0b1220;">
+        <div class="card-head">
+          <div><h3>Productos comprados</h3><p class="card-sub">Define lote y vencimiento para el control FEFO.</p></div>
+          <button type="button" class="btn btn-ghost btn-xs" id="add-linea">＋ Línea</button>
+        </div>
+        <div class="dynamic-rows" id="lineas"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-compra">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Registrar compra</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="modal-proveedor">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Nuevo proveedor</h3></div>
+      <button class="modal-close" data-modal-close="modal-proveedor">×</button>
+    </div>
+    <form id="form-proveedor">
+      <div class="form-group"><label class="required" for="pr-nombre">Nombre</label><input type="text" id="pr-nombre" name="nombre" required></div>
+      <div class="form-group"><label for="pr-telefono">Teléfono</label><input type="text" id="pr-telefono" name="telefono"></div>
+      <div class="form-group"><label for="pr-correo">Correo</label><input type="email" id="pr-correo" name="correo"></div>
+      <div class="form-group"><label for="pr-direccion">Dirección</label><input type="text" id="pr-direccion" name="direccion"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-proveedor">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear proveedor</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const productos = {{ productos|tojson }};
+  const lineas = document.getElementById("lineas");
+
+  function opcionesProducto() {
+    return '<option value="">Seleccione producto…</option>' + productos.map((p) =>
+      '<option value="' + p.IdProducto + '">' + App.escapeHtml(p.Nombre) + " · stock " + p.Stock + "</option>").join("");
+  }
+
+  function addLinea() {
+    const row = document.createElement("div");
+    row.className = "dynamic-row";
+    row.innerHTML =
+      '<button type="button" class="remove-row" title="Quitar">✕</button>' +
+      '<div class="form-grid-3">' +
+        '<div class="form-group"><label class="required">Producto</label><select class="ln-producto">' + opcionesProducto() + '</select></div>' +
+        '<div class="form-group"><label class="required">Cantidad</label><input type="number" min="1" value="1" class="ln-cantidad"></div>' +
+        '<div class="form-group"><label class="required">Costo unitario</label><input type="number" min="0" step="0.01" value="0.00" class="ln-costo"></div>' +
+        '<div class="form-group"><label>Código de lote</label><input type="text" class="ln-codigo" placeholder="Automático"></div>' +
+        '<div class="form-group"><label>Vencimiento</label><input type="date" class="ln-venc"></div>' +
+        '<div class="form-group"><label>Precio venta (si no tiene)</label><input type="number" min="0" step="0.01" class="ln-precio"></div>' +
+      '</div>';
+    row.querySelector(".remove-row").addEventListener("click", () => row.remove());
+    lineas.appendChild(row);
+  }
+
+  document.getElementById("add-linea").addEventListener("click", addLinea);
+  addLinea();
+
+  const fecha = document.getElementById("co-fecha");
+  if (fecha) fecha.value = App.todayISO();
+
+  document.getElementById("form-compra").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    const items = Array.from(lineas.querySelectorAll(".dynamic-row")).map((row) => ({
+      id_producto: row.querySelector(".ln-producto").value,
+      cantidad: row.querySelector(".ln-cantidad").value,
+      costo_unit: row.querySelector(".ln-costo").value,
+      codigo_lote: row.querySelector(".ln-codigo").value.trim() || null,
+      fecha_venc: row.querySelector(".ln-venc").value || null,
+      precio_venta: row.querySelector(".ln-precio").value || null,
+    })).filter((i) => i.id_producto);
+
+    if (!items.length) { App.toast("Agrega al menos una línea con producto.", "error"); return; }
+    const data = App.formData(form);
+    data.items = items;
+    App.setLoading(button, true, "Registrando…");
+    try {
+      const result = await App.api("/api/compras", { method: "POST", body: data });
+      App.toast("Compra registrada por " + App.money(result.total) + ".");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.getElementById("form-proveedor").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Creando…");
+    try {
+      await App.api("/api/proveedores", { method: "POST", body: App.formData(form) });
+      App.toast("Proveedor creado.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

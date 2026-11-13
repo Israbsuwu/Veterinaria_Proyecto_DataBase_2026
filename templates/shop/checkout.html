@@ -1,0 +1,69 @@
+{% extends "shop/base.html" %}
+{% block title %}Pago{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2>Finalizar compra</h2>
+    <p>Confirma tus datos y el método de pago.</p>
+  </div>
+  <a href="{{ url_for('shop.carrito') }}">← Volver al carrito</a>
+</div>
+
+<div class="cart-layout">
+  <div>
+    <div class="shop-card">
+      <h3>Datos de facturación</h3>
+      <div class="card-sub">El pedido quedará registrado a nombre de tu ficha de cliente.</div>
+      <div class="info-grid">
+        <div class="info-tile"><span>Cliente</span><strong>{{ perfil.cliente.Nombre }} {{ perfil.cliente.Apellido }}</strong></div>
+        <div class="info-tile"><span>Cédula</span><strong>{{ perfil.cliente.Cedula }}</strong></div>
+        <div class="info-tile"><span>Correo</span><strong>{{ perfil.cliente.Correo or '—' }}</strong></div>
+        <div class="info-tile"><span>Teléfono</span><strong>{{ perfil.cliente.Telefono or '—' }}</strong></div>
+      </div>
+      <p style="font-size:.75rem;color:var(--shop-muted);margin-top:.7rem;">
+        ¿Necesitas corregir tus datos? <a href="{{ url_for('shop.cuenta', panel='perfil') }}">Actualiza tu perfil</a> y vuelve a intentarlo.
+      </p>
+    </div>
+
+    <form class="shop-card" data-checkout-form>
+      <h3>Método de pago</h3>
+      <div class="card-sub">La tienda en línea no acepta pagos en efectivo. Si prefieres pagar en caja, retira tu pedido en la clínica.</div>
+
+      <label style="display:flex;gap:.6rem;align-items:flex-start;padding:.7rem;border:1px solid var(--shop-line);border-radius:10px;margin-bottom:.55rem;cursor:pointer;">
+        <input type="radio" name="metodo" value="Tarjeta" checked style="width:auto;margin-top:.2rem;">
+        <span><strong style="color:var(--shop-navy);">💳 Tarjeta</strong><br><small style="color:var(--shop-muted);">Pago inmediato con tarjeta de crédito o débito.</small></span>
+      </label>
+      <label style="display:flex;gap:.6rem;align-items:flex-start;padding:.7rem;border:1px solid var(--shop-line);border-radius:10px;margin-bottom:.75rem;cursor:pointer;">
+        <input type="radio" name="metodo" value="Transferencia" style="width:auto;margin-top:.2rem;">
+        <span><strong style="color:var(--shop-navy);">🏦 Transferencia</strong><br><small style="color:var(--shop-muted);">Transfiere y adjunta el número de referencia.</small></span>
+      </label>
+
+      <div class="form-group">
+        <label for="referencia">Referencia de pago (opcional)</label>
+        <input type="text" id="referencia" name="referencia" maxlength="60" placeholder="Ej. 4500-8891-2026">
+      </div>
+
+      <div class="summary-line total"><span>Total a pagar</span><span>{{ carrito.total|money }}</span></div>
+      <button type="submit" class="btn btn-primary btn-block" style="margin-top:.9rem;">Pagar {{ carrito.total|money }}</button>
+      <p style="font-size:.72rem;color:var(--shop-muted);margin-top:.6rem;text-align:center;">
+        Al confirmar se descuenta el inventario y se genera tu factura electrónica.
+      </p>
+    </form>
+  </div>
+
+  <aside class="summary-box">
+    <h3 style="color:var(--shop-navy);margin-bottom:.8rem;">Tu pedido</h3>
+    {% for line in carrito.lineas %}
+    <div class="summary-line">
+      <span>{{ line.Cantidad }} × {{ line.Nombre }}</span>
+      <span>{{ line.Subtotal|money }}</span>
+    </div>
+    {% endfor %}
+    <div class="summary-line total"><span>Total</span><span>{{ carrito.total|money }}</span></div>
+    <p style="font-size:.72rem;color:var(--shop-muted);margin-top:.8rem;">
+      Retiro en {{ clinic_address }}. Te avisaremos cuando tu pedido esté listo.
+    </p>
+  </aside>
+</div>
+{% endblock %}

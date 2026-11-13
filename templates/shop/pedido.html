@@ -1,0 +1,74 @@
+{% extends "shop/base.html" %}
+{% block title %}Pedido {{ venta.Factura }}{% endblock %}
+
+{% block content %}
+<div class="section-head no-print">
+  <div>
+    <h2>Pedido {{ venta.Factura }}</h2>
+    <p>Detalle de tu compra en línea.</p>
+  </div>
+  <a href="{{ url_for('shop.cuenta', panel='pedidos') }}">← Mis pedidos</a>
+</div>
+
+<div class="order-card">
+  <div class="order-head">
+    <div>
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--shop-muted);font-weight:700;">Factura</div>
+      <h2>{{ venta.Factura }}</h2>
+      <div style="font-size:.8rem;color:var(--shop-muted);margin-top:.2rem;">{{ venta.FechaVenta|fecha_hora }} · Origen {{ venta.Origen }}</div>
+    </div>
+    <div style="text-align:right;">
+      {% set estado = venta.Estado %}{% include "shop/_pill.html" %}
+      <div class="order-total" style="margin-top:.5rem;">{{ venta.total|money }}</div>
+    </div>
+  </div>
+
+  <div class="order-body">
+    <div class="info-grid" style="margin-bottom:1.2rem;">
+      <div class="info-tile"><span>Cliente</span><strong>{{ venta.Cliente }}</strong></div>
+      <div class="info-tile"><span>Cédula</span><strong>{{ venta.Cedula }}</strong></div>
+      <div class="info-tile"><span>Correo</span><strong>{{ venta.Correo or '—' }}</strong></div>
+      <div class="info-tile"><span>Atendido por</span><strong>{{ venta.Usuario }}</strong></div>
+    </div>
+
+    <table class="order-table">
+      <thead>
+        <tr><th>Concepto</th><th>Tipo</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Subtotal</th></tr>
+      </thead>
+      <tbody>
+        {% for item in venta.detalle %}
+        <tr>
+          <td>{{ item.Concepto }}</td>
+          <td>{{ item.TipoConcepto }}</td>
+          <td class="num">{{ item.Cantidad }}</td>
+          <td class="num">{{ item.PrecioUnit|money }}</td>
+          <td class="num">{{ (item.Cantidad * item.PrecioUnit)|money }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4" style="text-align:right;font-weight:700;">Total</td>
+          <td class="num order-total">{{ venta.total|money }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <h3 style="color:var(--shop-navy);font-size:.95rem;margin:1.2rem 0 .5rem;">Pagos</h3>
+    {% for pago in venta.pagos %}
+    <div class="summary-line">
+      <span>{{ pago.Metodo }}{% if pago.Referencia %} · Ref. {{ pago.Referencia }}{% endif %} · {{ pago.FechaPago|fecha_hora }}</span>
+      <span>{{ pago.Monto|money }}</span>
+    </div>
+    {% else %}
+    <p style="font-size:.8rem;color:var(--shop-muted);">Sin pagos registrados.</p>
+    {% endfor %}
+
+    <div class="no-print" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.4rem;">
+      <button type="button" class="btn btn-outline" onclick="window.print()">🖨️ Imprimir recibo</button>
+      <a class="btn btn-primary" href="{{ url_for('shop.catalogo') }}">Seguir comprando</a>
+      <a class="btn btn-outline" href="{{ url_for('shop.cuenta', panel='pedidos') }}">Volver a mi cuenta</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

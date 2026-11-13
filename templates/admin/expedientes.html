@@ -1,0 +1,144 @@
+{% extends "admin/base.html" %}
+{% block title %}Expedientes{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Expedientes clínicos</h2>
+    <p>Historial de pacientes, consultas, recetas y registros preventivos.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-mascota">＋ Nuevo paciente</button>
+  </div>
+</div>
+
+<form class="toolbar card" method="GET" action="{{ url_for('admin.expedientes') }}">
+  <div class="form-group grow">
+    <label for="q">Buscar</label>
+    <input type="search" id="q" name="q" value="{{ search }}" placeholder="Nombre de mascota, especie o dueño…">
+  </div>
+  <button type="submit" class="btn btn-secondary btn-sm">Buscar</button>
+  {% if search %}<a href="{{ url_for('admin.expedientes') }}" class="btn btn-ghost btn-sm">Limpiar</a>{% endif %}
+</form>
+
+{% if search %}
+<p class="note">{{ mascotas|length }} mascota(s) y {{ clientes|length }} cliente(s) coinciden con “{{ search }}”.</p>
+{% endif %}
+
+<div class="patient-grid">
+  {% for m in mascotas %}
+  <a class="patient-card" href="{{ url_for('admin.expediente_detalle', mascota_id=m.IdMascota) }}">
+    <div class="pc-head">
+      <div class="pc-avatar">{{ '🐶' if m.Especie == 'Perro' else '🐱' if m.Especie == 'Gato' else '🐾' }}</div>
+      <div>
+        <h4>{{ m.Nombre }}</h4>
+        <small>{{ m.Especie }}{% if m.Raza %} · {{ m.Raza }}{% endif %}</small>
+      </div>
+    </div>
+    <div class="pc-meta">
+      <span><b>Dueño</b>{{ m.Dueno }}</span>
+      <span><b>Edad</b>{{ m.EdadAnios if m.EdadAnios is not none else '—' }} año(s)</span>
+      <span><b>Sexo</b>{{ m.Sexo or '—' }}</span>
+      <span><b>Expediente</b>{{ '#' ~ m.IdExp if m.IdExp else 'Sin abrir' }}</span>
+    </div>
+    {% if m.Alergias %}<p class="tiny text-warning mt-1">⚠ Alergias: {{ m.Alergias }}</p>{% endif %}
+  </a>
+  {% else %}
+  <div class="empty-state" style="grid-column:1/-1;"><span class="emoji">📋</span>No se encontraron pacientes.</div>
+  {% endfor %}
+</div>
+
+<div class="modal-backdrop" id="modal-mascota">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h3>Nuevo paciente</h3>
+        <p>La ficha clínica se abre automáticamente.</p>
+      </div>
+      <button class="modal-close" data-modal-close="modal-mascota">×</button>
+    </div>
+    <form id="form-mascota">
+      <div class="form-group">
+        <label class="required" for="m-cliente">Dueño</label>
+        <select id="m-cliente" name="id_cliente" required>
+          <option value="">Seleccione un cliente…</option>
+          {% for c in clientes %}
+          <option value="{{ c.IdCliente }}">{{ c.Nombre }} {{ c.Apellido }} · {{ c.Cedula }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="required" for="m-nombre">Nombre</label>
+          <input type="text" id="m-nombre" name="nombre" required maxlength="100">
+        </div>
+        <div class="form-group">
+          <label class="required" for="m-especie">Especie</label>
+          <select id="m-especie" name="especie" required>
+            <option value="Perro">Perro</option>
+            <option value="Gato">Gato</option>
+            <option value="Ave">Ave</option>
+            <option value="Conejo">Conejo</option>
+            <option value="Reptil">Reptil</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="m-raza">Raza</label>
+          <input type="text" id="m-raza" name="raza" maxlength="80">
+        </div>
+        <div class="form-group">
+          <label for="m-sexo">Sexo</label>
+          <select id="m-sexo" name="sexo">
+            <option value="">No definido</option>
+            <option value="Macho">Macho</option>
+            <option value="Hembra">Hembra</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="m-color">Color</label>
+          <input type="text" id="m-color" name="color" maxlength="60">
+        </div>
+        <div class="form-group">
+          <label for="m-nac">Fecha de nacimiento</label>
+          <input type="date" id="m-nac" name="fecha_nac">
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="m-senas">Señas particulares</label>
+        <input type="text" id="m-senas" name="senas" maxlength="255">
+      </div>
+      <div class="form-group">
+        <label for="m-alergias">Alergias conocidas</label>
+        <input type="text" id="m-alergias" name="alergias" maxlength="255">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-mascota">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear expediente</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  document.getElementById("form-mascota").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Guardando…");
+    try {
+      const result = await App.api("/api/mascotas", { method: "POST", body: App.formData(form) });
+      App.toast("Paciente creado.");
+      setTimeout(() => (window.location.href = "/admin/expedientes/" + result.id_mascota), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

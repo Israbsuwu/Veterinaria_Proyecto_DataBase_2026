@@ -1,0 +1,377 @@
+{% extends "admin/base.html" %}
+{% block title %}Caja / POS{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Caja y punto de venta</h2>
+    <p>Sesiones de caja, cobro de productos y servicios, y cierre con arqueo.</p>
+  </div>
+  <div class="page-actions">
+    {% if sesion %}
+    <span class="chip ok">Sesión #{{ sesion.IdSesion }} abierta</span>
+    <button class="btn btn-danger btn-sm" data-modal-open="modal-cerrar">🔒 Cerrar caja</button>
+    {% endif %}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.ventas') }}">🧾 Ventas</a>
+  </div>
+</div>
+
+{% if not sesion %}
+<div class="two-col">
+  <section class="card">
+    <div class="card-head"><h3>Abrir sesión de caja</h3></div>
+    <p class="muted small" style="margin-bottom:1rem;">Registra el fondo inicial para comenzar a facturar. Solo puede existir una sesión abierta por usuario.</p>
+    <form id="form-abrir">
+      <div class="form-group">
+        <label class="required" for="ab-monto">Monto inicial en efectivo</label>
+        <input type="number" min="0" step="0.01" id="ab-monto" name="monto_inicial" value="0.00" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Abrir caja</button>
+    </form>
+  </section>
+  <section class="card">
+    <div class="card-head"><h3>Últimas sesiones</h3></div>
+    {% if sesiones %}
+    <div class="info-list">
+      {% for s in sesiones %}
+      <div class="info-row">
+        <span>#{{ s.IdSesion }} · {{ s.Usuario }}<br><small class="tiny">{{ s.FechaApert|fecha_hora }}</small></span>
+        <strong>{{ s.Total|money }}<br><small class="tiny">{{ s.Estado }} · {{ s.Ventas }} venta(s)</small></strong>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state"><span class="emoji">💵</span>Sin sesiones registradas.</div>
+    {% endif %}
+  </section>
+</div>
+{% else %}
+
+<div class="stat-grid">
+  <div class="stat-card green"><span class="stat-icon">💵</span><span class="stat-value">{{ resumen.total_ventas|money }}</span><span class="stat-label">Ventas de la sesión</span></div>
+  <div class="stat-card"><span class="stat-icon">🧾</span><span class="stat-value">{{ resumen.ventas_count }}</span><span class="stat-label">Facturas pagadas</span></div>
+  <div class="stat-card amber"><span class="stat-icon">🪙</span><span class="stat-value">{{ resumen.esperado_efectivo|money }}</span><span class="stat-label">Efectivo esperado</span></div>
+  <div class="stat-card"><span class="stat-icon">🏦</span><span class="stat-value">{{ resumen.MontoIni|money }}</span><span class="stat-label">Fondo inicial</span></div>
+</div>
+
+<div class="pos-layout two-col">
+  <section class="card">
+    <div class="card-head">
+      <div><h3>Catálogo</h3><p class="card-sub">Toca un producto o servicio para agregarlo.</p></div>
+      <input type="search" id="pos-buscar" placeholder="Buscar…" style="max-width:220px;">
+    </div>
+    <div class="pos-catalog" id="pos-catalogo">
+      {% for c in conceptos %}
+      <button type="button" class="pos-item {{ 'disabled' if c.TipoConcepto == 'Producto' and c.Stock <= 0 }}"
+              data-concepto="{{ c.IdConcepto }}" data-nombre="{{ c.Nombre }}"
+              data-precio="{{ c.Precio }}" data-tipo="{{ c.TipoConcepto }}"
+              data-stock="{{ c.Stock if c.TipoConcepto == 'Producto' else '' }}"
+              data-search="{{ (c.Nombre ~ ' ' ~ (c.Categoria or '') ~ ' ' ~ c.TipoConcepto)|lower }}">
+        <strong>{{ c.Nombre }}</strong>
+        <span class="pi-price">{{ c.Precio|money }}</span>
+        <span class="pi-stock">
+          {% if c.TipoConcepto == 'Producto' %}Stock: {{ c.Stock }}{% else %}Servicio{% endif %}
+        </span>
+      </button>
+      {% else %}
+      <div class="empty-state" style="grid-column:1/-1;">No hay conceptos activos.</div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="card sticky-panel">
+    <div class="card-head">
+      <h3>Venta actual</h3>
+      <span class="chip" id="cart-count">0 ítem(s)</span>
+    </div>
+    <div class="form-group">
+      <label for="pos-cliente">Cliente</label>
+      <select id="pos-cliente">
+        <option value="">Cliente de mostrador</option>
+        {% for c in clientes %}
+        <option value="{{ c.IdCliente }}">{{ c.Nombre }} {{ c.Apellido }} · {{ c.Cedula }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="cart-items" id="pos-cart">
+      <div class="empty-state" style="padding:1rem;"><span class="emoji">🛒</span>Agrega productos o servicios.</div>
+    </div>
+    <div class="cart-summary">
+      <div class="summary-row"><span>Subtotal</span><strong id="pos-subtotal">{{ 0|money }}</strong></div>
+      <div class="summary-row total"><span>Total</span><strong id="pos-total">{{ 0|money }}</strong></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label for="pos-metodo">Método de pago</label>
+        <select id="pos-metodo">
+          <option>Efectivo</option>
+          <option>Tarjeta</option>
+          <option>Transferencia</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="pos-recibido">Monto recibido</label>
+        <input type="number" min="0" step="0.01" id="pos-recibido" placeholder="Solo efectivo">
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="pos-referencia">Referencia</label>
+      <input type="text" id="pos-referencia" placeholder="N° voucher / transferencia">
+    </div>
+    <button type="button" class="btn btn-success btn-block" id="pos-cobrar">💳 Cobrar</button>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head"><h3>Ventas recientes</h3><a class="btn btn-ghost btn-xs" href="{{ url_for('admin.ventas') }}">Ver todas</a></div>
+  {% if ventas %}
+  <div class="table-container">
+    <table class="styled-table">
+      <thead><tr><th>Factura</th><th>Fecha</th><th>Cliente</th><th>Origen</th><th>Método</th><th class="num">Total</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        {% for v in ventas %}
+        <tr>
+          <td class="mono">{{ v.Factura }}</td>
+          <td class="nowrap">{{ v.FechaVenta|fecha_hora }}</td>
+          <td>{{ v.Cliente }}</td>
+          <td><span class="badge badge-{{ v.Origen|badge }}">{{ v.Origen }}</span></td>
+          <td>{{ v.Metodo or '—' }}</td>
+          <td class="num">{{ v.Total|money }}</td>
+          <td><span class="badge badge-{{ v.Estado|badge }}">{{ v.Estado }}</span></td>
+          <td><a class="btn btn-ghost btn-xs" href="{{ url_for('admin.venta_detalle', venta_id=v.IdVenta) }}">Ver</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state"><span class="emoji">🧾</span>Sin ventas registradas.</div>
+  {% endif %}
+</section>
+
+<!-- Cerrar caja -->
+<div class="modal-backdrop" id="modal-cerrar">
+  <div class="modal sm">
+    <div class="modal-head">
+      <div><h3>Cerrar sesión de caja</h3><p>Arqueo: {{ resumen.esperado_efectivo|money }} esperado en efectivo.</p></div>
+      <button class="modal-close" data-modal-close="modal-cerrar">×</button>
+    </div>
+    <form id="form-cerrar">
+      <input type="hidden" name="id_sesion" value="{{ sesion.IdSesion }}">
+      <div class="form-group">
+        <label class="required" for="ce-monto">Monto contado en efectivo</label>
+        <input type="number" min="0" step="0.01" id="ce-monto" name="monto_contado" value="{{ '%.2f'|format(resumen.esperado_efectivo) }}" required>
+      </div>
+      <p class="form-help">Si el monto difiere, el sistema registrará la diferencia en el resumen de la sesión.</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-cerrar">Cancelar</button>
+        <button type="submit" class="btn btn-danger btn-sm">Confirmar cierre</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Recibo -->
+<div class="modal-backdrop" id="modal-recibo">
+  <div class="modal">
+    <div class="modal-head no-print">
+      <div><h3>Venta registrada</h3></div>
+      <button class="modal-close" data-modal-close="modal-recibo">×</button>
+    </div>
+    <div id="recibo-contenido" class="receipt">
+      <div class="receipt-head">
+        <div><h2>{{ clinic_name }}</h2><small>{{ clinic_address }} · Tel. {{ clinic_phone }}</small></div>
+        <div style="text-align:right;"><small>Factura</small><br><strong id="rc-factura">—</strong></div>
+      </div>
+      <p style="font-size:.8rem;"><strong>Cliente:</strong> <span id="rc-cliente">—</span><br><strong>Fecha:</strong> <span id="rc-fecha">—</span></p>
+      <table>
+        <thead><tr><th>Cant.</th><th>Descripción</th><th>Precio</th><th>Subtotal</th></tr></thead>
+        <tbody id="rc-items"></tbody>
+        <tr class="total-row"><td colspan="3">Total</td><td id="rc-total">C$ 0.00</td></tr>
+      </table>
+      <p style="font-size:.8rem;margin-top:.7rem;"><strong>Pago:</strong> <span id="rc-metodo">—</span> · <strong>Recibido:</strong> <span id="rc-recibido">—</span> · <strong>Vuelto:</strong> <span id="rc-vuelto">—</span></p>
+      <div class="receipt-foot">¡Gracias por confiar en {{ clinic_name }}! 🐾</div>
+    </div>
+    <div class="modal-footer no-print">
+      <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-recibo">Cerrar</button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+      <a class="btn btn-primary btn-sm" id="rc-detalle" href="#">Ver factura</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  const abrirForm = document.getElementById("form-abrir");
+  if (abrirForm) {
+    abrirForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = abrirForm.querySelector("button[type=submit]");
+      App.setLoading(button, true, "Abriendo…");
+      try {
+        await App.api("/api/caja/abrir", { method: "POST", body: App.formData(abrirForm) });
+        App.toast("Caja abierta. Ya puedes facturar.");
+        setTimeout(() => window.location.reload(), 600);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+    return;
+  }
+
+  const cerrarForm = document.getElementById("form-cerrar");
+  if (cerrarForm) {
+    cerrarForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const button = cerrarForm.querySelector("button[type=submit]");
+      App.setLoading(button, true, "Cerrando…");
+      try {
+        await App.api("/api/caja/cerrar", { method: "POST", body: App.formData(cerrarForm) });
+        App.toast("Sesión de caja cerrada.");
+        setTimeout(() => window.location.reload(), 700);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+  }
+
+  const catalogo = document.getElementById("pos-catalogo");
+  if (!catalogo) return;
+
+  let cart = [];
+  const cartBox = document.getElementById("pos-cart");
+  const countBox = document.getElementById("cart-count");
+  const subtotalBox = document.getElementById("pos-subtotal");
+  const totalBox = document.getElementById("pos-total");
+
+  function total() {
+    return cart.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+  }
+
+  function render() {
+    if (!cart.length) {
+      cartBox.innerHTML = '<div class="empty-state" style="padding:1rem;"><span class="emoji">🛒</span>Agrega productos o servicios.</div>';
+    } else {
+      cartBox.innerHTML = cart.map((item, index) =>
+        '<div class="cart-item">' +
+          '<div class="ci-main"><div class="ci-name">' + App.escapeHtml(item.nombre) + '</div>' +
+          '<div class="ci-meta">' + App.escapeHtml(item.tipo) + ' · ' + App.money(item.precio) + '</div></div>' +
+          '<input class="qty" type="number" min="1" value="' + item.cantidad + '" data-index="' + index + '">' +
+          '<span class="cart-line-total">' + App.money(item.precio * item.cantidad) + '</span>' +
+          '<button class="remove-btn" data-remove="' + index + '" title="Quitar">✕</button>' +
+        '</div>').join("");
+    }
+    countBox.textContent = cart.reduce((sum, i) => sum + i.cantidad, 0) + " ítem(s)";
+    subtotalBox.textContent = App.money(total());
+    totalBox.textContent = App.money(total());
+  }
+
+  cartBox.addEventListener("input", (event) => {
+    const input = event.target.closest("input.qty");
+    if (!input) return;
+    const item = cart[Number(input.dataset.index)];
+    const value = Math.max(1, Number(input.value) || 1);
+    if (item.stock !== null && value > item.stock) {
+      App.toast("Stock disponible: " + item.stock, "error");
+      input.value = item.stock;
+      item.cantidad = item.stock;
+    } else {
+      item.cantidad = value;
+    }
+    render();
+  });
+
+  cartBox.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-remove]");
+    if (!btn) return;
+    cart.splice(Number(btn.dataset.remove), 1);
+    render();
+  });
+
+  catalogo.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-concepto]");
+    if (!button || button.classList.contains("disabled")) return;
+    const stock = button.dataset.stock === "" ? null : Number(button.dataset.stock);
+    const existing = cart.find((i) => i.id === Number(button.dataset.concepto));
+    if (existing) {
+      if (stock !== null && existing.cantidad >= stock) {
+        App.toast("No hay más stock disponible.", "error");
+        return;
+      }
+      existing.cantidad += 1;
+    } else {
+      cart.push({
+        id: Number(button.dataset.concepto),
+        nombre: button.dataset.nombre,
+        tipo: button.dataset.tipo,
+        precio: Number(button.dataset.precio),
+        stock: stock,
+        cantidad: 1,
+      });
+    }
+    render();
+  });
+
+  document.getElementById("pos-buscar").addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    catalogo.querySelectorAll(".pos-item").forEach((item) => {
+      item.style.display = !query || item.dataset.search.indexOf(query) !== -1 ? "" : "none";
+    });
+  });
+
+  document.getElementById("pos-cobrar").addEventListener("click", async (event) => {
+    if (!cart.length) { App.toast("Agrega al menos un producto o servicio.", "error"); return; }
+    const button = event.currentTarget;
+    const metodo = document.getElementById("pos-metodo").value;
+    const recibido = document.getElementById("pos-recibido").value;
+    const payload = {
+      id_cliente: document.getElementById("pos-cliente").value || null,
+      metodo: metodo,
+      referencia: document.getElementById("pos-referencia").value || null,
+      items: cart.map((i) => ({ id_concepto: i.id, cantidad: i.cantidad })),
+    };
+    if (metodo === "Efectivo" && recibido !== "") payload.monto_recibido = recibido;
+
+    App.setLoading(button, true, "Procesando…");
+    try {
+      const result = await App.api("/api/ventas", { method: "POST", body: payload });
+      mostrarRecibo(result);
+      cart = [];
+      render();
+      document.getElementById("pos-recibido").value = "";
+      document.getElementById("pos-referencia").value = "";
+      App.toast("Venta " + result.factura + " registrada.");
+    } catch (error) {
+      App.toast(error.message, "error");
+    } finally {
+      App.setLoading(button, false);
+    }
+  });
+
+  function mostrarRecibo(result) {
+    const cliente = document.getElementById("pos-cliente");
+    document.getElementById("rc-factura").textContent = result.factura;
+    document.getElementById("rc-cliente").textContent = cliente.selectedOptions[0].textContent;
+    document.getElementById("rc-fecha").textContent = new Date().toLocaleString("es-NI");
+    document.getElementById("rc-metodo").textContent = result.metodo;
+    document.getElementById("rc-recibido").textContent = App.money(result.recibido);
+    document.getElementById("rc-vuelto").textContent = App.money(result.vuelto);
+    document.getElementById("rc-total").textContent = App.money(result.total);
+    document.getElementById("rc-items").innerHTML = result.items.map((i) =>
+      "<tr><td>" + i.cantidad + "</td><td>" + App.escapeHtml(i.nombre) + "</td><td>" +
+      App.money(i.precio_unit) + "</td><td>" + App.money(i.subtotal) + "</td></tr>").join("");
+    document.getElementById("rc-detalle").href = "/admin/ventas/" + result.id_venta;
+    App.openModal("modal-recibo");
+  }
+
+  render();
+})();
+</script>
+{% endblock %}

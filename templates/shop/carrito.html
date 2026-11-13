@@ -1,0 +1,75 @@
+{% extends "shop/base.html" %}
+{% block title %}Carrito{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2>Tu carrito</h2>
+    <p>Revisa los productos y servicios antes de pagar.</p>
+  </div>
+  <a href="{{ url_for('shop.catalogo') }}">← Seguir comprando</a>
+</div>
+
+{% if carrito.lineas %}
+<div class="cart-layout">
+  <div>
+    <div class="cart-list">
+      {% for line in carrito.lineas %}
+      <div class="cart-row" data-cart-row data-concept="{{ line.IdConcepto }}" data-price="{{ line.Precio|float }}">
+        <div class="cart-thumb">{{ '🩺' if line.TipoConcepto == 'Servicio' else '📦' }}</div>
+        <div>
+          <h4>{{ line.Nombre }}</h4>
+          <div class="meta">
+            {{ line.Categoria or line.TipoConcepto }} · {{ line.Precio|money }} c/u
+            {% if not line.Disponible %}
+            <span class="pill red" style="margin-left:.3rem;">Stock insuficiente</span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="qty-control">
+          <button type="button" data-cart-qty="-1" aria-label="Quitar una unidad">−</button>
+          <span data-qty-value>{{ line.Cantidad }}</span>
+          <button type="button" data-cart-qty="1" aria-label="Agregar una unidad">+</button>
+        </div>
+        <div class="cart-line-price" data-line-price data-value="{{ line.Subtotal }}">{{ line.Subtotal|money }}</div>
+        <button type="button" class="cart-remove" data-cart-remove aria-label="Eliminar del carrito">✕</button>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <aside class="summary-box">
+    <h3 style="color:var(--shop-navy);margin-bottom:.8rem;">Resumen</h3>
+    <div class="summary-line"><span>Artículos</span><span data-cart-lines>{{ carrito.cantidad }}</span></div>
+    <div class="summary-line"><span>Subtotal</span><span>{{ carrito.total|money }}</span></div>
+    <div class="summary-line"><span>Envío</span><span>Retiro en clínica</span></div>
+    <div class="summary-line total"><span>Total</span><span data-cart-total>{{ carrito.total|money }}</span></div>
+
+    {% if not carrito.todo_disponible %}
+    <p style="font-size:.75rem;color:#b91c1c;margin:.6rem 0;">
+      Ajusta las cantidades marcadas: no hay stock suficiente para completar el pedido.
+    </p>
+    {% endif %}
+
+    {% if current_user.rol == role_client %}
+      {% if carrito.todo_disponible %}
+      <a class="btn btn-primary btn-block" style="margin-top:1rem;" href="{{ url_for('shop.checkout') }}">Continuar al pago</a>
+      {% else %}
+      <span class="btn btn-primary btn-block" style="margin-top:1rem;pointer-events:none;opacity:.55;cursor:not-allowed;" aria-disabled="true">Continuar al pago</span>
+      {% endif %}
+    {% else %}
+      <a class="btn btn-primary btn-block" style="margin-top:1rem;" href="{{ url_for('auth.shop_login', next=url_for('shop.checkout')) }}">Inicia sesión para pagar</a>
+    {% endif %}
+    <p style="font-size:.72rem;color:var(--shop-muted);margin-top:.7rem;text-align:center;">
+      Pago en línea con tarjeta o transferencia. También puedes pagar en caja al retirar.
+    </p>
+  </aside>
+</div>
+{% else %}
+<div class="empty">
+  <span class="emoji">🛒</span>
+  Tu carrito está vacío.
+  <div style="margin-top:1rem;"><a class="btn btn-primary" href="{{ url_for('shop.catalogo') }}">Explorar el catálogo</a></div>
+</div>
+{% endif %}
+{% endblock %}

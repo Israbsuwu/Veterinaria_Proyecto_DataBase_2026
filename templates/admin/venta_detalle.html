@@ -1,0 +1,87 @@
+{% extends "admin/base.html" %}
+{% block title %}Factura {{ venta.Factura }}{% endblock %}
+{% block content %}
+
+<div class="page-head no-print">
+  <div>
+    <h2>Factura {{ venta.Factura }}</h2>
+    <p>{{ venta.FechaVenta|fecha_hora }} · {{ venta.Origen }} · {{ venta.Cliente }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.ventas') }}" class="btn btn-ghost btn-sm">← Volver</a>
+    <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨 Imprimir</button>
+    {% if venta.Estado == 'Pagada' %}
+    <button class="btn btn-danger btn-sm" id="btn-anular">Anular factura</button>
+    {% endif %}
+  </div>
+</div>
+
+<div class="receipt">
+  <div class="receipt-head">
+    <div>
+      <h2>{{ clinic_name }}</h2>
+      <small>{{ clinic_address }}<br>Tel. {{ clinic_phone }}</small>
+    </div>
+    <div style="text-align:right;">
+      <small>Factura</small><br>
+      <strong>{{ venta.Factura }}</strong><br>
+      <small>{{ venta.FechaVenta|fecha_hora }}</small>
+    </div>
+  </div>
+  <p style="font-size:.82rem;line-height:1.6;">
+    <strong>Cliente:</strong> {{ venta.Cliente }}<br>
+    <strong>Cédula:</strong> {{ venta.Cedula or '—' }} · <strong>Correo:</strong> {{ venta.Correo or '—' }}<br>
+    <strong>Atendido por:</strong> {{ venta.Usuario }} · <strong>Origen:</strong> {{ venta.Origen }} ·
+    <strong>Estado:</strong> {{ venta.Estado }}
+  </p>
+  <table>
+    <thead><tr><th>Cant.</th><th>Descripción</th><th>Tipo</th><th class="num">Precio</th><th class="num">Subtotal</th></tr></thead>
+    <tbody>
+      {% for d in venta.detalle %}
+      <tr>
+        <td>{{ d.Cantidad }}</td>
+        <td>{{ d.Concepto }}</td>
+        <td>{{ d.TipoConcepto }}</td>
+        <td class="num">{{ d.PrecioUnit|money }}</td>
+        <td class="num">{{ (d.Cantidad * d.PrecioUnit)|money }}</td>
+      </tr>
+      {% endfor %}
+      <tr class="total-row"><td colspan="4">Total</td><td class="num">{{ venta.total|money }}</td></tr>
+    </tbody>
+  </table>
+  <div style="margin-top:1rem;font-size:.82rem;">
+    <strong>Pagos</strong>
+    {% for p in venta.pagos %}
+    <p>{{ p.FechaPago|fecha_hora }} · {{ p.Metodo }} · {{ p.Monto|money }}
+      {% if p.Referencia %} · Ref. {{ p.Referencia }}{% endif %}
+      {% if p.IdSesion %} · Caja #{{ p.IdSesion }}{% else %} · Pago en línea{% endif %}
+    </p>
+    {% else %}
+    <p class="muted">Sin pagos registrados.</p>
+    {% endfor %}
+  </div>
+  <div class="receipt-foot">¡Gracias por confiar en {{ clinic_name }}! 🐾</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  const button = document.getElementById("btn-anular");
+  if (!button) return;
+  button.addEventListener("click", async () => {
+    if (!window.confirm("¿Anular la factura {{ venta.Factura }}? El stock regresará al inventario.")) return;
+    App.setLoading(button, true, "Anulando…");
+    try {
+      await App.api("/api/ventas/{{ venta.IdVenta }}/anular", { method: "POST" });
+      App.toast("Factura anulada.");
+      setTimeout(() => window.location.reload(), 700);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+})();
+</script>
+{% endblock %}

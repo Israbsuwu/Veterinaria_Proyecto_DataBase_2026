@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Tienda{% endblock %} · {{ clinic_name }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/shop.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="shop-body">
+<div class="shop-shell">
+  <header class="shop-header">
+    <div class="shop-header-inner">
+      <a class="shop-brand" href="{{ url_for('shop.home') }}">
+        <span class="logo">🐾</span>
+        <span>
+          <strong>{{ clinic_name }}</strong>
+          <small>Tienda y citas en línea</small>
+        </span>
+      </a>
+
+      <nav class="shop-nav">
+        <a class="{{ 'active' if active == 'home' }}" href="{{ url_for('shop.home') }}">Inicio</a>
+        <a class="{{ 'active' if active == 'catalogo' }}" href="{{ url_for('shop.catalogo') }}">Catálogo</a>
+        {% if current_user.rol == role_client %}
+        <a class="{{ 'active' if active == 'cuenta' }}" href="{{ url_for('shop.cuenta') }}">Mi cuenta</a>
+        <a href="{{ url_for('shop.reservar') }}">Agendar cita</a>
+        {% endif %}
+      </nav>
+
+      <div class="shop-actions">
+        <a class="cart-link" href="{{ url_for('shop.carrito') }}" aria-label="Carrito de compras">
+          🛒 <span>Carrito</span>
+          <span class="cart-badge" data-cart-count data-count="{{ cart_count }}">{{ cart_count }}</span>
+        </a>
+        {% if current_user.rol == role_client %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('shop.cuenta') }}">{{ current_user.nombre }}</a>
+        <a class="btn btn-outline btn-sm" href="{{ url_for('auth.shop_logout') }}">Salir</a>
+        {% elif current_user.rol in staff_roles %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('admin.dashboard') }}">Panel interno</a>
+        {% else %}
+        <a class="btn btn-outline btn-sm" href="{{ url_for('auth.shop_login') }}">Ingresar</a>
+        <a class="btn btn-primary btn-sm" href="{{ url_for('auth.shop_register') }}">Crear cuenta</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="shop-main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}" data-auto-hide>{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="shop-footer">
+    <div class="shop-footer-inner">
+      <div>
+        <h4>🐾 {{ clinic_name }}</h4>
+        <p>Clínica veterinaria con atención integral para tus compañeros de vida. Productos, servicios y seguimiento clínico en un mismo lugar.</p>
+        <p><strong>{{ clinic_address }}</strong><br>Tel. {{ clinic_phone }}</p>
+      </div>
+      <div>
+        <h4>Tienda</h4>
+        <ul>
+          <li><a href="{{ url_for('shop.catalogo') }}" style="color:inherit;text-decoration:none;">Catálogo completo</a></li>
+          <li><a href="{{ url_for('shop.carrito') }}" style="color:inherit;text-decoration:none;">Mi carrito</a></li>
+          <li><a href="{{ url_for('shop.reservar') }}" style="color:inherit;text-decoration:none;">Agendar una cita</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Horario</h4>
+        <ul>
+          <li>Lunes a viernes · 8:00 a 18:00</li>
+          <li>Sábado · 8:00 a 13:00</li>
+          <li>Domingo · Emergencias</li>
+        </ul>
+      </div>
+    </div>
+    <div class="shop-footer-bottom">© {{ clinic_name }} · Sistema clínico y tienda en línea</div>
+  </footer>
+</div>
+
+<div id="app-toast" class="toast hidden"></div>
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
+<script src="{{ url_for('static', filename='js/shop.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -162,9 +162,56 @@ document.getElementById('formMascota').addEventListener('submit', async (e) => {
 });
 
 // Desactivar temporalmente la consulta para el siguiente paso
-document.getElementById('formNuevaConsulta').addEventListener('submit', (e) => {
+document.getElementById('formNuevaConsulta').addEventListener('submit', async (e) => {
     e.preventDefault();
-    alert('En el próximo paso conectaremos la Consulta Médica, el Descuento de Vacuna y la Notificación de correo 🚀');
+    const data = {
+        mascotaId: parseInt(document.getElementById('selectPacienteConsulta').value),
+        peso: document.getElementById('consultaPeso').value,
+        motivo: document.getElementById('consultaMotivo').value.trim(),
+        diagnostico: document.getElementById('consultaDiagnostico').value.trim(),
+        farmaco: document.getElementById('recetaFarmaco').value.trim(),
+        dosis: document.getElementById('recetaDosis').value.trim(),
+        duracion: document.getElementById('recetaDuracion').value.trim()
+    };
+
+    const res = await fetch('/api/consulta', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(data)
+    });
+    const result = await res.json();
+    
+    if (result.success) {
+        alert('🩺 Consulta guardada exitosamente.\n💉 Vacuna registrada en inventario.\n📧 Recordatorio de refuerzo programado (n8n).');
+        
+        // Inyectamos visualmente la tarjeta de la consulta en el expediente (Línea de tiempo)
+        const timeline = document.getElementById('timelineConsultas');
+        
+        // Si estaba el mensaje de advertencia ("En la Fase 5..."), lo borramos
+        if(timeline.innerHTML.includes('Fase 5')) { timeline.innerHTML = ''; }
+        
+        const nuevaCard = document.createElement('div');
+        nuevaCard.className = 'history-card-item';
+        nuevaCard.innerHTML = `
+        <div class="history-top-row">
+            <strong>${data.motivo}</strong>
+            <small style="color: #64748b;">Hoy</small>
+        </div>
+        <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Peso:</strong> ${data.peso} kg</p>
+        <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Diagnóstico:</strong> ${data.diagnostico}</p>
+        <p style="font-size: 0.85rem; color: #475569;"><strong>Prescripción:</strong> ${data.farmaco} (${data.dosis}) por ${data.duracion} días.</p>
+        <p style="font-size: 0.85rem; color: var(--vet-green-dark); margin-top: 8px;"><strong>💉 Vacuna Aplicada y Recordatorio de refuerzo programado para 30 días</strong></p>
+        `;
+        timeline.prepend(nuevaCard);
+        
+        e.target.reset();
+        
+        // Nos pasamos a la pestaña de Expediente para ver la tarjeta agregada
+        const tabBtns = document.querySelectorAll('.portal-tab-btn');
+        cambiarPortalTab('expediente', tabBtns[1]);
+    } else {
+        alert(`❌ Error al guardar la consulta: ${result.error}`);
+    }
 });
 
 // Arrancar funciones de inicio

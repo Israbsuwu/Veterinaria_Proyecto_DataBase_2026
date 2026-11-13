@@ -1,0 +1,92 @@
+{% extends "shop/base.html" %}
+{% block title %}Agendar cita{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2>Agendar una cita</h2>
+    <p>Elige el servicio, la mascota y el horario que prefieras.</p>
+  </div>
+  <a href="{{ url_for('shop.cuenta', panel='reservas') }}">← Mis citas</a>
+</div>
+
+<div class="cart-layout">
+  <div>
+    {% if not mascotas %}
+    <div class="shop-card">
+      <h3>Primero registra a tu mascota</h3>
+      <div class="card-sub">Para agendar una cita necesitamos saber a quién vamos a atender.</div>
+      <a class="btn btn-primary" href="{{ url_for('shop.cuenta', panel='mascotas') }}">Registrar mascota</a>
+    </div>
+    {% else %}
+    <form class="shop-card" data-reservation-form>
+      <h3>Datos de la cita</h3>
+      <div class="card-sub">La clínica confirmará tu cita y te avisará por correo.</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_mascota">Mascota</label>
+          <select id="id_mascota" name="id_mascota" required>
+            {% for pet in mascotas %}
+            <option value="{{ pet.IdMascota }}">{{ pet.Nombre }} · {{ pet.Especie }}{% if pet.Raza %} ({{ pet.Raza }}){% endif %}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="servicio">Servicio</label>
+          <select id="servicio" name="servicio" required>
+            <option value="Consulta general">Consulta general</option>
+            {% for servicio in servicios %}
+            <option value="{{ servicio.Nombre }}">{{ servicio.Nombre }} · {{ servicio.Precio|money }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="id_veterinario">Veterinario</label>
+          <select id="id_veterinario" name="id_veterinario">
+            <option value="">Cualquiera disponible</option>
+            {% for vet in vets %}
+            <option value="{{ vet.IdVeterinario }}">Dr(a). {{ vet.Nombre }} {{ vet.Apellido }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Horario preferido</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;">
+            <input type="date" name="fecha" required>
+            <input type="time" name="hora" required step="900">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="obs">Motivo o detalles adicionales</label>
+        <textarea id="obs" name="obs" rows="3" placeholder="Ej. Vómitos desde ayer, control de vacuna, revisión general…"></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block">Solicitar cita</button>
+      <p style="font-size:.72rem;color:var(--shop-muted);margin-top:.6rem;text-align:center;">
+        Recibirás un recordatorio un día antes de tu cita.
+      </p>
+    </form>
+    {% endif %}
+  </div>
+
+  <aside class="summary-box">
+    <h3 style="color:var(--shop-navy);margin-bottom:.8rem;">Antes de venir</h3>
+    <ul style="font-size:.8rem;color:var(--shop-muted);line-height:1.9;padding-left:1.1rem;">
+      <li>Llega 10 minutos antes de tu cita.</li>
+      <li>Trae el carné de vacunas si lo tienes.</li>
+      <li>Para ayunos o exámenes, te confirmaremos las indicaciones.</li>
+      <li>Si no puedes asistir, cancela con anticipación.</li>
+    </ul>
+    <div class="summary-line total" style="font-size:.95rem;"><span>Horario</span><span>8:00 – 18:00</span></div>
+    <p style="font-size:.72rem;color:var(--shop-muted);margin-top:.8rem;">
+      {{ clinic_address }}<br>Tel. {{ clinic_phone }}
+    </p>
+  </aside>
+</div>
+{% endblock %}

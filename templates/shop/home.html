@@ -1,0 +1,94 @@
+{% extends "shop/base.html" %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<section class="shop-hero">
+  <div>
+    <span class="hero-eyebrow">🐾 Cuidado veterinario integral</span>
+    <h1>Todo para tu mascota, <span>en un solo lugar</span>.</h1>
+    <p>Compra alimentos, medicamentos y accesorios, agenda citas con nuestros veterinarios y da seguimiento al expediente clínico de tu compañero.</p>
+    <div class="hero-actions">
+      <a class="btn btn-white" href="{{ url_for('shop.catalogo') }}">Ver catálogo</a>
+      {% if current_user.rol == role_client %}
+      <a class="btn btn-green" href="{{ url_for('shop.reservar') }}">Agendar cita</a>
+      {% else %}
+      <a class="btn btn-green" href="{{ url_for('auth.shop_register') }}">Crear mi cuenta</a>
+      {% endif %}
+    </div>
+  </div>
+  <div class="hero-visual">
+    <div class="hero-tile highlight"><span>🩺</span><strong>Consultas y vacunas</strong><small>Equipo veterinario certificado</small></div>
+    <div class="hero-tile"><span>📦</span><strong>Productos de calidad</strong><small>Stock y vencimientos controlados</small></div>
+    <div class="hero-tile"><span>📅</span><strong>Citas en línea</strong><small>Elige día, hora y veterinario</small></div>
+    <div class="hero-tile"><span>💚</span><strong>Historial clínico</strong><small>Todo el expediente de tu mascota</small></div>
+  </div>
+</section>
+
+<section class="shop-section">
+  <div class="section-head">
+    <div>
+      <h2>Compra por categoría</h2>
+      <p>Encuentra rápido lo que tu mascota necesita.</p>
+    </div>
+    <a href="{{ url_for('shop.catalogo') }}">Ver todo el catálogo →</a>
+  </div>
+  <div class="category-row">
+    <a class="category-chip" href="{{ url_for('shop.catalogo') }}">✨ Todo</a>
+    {% for categoria in categorias %}
+    <a class="category-chip" href="{{ url_for('shop.catalogo', categoria=categoria.IdCategoria) }}">
+      {{ categoria.Nombre }} <span style="opacity:.6;">({{ categoria.Productos }})</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if servicios %}
+<section class="shop-section">
+  <div class="section-head">
+    <div>
+      <h2>Servicios clínicos</h2>
+      <p>Reserva con anticipación y evita filas.</p>
+    </div>
+    <a href="{{ url_for('shop.catalogo', tipo='Servicio') }}">Ver servicios →</a>
+  </div>
+  <div class="product-grid">
+    {% for product in servicios %}
+      {% include "shop/_product_card.html" %}
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="shop-section">
+  <div class="section-head">
+    <div>
+      <h2>Productos destacados</h2>
+      <p>Seleccionados por nuestro equipo veterinario.</p>
+    </div>
+    <a href="{{ url_for('shop.catalogo', tipo='Producto') }}">Ver productos →</a>
+  </div>
+  {% if productos %}
+  <div class="product-grid">
+    {% for product in productos %}
+      {% include "shop/_product_card.html" %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty"><span class="emoji">📦</span>Pronto tendremos productos disponibles.</div>
+  {% endif %}
+</section>
+
+<section class="shop-section">
+  <div class="shop-card" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;">
+    <div>
+      <h3>¿Primera vez en la clínica?</h3>
+      <div class="card-sub">Crea tu cuenta para comprar en línea, registrar a tus mascotas y agendar citas.</div>
+    </div>
+    {% if current_user.rol == role_client %}
+    <a class="btn btn-primary" href="{{ url_for('shop.cuenta') }}">Ir a mi cuenta</a>
+    {% else %}
+    <a class="btn btn-primary" href="{{ url_for('auth.shop_register') }}">Registrarme</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

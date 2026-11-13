@@ -1,0 +1,288 @@
+{% extends "shop/base.html" %}
+{% block title %}Mi cuenta{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2>Hola, {{ perfil.cliente.Nombre }}</h2>
+    <p>Gestiona tus datos, mascotas, pedidos y citas.</p>
+  </div>
+  <a href="{{ url_for('shop.reservar') }}">+ Agendar cita</a>
+</div>
+
+<div class="account-layout">
+  <aside class="account-nav" data-tabs="#cuenta-panels">
+    <button type="button" class="active" data-tab="perfil">👤 Mi perfil</button>
+    <button type="button" data-tab="mascotas">🐾 Mis mascotas ({{ mascotas|length }})</button>
+    <button type="button" data-tab="pedidos">🧾 Mis pedidos ({{ pedidos|length }})</button>
+    <button type="button" data-tab="reservas">📅 Mis citas ({{ reservas|length }})</button>
+    <button type="button" data-tab="notificaciones">🔔 Avisos ({{ notificaciones|length }})</button>
+  </aside>
+
+  <section id="cuenta-panels">
+    <!-- Perfil -->
+    <div class="account-panel active" data-panel="perfil">
+      <div class="shop-card">
+        <h3>Datos personales</h3>
+        <div class="card-sub">Esta información se usa para tus facturas y el expediente de tus mascotas.</div>
+        <form data-profile-form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nombre">Nombre</label>
+              <input type="text" id="nombre" name="nombre" required value="{{ perfil.cliente.Nombre }}">
+            </div>
+            <div class="form-group">
+              <label for="apellido">Apellido</label>
+              <input type="text" id="apellido" name="apellido" required value="{{ perfil.cliente.Apellido }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="cedula">Cédula</label>
+              <input type="text" id="cedula" value="{{ perfil.cliente.Cedula }}" disabled>
+            </div>
+            <div class="form-group">
+              <label for="telefono">Teléfono</label>
+              <input type="tel" id="telefono" name="telefono" value="{{ perfil.cliente.Telefono or '' }}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="correo">Correo</label>
+              <input type="email" id="correo" name="correo" value="{{ perfil.cliente.Correo or '' }}">
+            </div>
+            <div class="form-group">
+              <label for="direccion">Dirección</label>
+              <input type="text" id="direccion" name="direccion" value="{{ perfil.cliente.Direccion or '' }}">
+            </div>
+          </div>
+          <label style="display:flex;gap:.5rem;align-items:center;margin-bottom:.9rem;cursor:pointer;">
+            <input type="hidden" name="acepta_notif" value="0">
+            <input type="checkbox" name="acepta_notif" value="1" {{ 'checked' if perfil.cliente.AceptaNotif }} style="width:auto;">
+            <span>Acepto recibir recordatorios de vacunas y citas.</span>
+          </label>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </form>
+      </div>
+
+      <div class="shop-card">
+        <h3>Seguridad</h3>
+        <div class="card-sub">
+          Usuario: <strong>{{ perfil.usuario.Correo if perfil.usuario else current_user.correo }}</strong>
+        </div>
+        <form data-password-form>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="actual">Contraseña actual</label>
+              <input type="password" id="actual" name="actual" required autocomplete="current-password">
+            </div>
+            <div class="form-group">
+              <label for="nueva">Nueva contraseña</label>
+              <input type="password" id="nueva" name="nueva" required minlength="6" autocomplete="new-password">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="confirmar">Confirmar nueva contraseña</label>
+            <input type="password" id="confirmar" name="confirmar" required minlength="6" autocomplete="new-password">
+          </div>
+          <button type="submit" class="btn btn-outline">Actualizar contraseña</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Mascotas -->
+    <div class="account-panel" data-panel="mascotas">
+      {% if mascotas %}
+      <div class="info-grid" style="grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-bottom:1rem;">
+        {% for pet in mascotas %}
+        <div class="shop-card" style="margin-bottom:0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;">
+            <div>
+              <h3>{{ '🐶' if pet.Especie|lower == 'perro' else ('🐱' if pet.Especie|lower == 'gato' else '🐾') }} {{ pet.Nombre }}</h3>
+              <div class="card-sub">{{ pet.Especie }}{% if pet.Raza %} · {{ pet.Raza }}{% endif %}</div>
+            </div>
+            {% set estado = 'Activo' %}
+            {% include "shop/_pill.html" %}
+          </div>
+          <div class="info-grid" style="grid-template-columns:1fr 1fr;gap:.5rem;">
+            <div class="info-tile"><span>Sexo</span><strong>{{ pet.Sexo or '—' }}</strong></div>
+            <div class="info-tile"><span>Edad</span><strong>{{ pet.EdadAnios if pet.EdadAnios is not none else '—' }} años</strong></div>
+            <div class="info-tile"><span>Color</span><strong>{{ pet.Color or '—' }}</strong></div>
+            <div class="info-tile"><span>Nacimiento</span><strong>{{ pet.FechaNac|fecha }}</strong></div>
+          </div>
+          {% if pet.Alergias %}
+          <p style="font-size:.76rem;color:#b45309;margin-top:.6rem;">⚠️ Alergias: {{ pet.Alergias }}</p>
+          {% endif %}
+          {% if pet.Senas %}
+          <p style="font-size:.74rem;color:var(--shop-muted);margin-top:.4rem;">Señas: {{ pet.Senas }}</p>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty" style="padding:1.5rem;">
+        <span class="emoji">🐾</span>
+        Aún no has registrado mascotas.
+      </div>
+      {% endif %}
+
+      <details class="shop-card">
+        <summary style="cursor:pointer;font-weight:800;color:var(--shop-navy);">+ Registrar una mascota</summary>
+        <form data-pet-form style="margin-top:1rem;">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-nombre">Nombre</label>
+              <input type="text" id="pet-nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+              <label for="pet-especie">Especie</label>
+              <select id="pet-especie" name="especie" required>
+                <option value="">Selecciona…</option>
+                <option>Perro</option>
+                <option>Gato</option>
+                <option>Ave</option>
+                <option>Roedor</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-raza">Raza</label>
+              <input type="text" id="pet-raza" name="raza">
+            </div>
+            <div class="form-group">
+              <label for="pet-sexo">Sexo</label>
+              <select id="pet-sexo" name="sexo">
+                <option value="">Sin especificar</option>
+                <option>Macho</option>
+                <option>Hembra</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="pet-color">Color</label>
+              <input type="text" id="pet-color" name="color">
+            </div>
+            <div class="form-group">
+              <label for="pet-nac">Fecha de nacimiento</label>
+              <input type="date" id="pet-nac" name="fecha_nac">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="pet-senas">Señas particulares</label>
+            <input type="text" id="pet-senas" name="senas">
+          </div>
+          <div class="form-group">
+            <label for="pet-alergias">Alergias conocidas</label>
+            <input type="text" id="pet-alergias" name="alergias">
+          </div>
+          <button type="submit" class="btn btn-primary">Registrar mascota</button>
+        </form>
+      </details>
+    </div>
+
+    <!-- Pedidos -->
+    <div class="account-panel" data-panel="pedidos">
+      <div class="shop-card">
+        <h3>Mis pedidos en línea</h3>
+        <div class="card-sub">Compras realizadas desde la tienda.</div>
+        {% if pedidos %}
+        <div style="overflow-x:auto;">
+          <table class="order-table">
+            <thead>
+              <tr><th>Factura</th><th>Fecha</th><th>Método</th><th>Estado</th><th class="num">Total</th><th></th></tr>
+            </thead>
+            <tbody>
+              {% for pedido in pedidos %}
+              <tr>
+                <td><strong>{{ pedido.Factura }}</strong></td>
+                <td>{{ pedido.FechaVenta|fecha_hora }}</td>
+                <td>{{ pedido.Metodo or '—' }}</td>
+                <td>{% set estado = pedido.Estado %}{% include "shop/_pill.html" %}</td>
+                <td class="num">{{ pedido.Total|money }}</td>
+                <td><a href="{{ url_for('shop.pedido', venta_id=pedido.IdVenta) }}">Ver</a></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty" style="padding:1.5rem;">
+          <span class="emoji">🧾</span>
+          Todavía no tienes pedidos en línea.
+          <div style="margin-top:.8rem;"><a class="btn btn-primary btn-sm" href="{{ url_for('shop.catalogo') }}">Ir al catálogo</a></div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Reservas -->
+    <div class="account-panel" data-panel="reservas">
+      <div class="shop-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem;">
+          <div>
+            <h3>Mis citas</h3>
+            <div class="card-sub">Reservas agendadas en la clínica.</div>
+          </div>
+          <a class="btn btn-primary btn-sm" href="{{ url_for('shop.reservar') }}">+ Nueva cita</a>
+        </div>
+        {% if reservas %}
+        <div style="overflow-x:auto;">
+          <table class="order-table">
+            <thead>
+              <tr><th>Fecha</th><th>Mascota</th><th>Motivo</th><th>Veterinario</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+              {% for reserva in reservas %}
+              <tr>
+                <td>{{ reserva.FechaIni|fecha_hora }}</td>
+                <td>{{ reserva.Mascota or '—' }}</td>
+                <td>{{ reserva.Motivo }}</td>
+                <td>{{ reserva.Veterinario or 'Por asignar' }}</td>
+                <td>{% set estado = reserva.Estado %}{% include "shop/_pill.html" %}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="empty" style="padding:1.5rem;">
+          <span class="emoji">📅</span>
+          No tienes citas registradas.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Notificaciones -->
+    <div class="account-panel" data-panel="notificaciones">
+      <div class="shop-card">
+        <h3>Avisos y recordatorios</h3>
+        <div class="card-sub">Notificaciones de citas y próximas vacunas.</div>
+        {% if notificaciones %}
+        <div style="display:flex;flex-direction:column;gap:.55rem;">
+          {% for aviso in notificaciones %}
+          <div style="display:flex;justify-content:space-between;gap:.8rem;align-items:center;border:1px solid var(--shop-line);border-radius:10px;padding:.65rem .8rem;">
+            <div>
+              <strong style="font-size:.85rem;color:var(--shop-navy);">{{ aviso.Tipo }}</strong>
+              <div style="font-size:.73rem;color:var(--shop-muted);">
+                {{ aviso.Canal }} · programado {{ aviso.FechaProg|fecha_hora }}
+              </div>
+            </div>
+            {% set estado = aviso.Estado %}{% include "shop/_pill.html" %}
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty" style="padding:1.5rem;">
+          <span class="emoji">🔔</span>
+          No tienes avisos por ahora.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

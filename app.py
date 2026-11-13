@@ -1,121 +1,104 @@
-from flask import Flask, render_template, request, session, redirect, url_for, flash, jsonify
-import pyodbc
+"""VetPepePepito - ERP clínico + tienda en línea.
 
-app = Flask(__name__)
-app.secret_key = 'pepe_pepito_secreto' 
-DB_SERVER = r'MSI\SQLEXPRESS' 
-DB_NAME = 'VetPepePepito'
+Aplicación Flask única que comparte la base de datos SQL Server y la API.
+"""
+from __future__ import annotations
 
-def get_db_connection():
-    conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={DB_SERVER};DATABASE={DB_NAME};Trusted_Connection=yes;'
-    return pyodbc.connect(conn_str)
+from flask import Flask, flash, redirect, render_template, request, url_for
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if 'user_id' in session: return redirect(url_for('index'))
-    if request.method == 'POST':
-        correo = request.form['correo']
-        contrasena = request.form['contrasena']
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT U.IdUsuario, U.Nombre, U.Correo, R.NombreRol 
-            FROM USUARIO U INNER JOIN ROL R ON U.IdRol = R.IdRol
-            WHERE U.Correo = ? AND U.Contrasena = ? AND U.Estado = 'Activo'
-        """, (correo, contrasena))
-        usuario = cursor.fetchone()
-        conn.close()
-        
-        if usuario:
-            session['user_id'] = usuario.IdUsuario
-            session['user_nombre'] = usuario.Nombre
-            session['user_rol'] = usuario.NombreRol
-            return redirect(url_for('index'))
-        else:
-            flash('Correo o contraseña incorrectos.')
-    return render_template('login.html')
+from config import Config
+from db import BusinessError, init_app as init_db
+from routes.admin_routes import admin_bp
+from routes.api_routes import api_bp
+from routes.auth_routes import auth_bp
+from routes.shop_routes import shop_bp
+from security import current_user
+from services import ecommerce_service
+from utils import date_text, datetime_text, fail, money
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('login'))
 
-@app.route('/')
-def index():
-    if 'user_id' not in session: return redirect(url_for('login'))
-    
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
-    # 1. Traer TODOS los Clientes reales de la BD
-    cursor.execute("SELECT IdCliente, Nombre, Apellido, Cedula, Telefono FROM CLIENTE")
-    clientes = [{'id': c.IdCliente, 'nombre': c.Nombre, 'apellido': c.Apellido, 'cedula': c.Cedula, 'tel': c.Telefono} for c in cursor.fetchall()]
-    
-    # 2. Traer TODAS las Mascotas reales de la BD
-    cursor.execute("""
-        SELECT M.IdMascota, M.Nombre, M.Especie, M.Raza, M.Sexo, M.IdCliente, E.Alergias 
-        FROM MASCOTA M
-        LEFT JOIN EXPEDIENTE_CLINICO E ON M.IdMascota = E.IdMascota
-    """)
-    mascotas = [{
-        'id': m.IdMascota, 'duenoId': m.IdCliente, 'nombre': m.Nombre, 
-        'especie': m.Especie, 'raza': m.Raza, 'sexo': m.Sexo, 
-        'alergias': m.Alergias if m.Alergias else ''
-    } for m in cursor.fetchall()]
-    
-    conn.close()
-    
-    # Le inyectamos los datos a la página
-    return render_template('index.html', clientes=clientes, mascotas=mascotas)
+def create_app() -> Flask:
+    app = Flask(__name__)
+    app.config.from_object(Config)
+    init_db(app)
 
-# Rutas API (Backend para procesar formularios)
-@app.route('/api/cliente', methods=['POST'])
-def crear_cliente():
-    datos = request.json
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # Guardar en BD y devolver el nuevo ID autogenerado
-        cursor.execute("""
-            INSERT INTO CLIENTE (Nombre, Apellido, Cedula, Telefono, AceptaNotif)
-            OUTPUT INSERTED.IdCliente
-            VALUES (?, ?, ?, ?, 1)
-        """, (datos['nombre'], datos['apellido'], datos['cedula'], datos['tel']))
-        nuevo_id = cursor.fetchone()[0]
-        conn.commit()
-        return jsonify({'success': True, 'id': nuevo_id})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-    finally:
-        conn.close()
+    app.register_blueprint(auth_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(api_bp)
+    app.register_blueprint(shop_bp)
 
-@app.route('/api/mascota', methods=['POST'])
-def crear_mascota():
-    datos = request.json
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # 1. Crear mascota
-        cursor.execute("""
-            INSERT INTO MASCOTA (Nombre, Especie, Raza, Sexo, IdCliente)
-            OUTPUT INSERTED.IdMascota
-            VALUES (?, ?, ?, ?, ?)
-        """, (datos['nombre'], datos['especie'], datos['raza'], datos['sexo'], datos['duenoId']))
-        nueva_mascota_id = cursor.fetchone()[0]
-        
-        # 2. Abrir automáticamente su expediente clínico y guardar alergias
-        alergias_input = datos.get('alergias', '')
-        cursor.execute("""
-            INSERT INTO EXPEDIENTE_CLINICO (FechaApertura, EstadoReg, Alergias, IdMascota)
-            VALUES (GETDATE(), 'Activo', ?, ?)
-        """, (alergias_input, nueva_mascota_id))
-        
-        conn.commit()
-        return jsonify({'success': True, 'id': nueva_mascota_id})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
-    finally:
-        conn.close()
+    @app.context_processor
+    def inject_globals():
+        return {
+            "current_user": current_user(),
+            "cart_count": ecommerce_service.cart_count(),
+            "clinic_name": Config.CLINIC_NAME,
+            "clinic_phone": Config.CLINIC_PHONE,
+            "clinic_address": Config.CLINIC_ADDRESS,
+            "currency": Config.CURRENCY,
+            "staff_roles": Config.STAFF_ROLES,
+            "role_admin": Config.ROLE_ADMIN,
+            "role_vet": Config.ROLE_VET,
+            "role_cashier": Config.ROLE_CASHIER,
+            "role_client": Config.ROLE_CLIENT,
+        }
 
-if __name__ == '__main__':
+    app.add_template_filter(money, "money")
+    app.add_template_filter(date_text, "fecha")
+    app.add_template_filter(datetime_text, "fecha_hora")
+
+    @app.template_filter("badge")
+    def badge(estado: str | None) -> str:
+        mapping = {
+            "Activo": "success",
+            "Pagada": "success",
+            "Disponible": "success",
+            "Completada": "success",
+            "Confirmada": "success",
+            "Vigente": "success",
+            "Abierta": "success",
+            "Enviada": "success",
+            "Pendiente": "warning",
+            "En Espera": "warning",
+            "Por Vencer": "warning",
+            "Baja": "info",
+            "Media": "warning",
+            "Alta": "danger",
+            "En Consulta": "info",
+            "Cancelada": "danger",
+            "Anulada": "danger",
+            "Vencido": "danger",
+            "Agotado": "danger",
+            "Inactivo": "danger",
+            "Fallida": "danger",
+            "Cerrada": "info",
+            "Archivado": "info",
+            "Web": "info",
+            "POS": "info",
+            "Cuarentena": "warning",
+        }
+        return mapping.get(estado or "", "info")
+
+    @app.errorhandler(BusinessError)
+    def handle_business_error(error: BusinessError):
+        if request.path.startswith("/api/") or request.is_json:
+            return fail(error.message, error.status)
+        flash(error.message, "danger")
+        return redirect(request.referrer or url_for("auth.index"))
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return render_template("error.html", code=403, mensaje="No tienes permisos para acceder a esta sección."), 403
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("error.html", code=404, mensaje="La página o el registro que buscas no existe."), 404
+
+    return app
+
+
+app = create_app()
+
+
+if __name__ == "__main__":
     app.run(debug=True, port=5000)

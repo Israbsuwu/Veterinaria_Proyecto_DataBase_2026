@@ -1,0 +1,127 @@
+{% extends "admin/base.html" %}
+{% block title %}Usuarios{% endblock %}
+{% block content %}
+
+<div class="page-head">
+  <div>
+    <h2>Usuarios y accesos</h2>
+    <p>Personal interno, veterinarios y cuentas de la tienda en línea.</p>
+  </div>
+  <div class="page-actions">
+    <button class="btn btn-primary btn-sm" data-modal-open="modal-usuario">＋ Nuevo usuario</button>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card"><span class="stat-icon">👤</span><span class="stat-value">{{ usuarios|length }}</span><span class="stat-label">Usuarios totales</span></div>
+  <div class="stat-card green"><span class="stat-icon">✅</span><span class="stat-value">{{ usuarios|selectattr('Estado', 'equalto', 'Activo')|list|length }}</span><span class="stat-label">Activos</span></div>
+  <div class="stat-card amber"><span class="stat-icon">🩺</span><span class="stat-value">{{ usuarios|selectattr('IdVeterinario')|list|length }}</span><span class="stat-label">Veterinarios</span></div>
+  <div class="stat-card"><span class="stat-icon">🛍️</span><span class="stat-value">{{ usuarios|selectattr('NombreRol', 'equalto', 'Cliente Web')|list|length }}</span><span class="stat-label">Clientes web</span></div>
+</div>
+
+<section class="card">
+  <div class="card-head"><h3>Listado de usuarios</h3><span class="chip">Las cuentas web se crean desde la ficha del cliente</span></div>
+  <div class="table-container">
+    <table class="styled-table">
+      <thead><tr><th>Usuario</th><th>Correo</th><th>Teléfono</th><th>Rol</th><th>Veterinario</th><th>Registro</th><th>Estado</th><th>Acciones</th></tr></thead>
+      <tbody>
+        {% for u in usuarios %}
+        <tr>
+          <td><strong>{{ u.Nombre }} {{ u.Apellido }}</strong><br><small class="muted">#{{ u.IdUsuario }}</small></td>
+          <td>{{ u.Correo }}</td>
+          <td>{{ u.Telefono or '—' }}</td>
+          <td><span class="badge badge-{{ 'success' if u.NombreRol == 'Administrador' else 'info' if u.NombreRol == 'Veterinario' else 'warning' if u.NombreRol == 'Cajero' else 'muted' }}">{{ u.NombreRol }}</span></td>
+          <td>{% if u.IdVeterinario %}{{ u.NumRegistro }}{% else %}—{% endif %}</td>
+          <td class="nowrap">{{ u.FechaReg|fecha }}</td>
+          <td><span class="badge badge-{{ u.Estado|badge }}">{{ u.Estado }}</span></td>
+          <td>
+            {% if u.NombreRol != 'Cliente Web' %}
+            <button class="btn btn-ghost btn-xs" data-estado="{{ u.IdUsuario }}" data-nuevo="{{ 'Inactivo' if u.Estado == 'Activo' else 'Activo' }}"
+              data-accion="{{ 'Desactivar' if u.Estado == 'Activo' else 'Activar' }}" data-nombre="{{ u.Nombre }} {{ u.Apellido }}">
+              {{ 'Desactivar' if u.Estado == 'Activo' else 'Activar' }}
+            </button>
+            {% else %}
+            <span class="chip">Tienda</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="modal-backdrop" id="modal-usuario">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3>Nuevo usuario interno</h3><p>Administrador, veterinario o cajero.</p></div>
+      <button class="modal-close" data-modal-close="modal-usuario">×</button>
+    </div>
+    <form id="form-usuario">
+      <div class="form-grid-2">
+        <div class="form-group"><label class="required" for="u-nombre">Nombre</label><input type="text" id="u-nombre" name="nombre" required></div>
+        <div class="form-group"><label class="required" for="u-apellido">Apellido</label><input type="text" id="u-apellido" name="apellido" required></div>
+        <div class="form-group"><label class="required" for="u-correo">Correo</label><input type="email" id="u-correo" name="correo" required></div>
+        <div class="form-group"><label for="u-telefono">Teléfono</label><input type="text" id="u-telefono" name="telefono"></div>
+        <div class="form-group">
+          <label class="required" for="u-rol">Rol</label>
+          <select id="u-rol" name="rol" required>
+            {% for r in roles %}<option value="{{ r }}">{{ r }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="required" for="u-password">Contraseña temporal</label>
+          <input type="text" id="u-password" name="contrasena" value="123456" minlength="6" required>
+        </div>
+        <div class="form-group">
+          <label for="u-registro">N° registro veterinario</label>
+          <input type="text" id="u-registro" name="num_registro" placeholder="Automático">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost btn-sm" data-modal-close="modal-usuario">Cancelar</button>
+        <button type="submit" class="btn btn-primary btn-sm">Crear usuario</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  document.getElementById("form-usuario").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = form.querySelector("button[type=submit]");
+    App.setLoading(button, true, "Creando…");
+    try {
+      await App.api("/api/usuarios", { method: "POST", body: App.formData(form) });
+      App.toast("Usuario creado.");
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      App.toast(error.message, "error");
+      App.setLoading(button, false);
+    }
+  });
+
+  document.querySelectorAll("[data-estado]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!window.confirm("¿" + button.dataset.accion + " a " + button.dataset.nombre + "?")) return;
+      App.setLoading(button, true, "…");
+      try {
+        await App.api("/api/usuarios/" + button.dataset.estado + "/estado", {
+          method: "PATCH", body: { estado: button.dataset.nuevo },
+        });
+        App.toast("Estado actualizado.");
+        setTimeout(() => window.location.reload(), 600);
+      } catch (error) {
+        App.toast(error.message, "error");
+        App.setLoading(button, false);
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}

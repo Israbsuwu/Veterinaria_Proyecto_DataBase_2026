@@ -1,0 +1,214 @@
+{% extends "admin/base.html" %}
+{% block title %}Tablero{% endblock %}
+{% block content %}
+{% set role = current_user.rol %}
+
+<div class="page-head">
+  <div>
+    <h2>Buen día, {{ current_user.nombre.split(' ')[0] }} 👋</h2>
+    <p>Resumen operativo de la clínica · {{ datos.serie_dias[-1].etiqueta if datos.serie_dias else '' }}</p>
+  </div>
+  <div class="page-actions">
+    <a href="{{ url_for('admin.agenda') }}" class="btn btn-secondary btn-sm">📅 Agenda</a>
+    {% if role in [role_admin, role_cashier] %}
+    <a href="{{ url_for('admin.caja') }}" class="btn btn-primary btn-sm">💵 Ir a caja</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card green">
+    <span class="stat-icon">💵</span>
+    <span class="stat-value">{{ datos.ventas_hoy.Total|money }}</span>
+    <span class="stat-label">Ventas de hoy</span>
+    <span class="stat-hint">{{ datos.ventas_hoy.Ventas }} factura(s)</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">📈</span>
+    <span class="stat-value">{{ datos.ventas_mes.Total|money }}</span>
+    <span class="stat-label">Facturado este mes</span>
+    <span class="stat-hint">POS {{ datos.ventas_pos_mes.Total|money }} · Web {{ datos.ventas_web_mes.Total|money }}</span>
+  </div>
+  <div class="stat-card amber">
+    <span class="stat-icon">📅</span>
+    <span class="stat-value">{{ datos.reservas_hoy }}</span>
+    <span class="stat-label">Citas de hoy</span>
+    <span class="stat-hint">{{ datos.reservas_pendientes }} pendiente(s)</span>
+  </div>
+  <div class="stat-card red">
+    <span class="stat-icon">🩺</span>
+    <span class="stat-value">{{ datos.atenciones_espera }}</span>
+    <span class="stat-label">En sala de espera</span>
+    <span class="stat-hint">{{ datos.atenciones_consulta }} en consulta</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">🐾</span>
+    <span class="stat-value">{{ datos.pacientes }}</span>
+    <span class="stat-label">Pacientes registrados</span>
+    <span class="stat-hint">{{ datos.clientes }} clientes · {{ datos.usuarios_web }} cuentas web</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">📦</span>
+    <span class="stat-value">{{ datos.alertas_inventario.stock_bajo|length }}</span>
+    <span class="stat-label">Alertas de stock</span>
+    <span class="stat-hint">{{ datos.alertas_inventario.por_vencer|length }} lote(s) por vencer</span>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h3>Ventas de los últimos 7 días</h3>
+          <p class="card-sub">Facturación diaria de la clínica</p>
+        </div>
+      </div>
+      {% set max_serie = (datos.serie_dias|map(attribute='total')|max) or 1 %}
+      <div class="bar-chart">
+        {% for dia in datos.serie_dias %}
+        <div class="bar" title="{{ dia.etiqueta }}: {{ dia.total|money }}">
+          <span class="bar-value">{{ dia.total|money if dia.total else '—' }}</span>
+          <div class="bar-fill" style="height: {{ ((dia.total / max_serie) * 100)|round|int if dia.total else 2 }}%"></div>
+          <span class="bar-label">{{ dia.etiqueta }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Ventas recientes</h3>
+        <a href="{{ url_for('admin.ventas') }}" class="btn btn-ghost btn-xs">Ver todas</a>
+      </div>
+      {% if datos.ventas_recientes %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Factura</th><th>Cliente</th><th>Origen</th><th>Estado</th><th class="num">Total</th></tr></thead>
+          <tbody>
+            {% for venta in datos.ventas_recientes %}
+            <tr>
+              <td class="mono">{{ venta.Factura }}</td>
+              <td>{{ venta.Cliente }}</td>
+              <td><span class="badge badge-{{ venta.Origen|badge }}">{{ venta.Origen }}</span></td>
+              <td><span class="badge badge-{{ venta.Estado|badge }}">{{ venta.Estado }}</span></td>
+              <td class="num">{{ venta.Total|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🧾</span>Aún no hay ventas registradas.</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Próximas citas</h3>
+        <a href="{{ url_for('admin.agenda') }}" class="btn btn-ghost btn-xs">Abrir agenda</a>
+      </div>
+      {% if datos.proximas_citas %}
+      <div class="table-container">
+        <table class="styled-table">
+          <thead><tr><th>Fecha</th><th>Cliente / Mascota</th><th>Motivo</th><th>Veterinario</th><th>Estado</th></tr></thead>
+          <tbody>
+            {% for cita in datos.proximas_citas %}
+            <tr>
+              <td class="nowrap">{{ cita.FechaIni|fecha_hora }}</td>
+              <td>{{ cita.Cliente }}<br><small class="muted">{{ cita.Mascota or 'Sin mascota' }}</small></td>
+              <td>{{ cita.Motivo or 'Consulta' }}</td>
+              <td>{{ cita.Veterinario or 'Por asignar' }}</td>
+              <td><span class="badge badge-{{ cita.Estado|badge }}">{{ cita.Estado }}</span></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">📅</span>No hay citas próximas.</div>
+      {% endif %}
+    </section>
+  </div>
+
+  <div class="stack">
+    {% if role in [role_admin, role_cashier] %}
+    <section class="card">
+      <div class="card-head">
+        <h3>Estado de caja</h3>
+        <a href="{{ url_for('admin.caja') }}" class="btn btn-ghost btn-xs">Abrir POS</a>
+      </div>
+      {% if datos.sesion_caja %}
+      <div class="info-list">
+        <div class="info-row"><span>Sesión</span><strong>#{{ datos.sesion_caja.IdSesion }} · Abierta</strong></div>
+        <div class="info-row"><span>Monto inicial</span><strong>{{ datos.sesion_caja.MontoIni|money }}</strong></div>
+        <div class="info-row"><span>Ventas de la sesión</span><strong>{{ datos.sesion_caja.total_ventas|money }}</strong></div>
+        <div class="info-row"><span>Efectivo esperado</span><strong>{{ datos.sesion_caja.esperado_efectivo|money }}</strong></div>
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🔒</span>No tienes una sesión de caja abierta.</div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Alertas de inventario</h3>
+        <a href="{{ url_for('admin.inventario') }}" class="btn btn-ghost btn-xs">Inventario</a>
+      </div>
+      {% set a = datos.alertas_inventario %}
+      <div class="info-list">
+        <div class="info-row"><span>Productos bajo stock mínimo</span><strong class="{{ 'text-danger' if a.stock_bajo }}">{{ a.stock_bajo|length }}</strong></div>
+        <div class="info-row"><span>Lotes por vencer (30 días)</span><strong class="{{ 'text-warning' if a.por_vencer }}">{{ a.por_vencer|length }}</strong></div>
+        <div class="info-row"><span>Lotes vencidos con stock</span><strong class="{{ 'text-danger' if a.vencidos }}">{{ a.vencidos|length }}</strong></div>
+        <div class="info-row"><span>Productos sin precio de venta</span><strong class="{{ 'text-warning' if a.sin_concepto }}">{{ a.sin_concepto|length }}</strong></div>
+      </div>
+      {% if a.stock_bajo %}
+      <div class="mt-1">
+        {% for p in a.stock_bajo[:4] %}
+        <span class="chip warn">{{ p.Nombre }}: {{ p.Stock }}/{{ p.StockMin }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Más vendido (30 días)</h3>
+      </div>
+      {% if datos.top_productos %}
+      <div class="info-list">
+        {% for p in datos.top_productos %}
+        <div class="info-row">
+          <span>{{ p.Nombre }}<br><small class="tiny">{{ p.Unidades }} unidad(es) · {{ p.TipoConcepto }}</small></span>
+          <strong>{{ p.Total|money }}</strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">🛍️</span>Sin ventas en el periodo.</div>
+      {% endif %}
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <h3>Últimos movimientos</h3>
+      </div>
+      {% if datos.ultimos_movimientos %}
+      <div class="info-list">
+        {% for m in datos.ultimos_movimientos %}
+        <div class="info-row">
+          <span>{{ m.Producto }}<br><small class="tiny">{{ m.FechaMov|fecha_hora }} · {{ m.Motivo or '—' }}</small></span>
+          <strong class="{{ 'text-success' if m.TipoMov == 'Entrada' else 'text-danger' if m.TipoMov == 'Salida' else 'text-warning' }}">
+            {{ '+' if m.TipoMov == 'Entrada' }}{{ m.Cantidad }}
+          </strong>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state"><span class="emoji">📦</span>Sin movimientos registrados.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

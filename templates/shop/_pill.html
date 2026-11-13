@@ -1,0 +1,2 @@
+{% set _estado = estado or '' %}
+<span class="pill {{ 'green' if _estado in ['Pagada', 'Completada', 'Confirmada', 'Enviada', 'Activo', 'Vigente', 'Abierta'] else ('amber' if _estado in ['Pendiente', 'En Espera', 'Por Vencer', 'En Consulta'] else ('red' if _estado in ['Anulada', 'Cancelada', 'Fallida', 'Agotado', 'Vencido', 'Inactivo'] else 'gray')) }}">{{ _estado or '—' }}</span>

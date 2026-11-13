@@ -1,0 +1,34 @@
+{% extends "shop/base.html" %}
+{% block title %}Ingresar{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">🐾</div>
+    <h1>Bienvenido de nuevo</h1>
+    <p class="sub">Ingresa para comprar y gestionar las citas de tus mascotas.</p>
+
+    <form method="POST" action="{{ url_for('auth.shop_login') }}">
+      <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+      <div class="form-group">
+        <label for="correo">Correo electrónico</label>
+        <input type="email" id="correo" name="correo" required placeholder="cliente@pepe.com" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label for="contrasena">Contraseña</label>
+        <input type="password" id="contrasena" name="contrasena" required placeholder="••••••" autocomplete="current-password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Ingresar a mi cuenta</button>
+    </form>
+
+    <p class="auth-alt">¿No tienes cuenta? <a href="{{ url_for('auth.shop_register') }}">Regístrate gratis</a></p>
+    <p class="auth-alt" style="margin-top:.4rem;">¿Eres del personal? <a href="{{ url_for('auth.login') }}">Acceso interno</a></p>
+
+    <div class="demo-box">
+      <strong>Cuenta de demostración</strong><br>
+      Correo: cliente@pepe.com<br>
+      Contraseña: 123456
+    </div>
+  </div>
+</div>
+{% endblock %}
