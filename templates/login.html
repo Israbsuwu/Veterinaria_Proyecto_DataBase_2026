@@ -258,14 +258,16 @@
                     <svg class="ico"><use href="#i-id"/></svg>
                     <select id="reg-rol" name="rol" required>
                       {% for rol in roles %}
+                        {% set clave = (rol.nombre or '')|lower %}
                         <option value="{{ rol.nombre }}"
+                          data-descripcion="{% if 'admin' in clave %}Control total del sistema: panel, clínica, inventario, proveedores y facturación.{% elif 'caja' in clave or 'recep' in clave %}Caja/recepción: cobro de productos y consultas médicas, comprobantes y facturas.{% elif 'bodega' in clave or 'invent' in clave %}Bodega: manejo de stock disponible, movimientos, productos y comunicación con proveedores.{% elif 'veter' in clave %}Veterinario: consultas médicas, expedientes clínicos, vacunas y citas.{% else %}Acceso según las acciones asignadas a este rol en el sistema.{% endif %}"
                           {% if datos.get('rol', 'Veterinario') == rol.nombre %}selected{% endif %}>
                           {{ rol.nombre }}{% if rol.nombre == 'Administrador' %} — control total del sistema{% endif %}
                         </option>
                       {% endfor %}
                     </select>
                   </div>
-                  <p class="field-hint">El rol define los permisos dentro del sistema clínico.</p>
+                  <p class="field-hint" id="rolAccionesHint">El rol define las acciones y permisos dentro del sistema clínico.</p>
                 </div>
 
                 <div class="full">
@@ -359,6 +361,19 @@
       if (pass && confirmar) {
         pass.addEventListener('input', revisarCoincidencia);
         confirmar.addEventListener('input', revisarCoincidencia);
+      }
+
+      var rolSelect = document.getElementById('reg-rol');
+      var rolHint = document.getElementById('rolAccionesHint');
+      function actualizarRolHint() {
+        if (!rolSelect || !rolHint) { return; }
+        var opt = rolSelect.options[rolSelect.selectedIndex];
+        var desc = opt && opt.getAttribute('data-descripcion');
+        rolHint.textContent = desc || 'El rol define las acciones y permisos dentro del sistema clínico.';
+      }
+      if (rolSelect) {
+        rolSelect.addEventListener('change', actualizarRolHint);
+        actualizarRolHint();
       }
 
       // Evitar doble envío.

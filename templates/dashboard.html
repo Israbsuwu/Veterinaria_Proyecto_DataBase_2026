@@ -57,60 +57,78 @@
       <nav class="side-nav" aria-label="Secciones del panel">
         <p class="nav-label">Operación</p>
 
+        {% if 'resumen' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'resumen' %}active{% endif %}" data-view="resumen">
           <span class="nav-ico"><svg class="ico"><use href="#i-grid"/></svg></span>
           <span class="nav-text"><strong>Resumen</strong><small>Estado del negocio</small></span>
         </button>
+        {% endif %}
 
+        {% if 'inventario' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'inventario' %}active{% endif %}" data-view="inventario">
           <span class="nav-ico"><svg class="ico"><use href="#i-box"/></svg></span>
           <span class="nav-text"><strong>Inventario</strong><small>Productos y stock</small></span>
           <span class="nav-count">{{ kpis.productos }}</span>
         </button>
+        {% endif %}
 
+        {% if 'productos' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'productos' %}active{% endif %}" data-view="productos">
           <span class="nav-ico"><svg class="ico"><use href="#i-store"/></svg></span>
           <span class="nav-text"><strong>Productos</strong><small>Tienda e imágenes</small></span>
           <span class="nav-count">{{ kpis.productos }}</span>
         </button>
+        {% endif %}
 
+        {% if 'vencimientos' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'vencimientos' %}active{% endif %}" data-view="vencimientos">
           <span class="nav-ico"><svg class="ico"><use href="#i-hourglass"/></svg></span>
           <span class="nav-text"><strong>Vencimientos</strong><small>Lotes y caducidad</small></span>
           <span class="nav-count">{{ kpis.lotes_365 }}</span>
         </button>
+        {% endif %}
 
+        {% if 'citas' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'citas' %}active{% endif %}" data-view="citas">
           <span class="nav-ico"><svg class="ico"><use href="#i-calendar"/></svg></span>
           <span class="nav-text"><strong>Citas médicas</strong><small>Agenda clínica</small></span>
           <span class="nav-count">{{ kpis.citas_programadas }}</span>
         </button>
+        {% endif %}
 
         <p class="nav-label">Administración</p>
 
+        {% if 'proveedores' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'proveedores' %}active{% endif %}" data-view="proveedores">
           <span class="nav-ico"><svg class="ico"><use href="#i-truck"/></svg></span>
           <span class="nav-text"><strong>Proveedores</strong><small>Compras y contacto</small></span>
           <span class="nav-count">{{ kpis.proveedores }}</span>
         </button>
+        {% endif %}
 
+        {% if 'facturas' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'facturas' %}active{% endif %}" data-view="facturas">
           <span class="nav-ico"><svg class="ico"><use href="#i-receipt"/></svg></span>
           <span class="nav-text"><strong>Facturas</strong><small>Ventas y cobros</small></span>
           <span class="nav-count">{{ kpis.facturas }}</span>
         </button>
+        {% endif %}
 
+        {% if 'clientes' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'clientes' %}active{% endif %}" data-view="clientes">
           <span class="nav-ico"><svg class="ico"><use href="#i-users"/></svg></span>
           <span class="nav-text"><strong>Clientes</strong><small>Dueños y mascotas</small></span>
           <span class="nav-count">{{ kpis.clientes }}</span>
         </button>
+        {% endif %}
 
+        {% if 'equipo' in secciones_permitidas %}
         <button type="button" class="nav-item {% if vista_inicial == 'equipo' %}active{% endif %}" data-view="equipo">
           <span class="nav-ico"><svg class="ico"><use href="#i-badge"/></svg></span>
           <span class="nav-text"><strong>Equipo</strong><small>Personal y roles</small></span>
           <span class="nav-count">{{ kpis.personal }}</span>
         </button>
+        {% endif %}
       </nav>
 
       <div class="side-foot">
@@ -188,6 +206,7 @@
         <!-- ============================================================
              VISTA: RESUMEN
              ============================================================ -->
+        {% if 'resumen' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'resumen' %}active{% endif %}" id="view-resumen"
                  data-view="resumen" data-title="Resumen">
           <div class="view-head">
@@ -437,10 +456,12 @@
             </section>
           </div>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: INVENTARIO
              ============================================================ -->
+        {% if 'inventario' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'inventario' %}active{% endif %}" id="view-inventario"
                  data-view="inventario" data-title="Inventario">
           <div class="view-head">
@@ -526,10 +547,12 @@
             <p class="empty-state" id="vacioInventario" hidden>No hay productos que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: PRODUCTOS (TIENDA)
              ============================================================ -->
+        {% if 'productos' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'productos' %}active{% endif %}" id="view-productos"
                  data-view="productos" data-title="Productos">
           <div class="view-head">
@@ -539,9 +562,9 @@
               <p>Administra lo que se muestra en la tienda: características de la base, precio en córdobas e imagen de referencia. Los productos nuevos aparecen de inmediato en el catálogo.</p>
             </div>
             <div class="view-actions">
-              <button type="button" class="btn-primary" data-open="modalProducto">
+              {% if puede("producto_gestionar") %}<button type="button" class="btn-primary" data-open="modalProducto">
                 <svg class="ico"><use href="#i-plus"/></svg> Agregar producto
-              </button>
+              </button>{% endif %}
             </div>
           </div>
 
@@ -581,12 +604,12 @@
                     </div>
                     <div class="product-admin-foot">
                       <span class="mono">#{{ '%03d'|format(producto.id) }} · {{ producto.unidad }}</span>
-                      <button type="button" class="mini-btn"
+                      {% if puede("producto_gestionar") %}<button type="button" class="mini-btn"
                               data-imagen="{{ producto.id }}"
                               data-nombre="{{ producto.nombre }}"
                               data-url="{{ url_for('dashboard_producto_imagen', id_producto=producto.id) }}">
                         <svg class="ico"><use href="#i-eye"/></svg> Imagen
-                      </button>
+                      </button>{% endif %}
                     </div>
                   </div>
                 </article>
@@ -595,10 +618,12 @@
             <p class="empty-state" id="vacioProductos" hidden>No hay productos que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: VENCIMIENTOS
              ============================================================ -->
+        {% if 'vencimientos' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'vencimientos' %}active{% endif %}" id="view-vencimientos"
                  data-view="vencimientos" data-title="Vencimientos">
           <div class="view-head">
@@ -678,10 +703,12 @@
             <p class="empty-state" id="vacioVencimientos" hidden>No hay lotes que coincidan con ese filtro.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: CITAS
              ============================================================ -->
+        {% if 'citas' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'citas' %}active{% endif %}" id="view-citas"
                  data-view="citas" data-title="Citas médicas">
           <div class="view-head">
@@ -765,10 +792,12 @@
             <p class="empty-state" id="vacioCitas" hidden>No hay citas con ese filtro.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: PROVEEDORES
              ============================================================ -->
+        {% if 'proveedores' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'proveedores' %}active{% endif %}" id="view-proveedores"
                  data-view="proveedores" data-title="Proveedores">
           <div class="view-head">
@@ -778,9 +807,9 @@
               <p>Contactos, compras acumuladas y último movimiento de cada proveedor. Los nuevos se registran como activos.</p>
             </div>
             <div class="view-actions">
-              <button type="button" class="btn-primary" data-open="modalProveedor">
+              {% if puede("proveedor_gestionar") %}<button type="button" class="btn-primary" data-open="modalProveedor">
                 <svg class="ico"><use href="#i-plus"/></svg> Nuevo proveedor
-              </button>
+              </button>{% endif %}
             </div>
           </div>
 
@@ -860,10 +889,12 @@
             {% endif %}
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: FACTURAS
              ============================================================ -->
+        {% if 'facturas' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'facturas' %}active{% endif %}" id="view-facturas"
                  data-view="facturas" data-title="Facturas">
           <div class="view-head">
@@ -937,10 +968,12 @@
             <p class="empty-state" id="vacioFacturas" hidden>No hay facturas que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: CLIENTES
              ============================================================ -->
+        {% if 'clientes' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'clientes' %}active{% endif %}" id="view-clientes"
                  data-view="clientes" data-title="Clientes">
           <div class="view-head">
@@ -998,10 +1031,12 @@
             <p class="empty-state" id="vacioClientes" hidden>No hay clientes que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
         <!-- ============================================================
              VISTA: EQUIPO
              ============================================================ -->
+        {% if 'equipo' in secciones_permitidas %}
         <section class="view {% if vista_inicial == 'equipo' %}active{% endif %}" id="view-equipo"
                  data-view="equipo" data-title="Equipo">
           <div class="view-head">
@@ -1057,6 +1092,7 @@
             <p class="empty-state" id="vacioEquipo" hidden>No hay cuentas que coincidan con la búsqueda.</p>
           </section>
         </section>
+        {% endif %}
 
       </main>
     </div>

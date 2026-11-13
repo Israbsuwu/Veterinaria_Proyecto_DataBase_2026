@@ -324,9 +324,124 @@ def es_personal():
     return session.get('user_tipo') == 'personal' and 'user_id' in session
 
 
+def _normalizar_rol(nombre):
+    texto = str(nombre or '').strip().lower()
+    for acento, plano in (
+        ('á', 'a'), ('é', 'e'), ('í', 'i'), ('ó', 'o'), ('ú', 'u'),
+        ('ü', 'u'), ('ñ', 'n'),
+    ):
+        texto = texto.replace(acento, plano)
+    return ' '.join(texto.split())
+
+
+ACCIONES_POR_ROL = {
+    'administrador': {
+        'descripcion': 'Control total: gestiona operación, clínica, inventario, proveedores, facturas y equipo.',
+        'permisos': {'*'},
+    },
+    'caja': {
+        'descripcion': 'Caja: realiza cobros de productos y consultas, genera comprobantes y consulta facturas.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_facturas', 'seccion_clientes',
+            'factura_ver', 'comprobante_tienda', 'portal_clinico',
+            'cliente_crear', 'mascota_crear', 'expediente_alergia', 'preventivo_gestionar',
+        },
+    },
+    'recepcion': {
+        'descripcion': 'Recepción: atiende cobros, clientes, citas y apoyo de consultas médicas.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_facturas', 'seccion_clientes', 'seccion_citas',
+            'factura_ver', 'comprobante_tienda', 'cita_estado', 'portal_clinico',
+            'cliente_crear', 'mascota_crear', 'expediente_alergia', 'preventivo_gestionar',
+        },
+    },
+    'recepcionista': {
+        'descripcion': 'Recepción: atiende cobros, clientes, citas y apoyo de consultas médicas.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_facturas', 'seccion_clientes', 'seccion_citas',
+            'factura_ver', 'comprobante_tienda', 'cita_estado', 'portal_clinico',
+            'cliente_crear', 'mascota_crear', 'expediente_alergia', 'preventivo_gestionar',
+        },
+    },
+    'bodega': {
+        'descripcion': 'Bodega: maneja stock disponible, movimientos, productos y se comunica con proveedores.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_inventario', 'seccion_productos',
+            'seccion_vencimientos', 'seccion_proveedores',
+            'producto_gestionar', 'movimiento_gestionar', 'proveedor_gestionar',
+        },
+    },
+    'inventario': {
+        'descripcion': 'Inventario: maneja stock disponible, movimientos, productos y proveedores.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_inventario', 'seccion_productos',
+            'seccion_vencimientos', 'seccion_proveedores',
+            'producto_gestionar', 'movimiento_gestionar', 'proveedor_gestionar',
+        },
+    },
+    'veterinario': {
+        'descripcion': 'Veterinario: atiende consultas médicas, expedientes clínicos, vacunas y seguimiento de citas.',
+        'permisos': {
+            'dashboard', 'seccion_resumen', 'seccion_citas', 'seccion_clientes',
+            'cita_estado', 'portal_clinico',
+            'cliente_crear', 'mascota_crear', 'expediente_alergia', 'preventivo_gestionar',
+        },
+    },
+}
+
+PERMISOS_PERSONAL_BASE = {'dashboard', 'seccion_resumen'}
+
+
+def config_rol(nombre=None):
+    """Devuelve la configuración de acciones/permisos para un rol de personal."""
+    rol = _normalizar_rol(nombre if nombre is not None else session.get('user_rol'))
+    return ACCIONES_POR_ROL.get(rol)
+
+
+def permisos_usuario(nombre=None):
+    """Conjunto de permisos efectivos del rol actual (o del rol indicado)."""
+    if session.get('user_tipo') == 'cliente':
+        return set()
+    cfg = config_rol(nombre)
+    if not cfg:
+        # Rol sin configuración explícita: acceso base de lectura al panel.
+        return set(PERMISOS_PERSONAL_BASE)
+    permisos = set(cfg.get('permisos') or set())
+    if '*' in permisos:
+        return {'*'}
+    return permisos
+
+
+def tiene_permiso(permiso, rol=None):
+    if session.get('user_tipo') == 'cliente':
+        return False
+    if not es_personal():
+        return False
+    permisos = permisos_usuario(rol)
+    return '*' in permisos or permiso in permisos
+
+
+def requiere_permiso(permiso, vista=None):
+    """Valida permiso de personal; responde según el tipo de petición."""
+    if not es_personal():
+        if request.path.startswith('/api/') or request.is_json or request.accept_mimetypes.best == 'application/json':
+            return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+        return redirect(url_for('login'))
+    if tiene_permiso(permiso):
+        return None
+    mensaje = 'Tu rol no tiene permiso para realizar esta acción.'
+    if request.path.startswith('/api/') or request.is_json or request.accept_mimetypes.best == 'application/json':
+        return jsonify({'success': False, 'error': mensaje}), 403
+    flash(mensaje, 'error')
+    if vista:
+        return redirect(url_for('dashboard', vista=vista))
+    return redirect(url_for('dashboard'))
+
+
 def datos_usuario():
     nombre = session.get('user_nombre', '') or ''
     apellido = session.get('user_apellido', '') or ''
+    permisos = sorted(p for p in permisos_usuario() if p != '*')
     return {
         'id': session.get('user_id'),
         'nombre': nombre,
@@ -334,6 +449,8 @@ def datos_usuario():
         'correo': session.get('user_correo', '') or '',
         'rol': session.get('user_rol', 'Personal') or 'Personal',
         'iniciales': (nombre[:1] + apellido[:1]).upper() or 'VP',
+        'permisos': permisos,
+        'es_admin': tiene_permiso('*'),
     }
 
 
@@ -790,6 +907,9 @@ def portal_clinico():
         if session.get('user_tipo') == 'cliente':
             return redirect(url_for('index'))
         return redirect(url_for('login'))
+    if not tiene_permiso('portal_clinico'):
+        flash('Tu rol no tiene permiso para acceder al portal clínico.', 'error')
+        return redirect(url_for('dashboard'))
 
     clientes, mascotas = [], []
     conn = None
@@ -854,6 +974,21 @@ def dashboard():
         if session.get('user_tipo') == 'cliente':
             return redirect(url_for('index'))
         return redirect(url_for('login'))
+    if not tiene_permiso('dashboard'):
+        flash('Tu rol no tiene permiso para acceder al panel de gestión.', 'error')
+        return redirect(url_for('index'))
+
+    secciones = [
+        vista for vista in (
+            'resumen', 'inventario', 'productos', 'vencimientos', 'citas',
+            'proveedores', 'facturas', 'clientes', 'equipo',
+        ) if tiene_permiso(f'seccion_{vista}')
+    ]
+    if not secciones:
+        secciones = ['resumen']
+    vista_inicial = limpiar(request.args.get('vista')).lower()
+    if vista_inicial not in secciones:
+        vista_inicial = secciones[0]
 
     conn = None
     try:
@@ -867,14 +1002,17 @@ def dashboard():
         if conn is not None:
             conn.close()
 
-    return render_template('dashboard.html', usuario=datos_usuario(),
-                           vista_inicial='resumen', **datos)
+    return render_template(
+        'dashboard.html', usuario=datos_usuario(),
+        vista_inicial=vista_inicial, secciones_permitidas=secciones,
+        puede=tiene_permiso, **datos)
 
 
 @app.route('/dashboard/proveedor', methods=['POST'])
 def dashboard_proveedor():
-    if not es_personal():
-        return redirect(url_for('login'))
+    denegado = requiere_permiso('proveedor_gestionar', vista='proveedores')
+    if denegado:
+        return denegado
 
     datos = {
         'nombre': limpiar(request.form.get('nombre')),
@@ -918,8 +1056,9 @@ def dashboard_proveedor():
 
 @app.route('/dashboard/producto', methods=['POST'])
 def dashboard_producto():
-    if not es_personal():
-        return redirect(url_for('login'))
+    denegado = requiere_permiso('producto_gestionar', vista='productos')
+    if denegado:
+        return denegado
 
     datos = {
         'nombre': limpiar(request.form.get('nombre')),
@@ -976,8 +1115,9 @@ def dashboard_producto():
 
 @app.route('/dashboard/producto/<int:id_producto>/imagen', methods=['POST'])
 def dashboard_producto_imagen(id_producto):
-    if not es_personal():
-        return redirect(url_for('login'))
+    denegado = requiere_permiso('producto_gestionar', vista='productos')
+    if denegado:
+        return denegado
 
     archivo = request.files.get('imagen')
     if archivo is None or not archivo.filename:
@@ -1009,8 +1149,9 @@ def dashboard_producto_imagen(id_producto):
 
 @app.route('/dashboard/movimiento', methods=['POST'])
 def dashboard_movimiento():
-    if not es_personal():
-        return redirect(url_for('login'))
+    denegado = requiere_permiso('movimiento_gestionar', vista='vencimientos')
+    if denegado:
+        return denegado
 
     try:
         id_lote = int(request.form.get('id_lote') or 0)
@@ -1048,8 +1189,9 @@ def dashboard_movimiento():
 
 @app.route('/dashboard/cita/<int:id_reserva>/estado', methods=['POST'])
 def dashboard_cita_estado(id_reserva):
-    if not es_personal():
-        return jsonify({'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('cita_estado')
+    if denegado:
+        return denegado
 
     datos = request.get_json(silent=True) or request.form
     estado = limpiar(datos.get('estado')).upper()
@@ -1077,8 +1219,9 @@ def dashboard_cita_estado(id_reserva):
 
 @app.route('/api/factura/<int:id_venta>')
 def api_factura(id_venta):
-    if not es_personal():
-        return jsonify({'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('factura_ver')
+    if denegado:
+        return denegado
 
     conn = None
     try:
@@ -1098,8 +1241,9 @@ def api_factura(id_venta):
 # Rutas API (Backend para procesar formularios)
 @app.route('/api/cliente', methods=['POST'])
 def crear_cliente():
-    if not es_personal():
-        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('cliente_crear')
+    if denegado:
+        return denegado
 
     datos = request.get_json(silent=True) or {}
     conn = None
@@ -1152,8 +1296,9 @@ def crear_cliente():
 
 @app.route('/api/mascota', methods=['POST'])
 def crear_mascota():
-    if not es_personal():
-        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('mascota_crear')
+    if denegado:
+        return denegado
 
     datos = request.get_json(silent=True) or {}
     conn = None
@@ -1226,8 +1371,9 @@ def crear_mascota():
 @app.route('/api/expediente/alergia', methods=['POST'])
 def guardar_analisis_alergia():
     """Guarda el análisis de alergia en el expediente usando columnas existentes."""
-    if not es_personal():
-        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('expediente_alergia')
+    if denegado:
+        return denegado
 
     datos = request.get_json(silent=True) or {}
     id_mascota = datos.get('id_mascota')
@@ -1303,8 +1449,9 @@ def guardar_analisis_alergia():
 @app.route('/api/mascota/<int:id_mascota>/preventivos')
 def api_preventivos_mascota(id_mascota):
     """Lista registros preventivos (carta de vacunas) de una mascota."""
-    if not es_personal():
-        return jsonify({'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('preventivo_gestionar')
+    if denegado:
+        return denegado
 
     conn = None
     try:
@@ -1343,8 +1490,9 @@ def api_preventivos_mascota(id_mascota):
 @app.route('/api/preventivo', methods=['POST'])
 def crear_preventivo():
     """Registra un procedimiento preventivo/vacunación en el expediente (carta de vacunas)."""
-    if not es_personal():
-        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+    denegado = requiere_permiso('preventivo_gestionar')
+    if denegado:
+        return denegado
 
     datos = request.get_json(silent=True) or {}
     try:
