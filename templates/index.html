@@ -235,7 +235,7 @@
   </footer>
 
   <!-- ============================== CARRITO ============================== -->
-  <div class="cart-backdrop" id="cartBackdrop" onclick="cerrarCarrito()"></div>
+  <div class="cart-backdrop" id="cartBackdrop" onclick="document.getElementById('cartDrawer').classList.remove('active');document.getElementById('cartBackdrop').classList.remove('active');document.body.classList.remove('no-scroll');"></div>
 
   <aside class="cart-drawer" id="cartDrawer" aria-label="Carrito de compras" aria-hidden="true">
     <header class="cart-head">
@@ -243,7 +243,7 @@
         <h3>Mi carrito</h3>
         <small id="cartResumen">0 productos</small>
       </div>
-      <button type="button" class="cart-close" onclick="cerrarCarrito()" aria-label="Cerrar carrito">✕</button>
+      <button type="button" class="cart-close" onclick="document.getElementById('cartDrawer').classList.remove('active');document.getElementById('cartBackdrop').classList.remove('active');document.body.classList.remove('no-scroll');" aria-label="Cerrar carrito">✕</button>
     </header>
 
     <div class="cart-items" id="cartItemsList"></div>
