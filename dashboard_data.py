@@ -90,7 +90,7 @@ def _contexto(cursor):
         nombre_expr = 'P.Nombre'
         join_concepto = f"""
             OUTER APPLY (
-                SELECT TOP 1 CF.{precio} AS Precio
+                SELECT TOP 1 CF.{precio} AS Precio, CF.Descripcion AS Descripcion
                 FROM CONCEPTO_FACTURABLE CF
                 WHERE UPPER(CF.TipoConcepto) = 'PRODUCTO'
                   AND CF.Nombre = P.Nombre
