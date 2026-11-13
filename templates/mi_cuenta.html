@@ -85,8 +85,10 @@
                     {% if m.raza %} · {{ m.raza }}{% endif %}
                     {% if m.sexo %} · {{ m.sexo }}{% endif %}
                   </span>
-                  {% if m.alergias %}
-                    <em>Alergias: {{ m.alergias }}</em>
+                  {% if m.condiciones %}
+                    <em>Condiciones / análisis: {{ m.condiciones }}</em>
+                  {% elif m.observaciones %}
+                    <em>Observaciones: {{ m.observaciones }}</em>
                   {% endif %}
                 </div>
               </li>

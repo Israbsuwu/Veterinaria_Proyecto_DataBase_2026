@@ -1005,4 +1005,66 @@ def crear_producto(cursor, datos):
             VALUES (?, {', '.join(['?'] * len(campos_prod))})
         """, [id_producto] + parametros_prod)
 
+    # Registro opcional de costo de compra (oferta del proveedor) usando tablas existentes.
+    costo_raw = datos.get('costo_compra')
+    id_proveedor_raw = datos.get('id_proveedor')
+    id_usuario = datos.get('id_usuario')
+    costo_compra = None
+    if costo_raw not in (None, ''):
+        try:
+            costo_compra = float(costo_raw)
+        except (TypeError, ValueError):
+            raise ValueError('El costo de compra no es válido.')
+        if costo_compra < 0:
+            raise ValueError('El costo de compra no puede ser negativo.')
+
+    if costo_compra is not None and costo_compra > 0 and id_proveedor_raw:
+        try:
+            id_proveedor = int(id_proveedor_raw)
+        except (TypeError, ValueError):
+            raise ValueError('El proveedor seleccionado no es válido.')
+
+        cursor.execute("SELECT COUNT(*) FROM PROVEEDOR WHERE IdProveedor = ?", (id_proveedor,))
+        if not cursor.fetchone()[0]:
+            raise ValueError('El proveedor seleccionado no existe.')
+        if not id_usuario:
+            raise ValueError('No se pudo identificar el usuario para registrar el costo de compra.')
+
+        compra = _columnas(cursor, 'COMPRA')
+        id_compra_col = _col(compra, 'IdCompra', default='IdCompra')
+        if _es_identidad(cursor, 'COMPRA', id_compra_col):
+            # Variante poco común; se intenta OUTPUT.
+            cursor.execute(f"""
+                INSERT INTO COMPRA (IdProveedor, IdUsuario, FechaCompra, NumeroDocumento, Estado)
+                OUTPUT INSERTED.{id_compra_col}
+                VALUES (?, ?, ?, ?, ?)
+            """, (id_proveedor, id_usuario, datetime.now(),
+                  f'OFERTA-P{id_producto}-{int(datetime.now().timestamp())}', 'RECIBIDA'))
+            id_compra = int(cursor.fetchone()[0])
+        else:
+            cursor.execute(f"SELECT ISNULL(MAX({id_compra_col}), 0) + 1 FROM COMPRA")
+            id_compra = int(cursor.fetchone()[0])
+            cursor.execute(f"""
+                INSERT INTO COMPRA ({id_compra_col}, IdProveedor, IdUsuario, FechaCompra, NumeroDocumento, Estado)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (id_compra, id_proveedor, id_usuario, datetime.now(),
+                  f'OFERTA-P{id_producto}', 'RECIBIDA'))
+
+        detalle = _columnas(cursor, 'DETALLE_COMPRA')
+        id_detalle_col = _col(detalle, 'IdDetalleCompra', default='IdDetalleCompra')
+        if _es_identidad(cursor, 'DETALLE_COMPRA', id_detalle_col):
+            cursor.execute(f"""
+                INSERT INTO DETALLE_COMPRA (IdCompra, IdProducto, Cantidad, CostoUnitario)
+                OUTPUT INSERTED.{id_detalle_col}
+                VALUES (?, ?, ?, ?)
+            """, (id_compra, id_producto, 1, costo_compra))
+            id_detalle = int(cursor.fetchone()[0])
+        else:
+            cursor.execute(f"SELECT ISNULL(MAX({id_detalle_col}), 0) + 1 FROM DETALLE_COMPRA")
+            id_detalle = int(cursor.fetchone()[0])
+            cursor.execute(f"""
+                INSERT INTO DETALLE_COMPRA ({id_detalle_col}, IdCompra, IdProducto, Cantidad, CostoUnitario)
+                VALUES (?, ?, ?, ?, ?)
+            """, (id_detalle, id_compra, id_producto, 1, costo_compra))
+
     return {'producto_id': id_producto, 'concepto_id': id_concepto, 'nombre': nombre}

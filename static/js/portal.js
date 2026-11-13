@@ -123,17 +123,19 @@
     const nombreEl = $('#expNombreMascota');
     const detallesEl = $('#expDetallesMascota');
     const duenoEl = $('#expDuenoMascota');
-    const badge = $('#expAlergiaMascota');
+    const badge = $('#expEstadoAlergia');
     const timeline = $('#timelineConsultas');
+    const animal = $('#alergiaAnimal');
 
     if (nombreEl) nombreEl.textContent = 'Sin pacientes registrados';
     if (detallesEl) detallesEl.textContent = 'Registra un propietario y una mascota para comenzar.';
     if (duenoEl) duenoEl.textContent = '';
+    if (animal) animal.value = '';
     if (badge) {
-      badge.textContent = 'Sin alergias registradas';
-      badge.style.background = '#edf6df';
-      badge.style.color = '#41681c';
-      badge.style.borderColor = '#c7dba6';
+      badge.textContent = 'Análisis de alergia pendiente';
+      badge.style.background = '#fdf3dc';
+      badge.style.color = '#875810';
+      badge.style.borderColor = '#e8cc93';
     }
     if (timeline) {
       timeline.innerHTML = '<p style="color: var(--muted); font-size: 0.82rem;">Todavía no hay atenciones registradas.</p>';
@@ -150,13 +152,18 @@
     const nombreEl = $('#expNombreMascota');
     const detallesEl = $('#expDetallesMascota');
     const duenoEl = $('#expDuenoMascota');
-    const badge = $('#expAlergiaMascota');
+    const badge = $('#expEstadoAlergia');
     const timeline = $('#timelineConsultas');
+    const animal = $('#alergiaAnimal');
 
     if (nombreEl) nombreEl.textContent = mascota.nombre;
     if (detallesEl) {
-      detallesEl.textContent = `${mascota.especie || '—'} • Raza: ${mascota.raza || '—'} • Sexo: ${mascota.sexo || '—'}`;
+      const partes = [mascota.especie || '—', `Raza: ${mascota.raza || '—'}`, `Sexo: ${mascota.sexo || '—'}`];
+      if (mascota.color) partes.push(`Color: ${mascota.color}`);
+      if (mascota.fecha_nacimiento) partes.push(`Nacimiento: ${mascota.fecha_nacimiento}`);
+      detallesEl.textContent = partes.join(' • ');
     }
+    if (animal) animal.value = `${mascota.nombre || ''} (${mascota.especie || 'Animal'})`.trim();
 
     const dueno = propietarios.find((p) => String(p.id) === String(mascota.duenoId));
     if (duenoEl) {
@@ -166,16 +173,17 @@
     }
 
     if (badge) {
-      if (mascota.alergias && mascota.alergias.trim() !== '') {
-        badge.textContent = `⚠️ Alergia: ${mascota.alergias}`;
-        badge.style.background = '#fbeae5';
-        badge.style.color = '#8c3525';
-        badge.style.borderColor = '#e8bdb1';
-      } else {
-        badge.textContent = 'Sin alergias registradas';
+      const analisis = mascota.analisis_alergia || '';
+      if (analisis && analisis.trim() !== '') {
+        badge.textContent = 'Análisis de alergia registrado';
         badge.style.background = '#edf6df';
         badge.style.color = '#41681c';
         badge.style.borderColor = '#c7dba6';
+      } else {
+        badge.textContent = 'Análisis de alergia pendiente';
+        badge.style.background = '#fdf3dc';
+        badge.style.color = '#875810';
+        badge.style.borderColor = '#e8cc93';
       }
     }
 
@@ -197,6 +205,8 @@
         nombre: $('#propNombre').value.trim(),
         apellido: $('#propApellido').value.trim(),
         tel: $('#propTel').value.trim(),
+        correo: ($('#propCorreo') ? $('#propCorreo').value.trim() : ''),
+        direccion: ($('#propDireccion') ? $('#propDireccion').value.trim() : ''),
       };
 
       try {
@@ -232,7 +242,9 @@
         especie: $('#mascotaEspecie').value,
         raza: $('#mascotaRaza').value.trim() || 'Criollo',
         sexo: $('#mascotaSexo').value,
-        alergias: $('#mascotaAlergias').value.trim(),
+        color: ($('#mascotaColor') ? $('#mascotaColor').value.trim() : ''),
+        fecha_nacimiento: ($('#mascotaNacimiento') ? $('#mascotaNacimiento').value : ''),
+        senas: ($('#mascotaSenas') ? $('#mascotaSenas').value.trim() : ''),
       };
 
       try {
@@ -266,6 +278,45 @@
     formNuevaConsulta.addEventListener('submit', (evento) => {
       evento.preventDefault();
       avisar('La consulta médica y el descuento de vacuna se conectarán en la siguiente fase.');
+    });
+  }
+
+  const formAnalisisAlergia = $('#formAnalisisAlergia');
+  if (formAnalisisAlergia) {
+    formAnalisisAlergia.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const sel = $('#selectExpediente');
+      const idMascota = sel ? sel.value : '';
+      const mascota = mascotas.find((m) => String(m.id) === String(idMascota));
+      if (!mascota) {
+        avisar('Selecciona un paciente para registrar el análisis de alergia.', 'error');
+        return;
+      }
+      const datos = {
+        id_mascota: Number(idMascota),
+        tipo_examen: ($('#alergiaExamen') ? $('#alergiaExamen').value : ''),
+        tipo_alergia: ($('#alergiaTipo') ? $('#alergiaTipo').value : ''),
+        animal: ($('#alergiaAnimal') ? $('#alergiaAnimal').value : ''),
+        observaciones: ($('#alergiaObservaciones') ? $('#alergiaObservaciones').value.trim() : ''),
+      };
+      try {
+        const respuesta = await fetch('/api/expediente/alergia', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos),
+        });
+        const resultado = await respuesta.json();
+        if (resultado.success) {
+          mascota.analisis_alergia = resultado.resumen || 'registrado';
+          mascota.condiciones = resultado.condiciones || '';
+          avisar('Análisis de alergia guardado en el expediente.');
+          window.renderExpedienteSeleccionado(idMascota);
+        } else {
+          avisar(resultado.error || 'No se pudo guardar el análisis.', 'error');
+        }
+      } catch (error) {
+        avisar('No se pudo conectar con el servidor.', 'error');
+      }
     });
   }
 
@@ -309,7 +360,8 @@
     $('#editDuenoTel').value = dueno.tel || '';
     $('#editMascotaNombre').value = mascota.nombre || '';
     $('#editMascotaEspecie').value = mascota.especie || 'Canino';
-    $('#editMascotaAlergias').value = mascota.alergias || '';
+    const senas = $('#editMascotaSenas');
+    if (senas) senas.value = mascota.senas || mascota.condiciones || '';
 
     mostrarModal('modalEditarPaciente');
   };

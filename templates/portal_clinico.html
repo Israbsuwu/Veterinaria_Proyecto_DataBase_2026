@@ -84,9 +84,19 @@
                   <input type="text" id="propApellido" placeholder="Garay" required>
                 </div>
               </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="propTel">Teléfono</label>
+                  <input type="tel" id="propTel" placeholder="8888-8888" required>
+                </div>
+                <div class="form-field">
+                  <label for="propCorreo">Correo</label>
+                  <input type="email" id="propCorreo" placeholder="cliente@correo.com">
+                </div>
+              </div>
               <div class="form-field">
-                <label for="propTel">Teléfono</label>
-                <input type="tel" id="propTel" placeholder="8888-8888" required>
+                <label for="propDireccion">Dirección</label>
+                <input type="text" id="propDireccion" placeholder="Barrio, calle, referencia…">
               </div>
               <button type="submit" class="btn-green-solid">Guardar propietario</button>
             </form>
@@ -105,10 +115,11 @@
                   <input type="text" id="mascotaNombre" placeholder="Jerry" required>
                 </div>
                 <div class="form-field">
-                  <label for="mascotaEspecie">Especie</label>
+                  <label for="mascotaEspecie">Especie / animal</label>
                   <select id="mascotaEspecie">
                     <option value="Canino">Canino</option>
                     <option value="Felino">Felino</option>
+                    <option value="Ave">Ave</option>
                     <option value="Otro">Otro</option>
                   </select>
                 </div>
@@ -126,10 +137,21 @@
                   </select>
                 </div>
               </div>
-              <div class="form-field">
-                <label for="mascotaAlergias">Alergias conocidas</label>
-                <input type="text" id="mascotaAlergias" placeholder="Ej. Alérgico a penicilina">
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="mascotaColor">Color</label>
+                  <input type="text" id="mascotaColor" placeholder="Ej. Café con blanco">
+                </div>
+                <div class="form-field">
+                  <label for="mascotaNacimiento">Fecha de nacimiento</label>
+                  <input type="date" id="mascotaNacimiento">
+                </div>
               </div>
+              <div class="form-field">
+                <label for="mascotaSenas">Señas particulares</label>
+                <input type="text" id="mascotaSenas" placeholder="Marcas, comportamiento, características distintivas…">
+              </div>
+              <p class="form-note">Las alergias no se registran por suposición: el veterinario realiza el análisis en el expediente clínico.</p>
               <button type="submit" class="btn-green-solid">Registrar mascota y expediente</button>
             </form>
           </div>
@@ -152,8 +174,51 @@
             <p id="expDuenoMascota" style="font-size: 0.82rem; color: var(--forest-mid); font-weight: 700;">Dueño: —</p>
           </div>
           <div>
-            <span class="badge-allergy" id="expAlergiaMascota">Sin alergias registradas</span>
+            <span class="badge-allergy" id="expEstadoAlergia">Análisis de alergia pendiente</span>
           </div>
+        </div>
+
+        <div class="card-clean-form" style="margin-bottom: 1rem;">
+          <h3>🔬 Análisis de alergia (expediente)</h3>
+          <p style="font-size: 0.72rem; color: var(--muted); margin-bottom: 0.7rem;">El veterinario registra el análisis según el examen realizado. No se asumen alergias conocidas.</p>
+          <form id="formAnalisisAlergia">
+            <div class="form-field-row">
+              <div class="form-field">
+                <label for="alergiaExamen">Tipo de examen de alergia</label>
+                <select id="alergiaExamen">
+                  <option value="">Seleccionar examen…</option>
+                  <option value="Prueba intradérmica">Prueba intradérmica</option>
+                  <option value="Prueba sérica (IgE)">Prueba sérica (IgE)</option>
+                  <option value="Dieta de eliminación">Dieta de eliminación</option>
+                  <option value="Prueba de parche">Prueba de parche</option>
+                  <option value="Evaluación clínica">Evaluación clínica</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="alergiaTipo">Tipo de alergia</label>
+                <select id="alergiaTipo">
+                  <option value="">Seleccionar tipo…</option>
+                  <option value="Alimentaria">Alimentaria</option>
+                  <option value="Ambiental / Atopia">Ambiental / Atopia</option>
+                  <option value="Pulgas (DAPP)">Pulgas (DAPP)</option>
+                  <option value="Por contacto">Por contacto</option>
+                  <option value="Medicamentosa">Medicamentosa</option>
+                  <option value="Sin alergia detectada">Sin alergia detectada</option>
+                  <option value="Otro">Otro</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="alergiaAnimal">Animal / paciente evaluado</label>
+              <input type="text" id="alergiaAnimal" placeholder="Se completa con el paciente seleccionado" readonly>
+            </div>
+            <div class="form-field">
+              <label for="alergiaObservaciones">Observaciones del análisis</label>
+              <textarea id="alergiaObservaciones" rows="2" placeholder="Hallazgos, indicaciones o seguimiento del examen…"></textarea>
+            </div>
+            <button type="submit" class="btn-green-solid">Guardar análisis en expediente</button>
+          </form>
         </div>
 
         <div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap;">
@@ -271,8 +336,8 @@
           </div>
         </div>
         <div class="form-field">
-          <label for="editMascotaAlergias">Alergias / condiciones</label>
-          <input type="text" id="editMascotaAlergias">
+          <label for="editMascotaSenas">Señas particulares / condiciones</label>
+          <input type="text" id="editMascotaSenas" placeholder="Características o condiciones registradas">
         </div>
 
         <div class="modal-btn-row">

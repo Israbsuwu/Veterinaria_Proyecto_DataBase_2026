@@ -19,9 +19,10 @@ from dashboard_data import (
 
 app = Flask(__name__)
 app.secret_key = 'pepe_pepito_secreto'
-app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024
+app.config['MAX_CONTENT_LENGTH'] = 55 * 1024 * 1024
 
 CARPETA_PRODUCTOS = os.path.join(app.static_folder, 'img', 'productos')
+CARPETA_EXPEDIENTES = os.path.join(app.static_folder, 'img', 'expedientes')
 EXTENSIONES_IMAGEN = {'png', 'jpg', 'jpeg', 'webp'}
 
 ARTE_CATEGORIAS = {
@@ -717,9 +718,9 @@ def mi_cuenta():
             'telefono': fila.Telefono, 'correo': fila.Correo, 'direccion': fila.Direccion,
         }
 
-        col_alergias = nombre_columna_alergias(cursor)
-        cursor.execute(f"""
-            SELECT M.Nombre, M.Especie, M.Raza, M.Sexo, E.{col_alergias} AS Alergias
+        cursor.execute("""
+            SELECT M.Nombre, M.Especie, M.Raza, M.Sexo, M.Color,
+                   E.CondicionesPreexistentes, E.ObservacionesGenerales
             FROM MASCOTA M
             LEFT JOIN EXPEDIENTE_CLINICO E ON M.IdMascota = E.IdMascota
             WHERE M.IdCliente = ?
@@ -727,13 +728,12 @@ def mi_cuenta():
         """, (session['cliente_id'],))
         mascotas = []
         for m in cursor.fetchall():
-            alergias = (m.Alergias or '').strip()
-            if alergias.lower() in ('no conocidas', 'no conocida', 'ninguna', 'ninguno',
-                                    'no aplica', 'n/a', 'sin alergias'):
-                alergias = ''
+            condiciones = (m.CondicionesPreexistentes or '').strip()
+            observaciones = (m.ObservacionesGenerales or '').strip()
             mascotas.append({
                 'nombre': m.Nombre, 'especie': m.Especie, 'raza': m.Raza,
-                'sexo': m.Sexo, 'alergias': alergias,
+                'sexo': m.Sexo, 'color': m.Color or '',
+                'condiciones': condiciones, 'observaciones': observaciones,
             })
     except pyodbc.Error:
         flash('No se pudo cargar tu cuenta. Revisa la conexión con la base de datos.', 'error')
@@ -797,22 +797,43 @@ def portal_clinico():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute("SELECT IdCliente, Nombre, Apellido, Cedula, Telefono FROM CLIENTE")
-        clientes = [{'id': c.IdCliente, 'nombre': c.Nombre, 'apellido': c.Apellido,
-                     'cedula': c.Cedula, 'tel': c.Telefono} for c in cursor.fetchall()]
+        cursor.execute("""
+            SELECT IdCliente, Nombre, Apellido, Cedula, Telefono, Correo, Direccion
+            FROM CLIENTE
+            ORDER BY Nombre, Apellido
+        """)
+        clientes = [{
+            'id': c.IdCliente, 'nombre': c.Nombre, 'apellido': c.Apellido,
+            'cedula': c.Cedula or '', 'tel': c.Telefono or '',
+            'correo': c.Correo or '', 'direccion': c.Direccion or '',
+        } for c in cursor.fetchall()]
 
-        col_alergias = nombre_columna_alergias(cursor)
-        cursor.execute(f"""
+        cursor.execute("""
             SELECT M.IdMascota, M.Nombre, M.Especie, M.Raza, M.Sexo, M.IdCliente,
-                   E.{col_alergias} AS Alergias
+                   M.Color, M.FechaNacimiento, M.SenasParticulares,
+                   E.CondicionesPreexistentes, E.ObservacionesGenerales
             FROM MASCOTA M
             LEFT JOIN EXPEDIENTE_CLINICO E ON M.IdMascota = E.IdMascota
+            ORDER BY M.Nombre
         """)
-        mascotas = [{
-            'id': m.IdMascota, 'duenoId': m.IdCliente, 'nombre': m.Nombre,
-            'especie': m.Especie, 'raza': m.Raza, 'sexo': m.Sexo,
-            'alergias': m.Alergias if m.Alergias else ''
-        } for m in cursor.fetchall()]
+        for m in cursor.fetchall():
+            nacimiento = ''
+            if m.FechaNacimiento:
+                try:
+                    nacimiento = m.FechaNacimiento.strftime('%Y-%m-%d')
+                except Exception:
+                    nacimiento = str(m.FechaNacimiento)[:10]
+            condiciones = (m.CondicionesPreexistentes or '').strip()
+            observaciones = (m.ObservacionesGenerales or '').strip()
+            analisis = condiciones or observaciones
+            mascotas.append({
+                'id': m.IdMascota, 'duenoId': m.IdCliente, 'nombre': m.Nombre,
+                'especie': m.Especie or '', 'raza': m.Raza or '', 'sexo': m.Sexo or '',
+                'color': m.Color or '', 'fecha_nacimiento': nacimiento,
+                'senas': m.SenasParticulares or '',
+                'condiciones': condiciones, 'observaciones': observaciones,
+                'analisis_alergia': analisis,
+            })
     except pyodbc.Error:
         flash('No se pudo cargar el portal clínico. Revisa la conexión con la base de datos.', 'error')
     finally:
@@ -906,6 +927,9 @@ def dashboard_producto():
         'id_categoria': request.form.get('id_categoria'),
         'unidad': limpiar(request.form.get('unidad')).upper() or 'UNIDAD',
         'precio': request.form.get('precio'),
+        'costo_compra': request.form.get('costo_compra'),
+        'id_proveedor': request.form.get('id_proveedor'),
+        'id_usuario': session.get('user_id'),
         'stock_minimo': request.form.get('stock_minimo'),
         'controla_vencimiento': request.form.get('controla_vencimiento') in ('1', 'on', 'true'),
     }
@@ -1085,16 +1109,27 @@ def crear_cliente():
         columnas = columnas_cliente(cursor)
 
         campos = ['Nombre', 'Apellido', 'Cedula', 'Telefono']
-        parametros = [datos.get('nombre'), datos.get('apellido'),
-                      datos.get('cedula'), datos.get('tel')]
+        parametros = [limpiar(datos.get('nombre')), limpiar(datos.get('apellido')),
+                      limpiar(datos.get('cedula')), limpiar(datos.get('tel'))]
         marcas = ['?', '?', '?', '?']
 
-        if columnas['notif']:
+        correo = limpiar(datos.get('correo')).lower()
+        direccion = limpiar(datos.get('direccion'))
+        if correo and 'correo' in columnas:
+            campos.append('Correo')
+            parametros.append(correo)
+            marcas.append('?')
+        if direccion and 'direccion' in columnas:
+            campos.append('Direccion')
+            parametros.append(direccion)
+            marcas.append('?')
+
+        if columnas.get('notif'):
             campos.append(columnas['notif'])
             parametros.append(1)
             marcas.append('?')
 
-        if not columnas['id_identity']:
+        if not columnas.get('id_identity', True):
             cursor.execute("SELECT ISNULL(MAX(IdCliente), 0) + 1 FROM CLIENTE")
             campos.insert(0, 'IdCliente')
             parametros.insert(0, cursor.fetchone()[0])
@@ -1127,15 +1162,26 @@ def crear_mascota():
         cursor = conn.cursor()
 
         # 1. Crear mascota (IdMascota puede ser IDENTITY o no según la base).
+        columnas_mascota = columnas_tabla(cursor, 'MASCOTA')
         campos = ['Nombre', 'Especie', 'Raza', 'Sexo', 'IdCliente']
-        parametros = [datos.get('nombre'), datos.get('especie'),
-                      datos.get('raza'), datos.get('sexo'), datos.get('duenoId')]
+        parametros = [limpiar(datos.get('nombre')), limpiar(datos.get('especie')),
+                      limpiar(datos.get('raza')) or 'Criollo', limpiar(datos.get('sexo')),
+                      datos.get('duenoId')]
         marcas = ['?', '?', '?', '?', '?']
+
+        color = limpiar(datos.get('color'))
+        nacimiento = limpiar(datos.get('fecha_nacimiento'))
+        senas = limpiar(datos.get('senas'))
+        if color and 'color' in columnas_mascota:
+            campos.append('Color'); parametros.append(color); marcas.append('?')
+        if nacimiento and 'fechanacimiento' in columnas_mascota:
+            campos.append('FechaNacimiento'); parametros.append(nacimiento); marcas.append('?')
+        if senas and 'senasparticulares' in columnas_mascota:
+            campos.append('SenasParticulares'); parametros.append(senas); marcas.append('?')
+
         if not columna_es_identidad(cursor, 'MASCOTA', 'IdMascota'):
             cursor.execute("SELECT ISNULL(MAX(IdMascota), 0) + 1 FROM MASCOTA")
-            campos.insert(0, 'IdMascota')
-            parametros.insert(0, cursor.fetchone()[0])
-            marcas.insert(0, '?')
+            campos.insert(0, 'IdMascota'); parametros.insert(0, cursor.fetchone()[0]); marcas.insert(0, '?')
 
         cursor.execute(f"""
             INSERT INTO MASCOTA ({', '.join(campos)})
@@ -1144,14 +1190,14 @@ def crear_mascota():
         """, parametros)
         nueva_mascota_id = cursor.fetchone()[0]
 
-        # 2. Expediente clínico: los nombres de columna cambian entre bases.
+        # 2. Expediente clínico: análisis de alergia se registra después por el veterinario.
         columnas_exp = columnas_tabla(cursor, 'EXPEDIENTE_CLINICO')
         col_estado = ('EstadoRegistro' if 'estadoregistro' in columnas_exp
                       else 'EstadoReg' if 'estadoreg' in columnas_exp else None)
         col_alergias = nombre_columna_alergias(cursor)
 
         campos = ['FechaApertura', col_alergias, 'IdMascota']
-        parametros = [date.today(), datos.get('alergias', '') or '', nueva_mascota_id]
+        parametros = [date.today(), '', nueva_mascota_id]
         marcas = ['?', '?', '?']
         if col_estado:
             campos.append(col_estado)
@@ -1161,9 +1207,7 @@ def crear_mascota():
         col_exp_id = columna_id(cursor, 'EXPEDIENTE_CLINICO', 'IdExpediente', 'IdExp')
         if not columna_es_identidad(cursor, 'EXPEDIENTE_CLINICO', col_exp_id):
             cursor.execute(f"SELECT ISNULL(MAX({col_exp_id}), 0) + 1 FROM EXPEDIENTE_CLINICO")
-            campos.insert(0, col_exp_id)
-            parametros.insert(0, cursor.fetchone()[0])
-            marcas.insert(0, '?')
+            campos.insert(0, col_exp_id); parametros.insert(0, cursor.fetchone()[0]); marcas.insert(0, '?')
 
         cursor.execute(f"""
             INSERT INTO EXPEDIENTE_CLINICO ({', '.join(campos)})
@@ -1179,10 +1223,88 @@ def crear_mascota():
             conn.close()
 
 
+@app.route('/api/expediente/alergia', methods=['POST'])
+def guardar_analisis_alergia():
+    """Guarda el análisis de alergia en el expediente usando columnas existentes."""
+    if not es_personal():
+        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+
+    datos = request.get_json(silent=True) or {}
+    id_mascota = datos.get('id_mascota')
+    tipo_examen = limpiar(datos.get('tipo_examen'))
+    tipo_alergia = limpiar(datos.get('tipo_alergia'))
+    animal = limpiar(datos.get('animal'))
+    observaciones = limpiar(datos.get('observaciones'))
+
+    if not id_mascota:
+        return jsonify({'success': False, 'error': 'Selecciona un paciente válido.'}), 400
+    if not (tipo_examen or tipo_alergia or observaciones):
+        return jsonify({'success': False, 'error': 'Indica al menos el tipo de examen, el tipo de alergia o una observación.'}), 400
+
+    partes = []
+    if tipo_examen:
+        partes.append(f'Tipo de examen: {tipo_examen}')
+    if tipo_alergia:
+        partes.append(f'Tipo de alergia: {tipo_alergia}')
+    if animal:
+        partes.append(f'Animal: {animal}')
+    resumen = ' | '.join(partes)
+    condiciones = resumen[:300] if resumen else ''
+    obs_texto = observaciones[:500] if observaciones else ''
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM MASCOTA WHERE IdMascota = ?", (id_mascota,))
+        if not cursor.fetchone()[0]:
+            return jsonify({'success': False, 'error': 'La mascota seleccionada no existe.'}), 404
+
+        cursor.execute("SELECT COUNT(*) FROM EXPEDIENTE_CLINICO WHERE IdMascota = ?", (id_mascota,))
+        if cursor.fetchone()[0]:
+            cursor.execute("""
+                UPDATE EXPEDIENTE_CLINICO
+                SET CondicionesPreexistentes = ?, ObservacionesGenerales = ?
+                WHERE IdMascota = ?
+            """, (condiciones, obs_texto, id_mascota))
+        else:
+            # Crear expediente si no existe (usa columnas disponibles).
+            columnas_exp = columnas_tabla(cursor, 'EXPEDIENTE_CLINICO')
+            col_estado = ('EstadoRegistro' if 'estadoregistro' in columnas_exp
+                          else 'EstadoReg' if 'estadoreg' in columnas_exp else None)
+            col_alergias = nombre_columna_alergias(cursor)
+            campos = ['FechaApertura', col_alergias, 'CondicionesPreexistentes', 'ObservacionesGenerales', 'IdMascota']
+            parametros = [date.today(), '', condiciones, obs_texto, id_mascota]
+            marcas = ['?', '?', '?', '?', '?']
+            if col_estado:
+                campos.append(col_estado)
+                parametros.append(valor_estado_expediente(cursor, col_estado))
+                marcas.append('?')
+            col_exp_id = columna_id(cursor, 'EXPEDIENTE_CLINICO', 'IdExpediente', 'IdExp')
+            if not columna_es_identidad(cursor, 'EXPEDIENTE_CLINICO', col_exp_id):
+                cursor.execute(f"SELECT ISNULL(MAX({col_exp_id}), 0) + 1 FROM EXPEDIENTE_CLINICO")
+                campos.insert(0, col_exp_id); parametros.insert(0, cursor.fetchone()[0]); marcas.insert(0, '?')
+            cursor.execute(f"""
+                INSERT INTO EXPEDIENTE_CLINICO ({', '.join(campos)})
+                VALUES ({', '.join(marcas)})
+            """, parametros)
+
+        conn.commit()
+        return jsonify({'success': True, 'resumen': resumen, 'condiciones': condiciones})
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        return jsonify({'success': False, 'error': str(exc)})
+    finally:
+        if conn is not None:
+            conn.close()
+
+
 @app.errorhandler(413)
 def archivo_demasiado_grande(error):
-    flash('La imagen es demasiado grande. El límite es de 6 MB.', 'error')
-    return redirect(url_for('dashboard', _anchor='productos'))
+    destino = request.referrer or url_for('dashboard', _anchor='productos')
+    flash('El archivo es demasiado grande. Límite general: 55 MB (imágenes de producto: 6 MB).', 'error')
+    return redirect(destino)
 
 
 if __name__ == '__main__':
