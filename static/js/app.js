@@ -1,220 +1,691 @@
-// Leer los datos inyectados de forma segura desde el HTML
-const serverData = document.getElementById('server-data');
-let propietarios = [];
-let mascotas = [];
+/* ==========================================================================
+   Tienda — Veterinaria Pepe & Pepito
+   Catálogo, filtros, detalle de producto y carrito. Solo compra.
+   ========================================================================== */
 
-if (serverData) {
-    propietarios = JSON.parse(serverData.dataset.clientes || '[]');
-    mascotas = JSON.parse(serverData.dataset.mascotas || '[]');
-}
+(function () {
+  'use strict';
 
-// CONTROL DE NAVEGACIÓN Y TABS
-window.togglePortalClinico = function() {
-    const portal = document.getElementById('portalClinicoWrap');
-    if (portal.style.display === 'none' || portal.style.display === '') {
-        portal.style.display = 'block';
-        portal.scrollIntoView({ behavior: 'smooth' });
-    } else {
-        portal.style.display = 'none';
+  /* ------------------------------------------------------------------------
+     Utilidades
+     ------------------------------------------------------------------------ */
+
+  const $ = (selector, scope) => (scope || document).querySelector(selector);
+  const $$ = (selector, scope) => Array.from((scope || document).querySelectorAll(selector));
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const hasAnime = typeof window.anime !== 'undefined';
+
+  function animar(targets, params) {
+    if (!hasAnime || reduceMotion || !targets) return null;
+    try {
+      return window.anime.animate(targets, params);
+    } catch (error) {
+      return null;
     }
-};
+  }
 
-window.cambiarPortalTab = function(panelId, btnElement) {
-    document.querySelectorAll('.portal-tab-btn').forEach(btn => btn.classList.remove('active'));
-    btnElement.classList.add('active');
+  function escapar(texto) {
+    return String(texto == null ? '' : texto)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
 
-    document.querySelectorAll('.portal-view-panel').forEach(panel => panel.classList.remove('active'));
-    document.getElementById(`pview-${panelId}`).classList.add('active');
-};
+  function sinAcentos(texto) {
+    return String(texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
 
-window.abrirPortalEnTab = function(tabName) {
-    document.getElementById('portalClinicoWrap').style.display = 'block';
-    document.getElementById('portalClinicoWrap').scrollIntoView({ behavior: 'smooth' });
-    
-    const tabBtns = document.querySelectorAll('.portal-tab-btn');
-    if (tabName === 'pacientes') {
-        cambiarPortalTab('registro', tabBtns[0]);
-    } else {
-        cambiarPortalTab('expediente', tabBtns[1]);
+  function dinero(valor) {
+    const numero = Number(valor) || 0;
+    return 'C$ ' + numero.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
+
+  /* ------------------------------------------------------------------------
+     Catálogo entregado por Flask
+     ------------------------------------------------------------------------ */
+
+  let productos = [];
+
+  const datosCatalogo = $('#datos-catalogo');
+  if (datosCatalogo) {
+    try {
+      productos = JSON.parse(datosCatalogo.textContent || '[]');
+    } catch (error) {
+      productos = [];
     }
-};
+  }
 
-// ==========================================
-// FUNCIONES PARA LLENAR LOS DESPLEGABLES CON SQL
-// ==========================================
-function actualizarSelectores() {
-    const selDueno = document.getElementById('selectDuenoAsignado');
-    const selExpediente = document.getElementById('selectExpediente');
-    const selPacienteConsulta = document.getElementById('selectPacienteConsulta');
+  const porId = new Map();
+  productos.forEach((producto) => porId.set(String(producto.id), producto));
 
-    selDueno.innerHTML = '';
-    propietarios.forEach(p => {
-        selDueno.innerHTML += `<option value="${p.id}">${p.nombre} ${p.apellido} (${p.cedula})</option>`;
+  const estado = {
+    categoria: 'todas',
+    texto: '',
+    orden: 'relevancia',
+    visibles: 12,
+  };
+
+  const TAMANO_PAGINA = 12;
+
+  function estadoStock(producto) {
+    const stock = Number(producto.stock) || 0;
+    const minimo = Number(producto.minimo) || 0;
+    if (stock <= 0) return { clase: 'agotado', texto: 'Agotado' };
+    if (stock <= minimo) return { clase: 'low', texto: 'Stock bajo' };
+    return { clase: 'ok', texto: 'Disponible' };
+  }
+
+  function imagenDe(producto) {
+    return producto.imagen || producto.arte || '';
+  }
+
+  function coincide(producto) {
+    if (estado.categoria !== 'todas' && producto.categoria !== estado.categoria) return false;
+    if (!estado.texto) return true;
+    const texto = sinAcentos([
+      producto.nombre,
+      producto.categoria,
+      producto.descripcion,
+      producto.unidad,
+    ].join(' '));
+    return texto.indexOf(estado.texto) !== -1;
+  }
+
+  function ordenar(lista) {
+    const copia = lista.slice();
+    switch (estado.orden) {
+      case 'precio-asc':
+        copia.sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0));
+        break;
+      case 'precio-desc':
+        copia.sort((a, b) => (Number(b.precio) || 0) - (Number(a.precio) || 0));
+        break;
+      case 'nombre':
+        copia.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+        break;
+      case 'stock':
+        copia.sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0));
+        break;
+      default:
+        copia.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+    }
+    return copia;
+  }
+
+  function tarjetaProducto(producto) {
+    const stock = estadoStock(producto);
+    const agotado = stock.clase === 'agotado';
+    const imagen = imagenDe(producto);
+    const descripcion = producto.descripcion && producto.descripcion.trim()
+      ? producto.descripcion
+      : 'Producto veterinario seleccionado por nuestro equipo.';
+
+    return `
+      <article class="shop-card" data-id="${producto.id}">
+        <button type="button" class="card-add" data-agregar="${producto.id}" ${agotado ? 'disabled' : ''}
+                title="${agotado ? 'Producto agotado' : 'Agregar al carrito'}"
+                aria-label="${agotado ? 'Producto agotado' : 'Agregar ' + escapar(producto.nombre) + ' al carrito'}">+</button>
+        <div class="shop-card-img">
+          <img src="${escapar(imagen)}" alt="${escapar(producto.nombre)}" loading="lazy">
+          <span class="stock-badge ${stock.clase}">${stock.texto}</span>
+        </div>
+        <div class="shop-card-body">
+          <span class="card-cat">${escapar(producto.categoria)}</span>
+          <h3>${escapar(producto.nombre)}</h3>
+          <p class="card-desc">${escapar(descripcion)}</p>
+          <div class="card-foot">
+            <span class="card-price">${dinero(producto.precio)}<br><small>más IVA</small></span>
+            <button type="button" class="btn-detail" data-detalle="${producto.id}">Ver detalle</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function renderCatalogo() {
+    const grilla = $('#productGrid');
+    if (!grilla) return;
+
+    const filtrados = ordenar(productos.filter(coincide));
+    const recorte = filtrados.slice(0, estado.visibles);
+
+    grilla.innerHTML = recorte.map(tarjetaProducto).join('');
+
+    const contador = $('#contadorProductos');
+    if (contador) {
+      contador.textContent = filtrados.length + (filtrados.length === 1 ? ' producto' : ' productos');
+    }
+
+    const vacio = $('#vacioCatalogo');
+    if (vacio) vacio.hidden = filtrados.length !== 0;
+
+    const verMas = $('#btnVerMas');
+    if (verMas) verMas.hidden = filtrados.length <= estado.visibles;
+
+    animar($$('.shop-card', grilla), {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      duration: 380,
+      delay: hasAnime ? window.anime.stagger(28) : 0,
+      ease: 'outCubic',
+    });
+  }
+
+  function aplicarFiltroCategoria(categoria) {
+    estado.categoria = categoria || 'todas';
+    estado.visibles = TAMANO_PAGINA;
+
+    $$('.cat-chip').forEach((chip) => {
+      chip.classList.toggle('active', chip.dataset.categoria === estado.categoria);
     });
 
-    selExpediente.innerHTML = '';
-    selPacienteConsulta.innerHTML = '';
-    mascotas.forEach(m => {
-        const dueno = propietarios.find(p => p.id === m.duenoId);
-        const duenoTxt = dueno ? `${dueno.nombre} ${dueno.apellido}` : 'Sin dueño';
-        const opt = `<option value="${m.id}">${m.nombre} (${m.especie}) — Propietario: ${duenoTxt}</option>`;
-        selExpediente.innerHTML += opt;
-        selPacienteConsulta.innerHTML += opt;
+    renderCatalogo();
+  }
+
+  /* ------------------------------------------------------------------------
+     Aviso flotante
+     ------------------------------------------------------------------------ */
+
+  let temporizadorAviso = null;
+
+  function avisar(mensaje, tipo) {
+    const aviso = $('#avisoTienda');
+    if (!aviso) return;
+
+    aviso.textContent = mensaje;
+    aviso.classList.toggle('is-error', tipo === 'error');
+    aviso.hidden = false;
+
+    animar(aviso, {
+      opacity: [0, 1],
+      translateY: [12, 0],
+      duration: 240,
+      ease: 'outCubic',
     });
 
-    if (mascotas.length > 0) {
-        selExpediente.value = mascotas[0].id;
-        renderExpedienteSeleccionado(mascotas[0].id);
+    window.clearTimeout(temporizadorAviso);
+    temporizadorAviso = window.setTimeout(() => {
+      aviso.hidden = true;
+    }, 3800);
+  }
+
+  /* ------------------------------------------------------------------------
+     Carrito
+     ------------------------------------------------------------------------ */
+
+  const CLAVE_CARRITO = 'vetpepe_carrito_v1';
+  const IVA = 0.15;
+  let carrito = leerCarrito();
+
+  function leerCarrito() {
+    try {
+      const crudo = window.localStorage.getItem(CLAVE_CARRITO);
+      const lista = crudo ? JSON.parse(crudo) : [];
+      if (!Array.isArray(lista)) return [];
+      return lista
+        .filter((item) => item && (item.nombre || item.id))
+        .map((item) => {
+          const producto = item.id != null ? porId.get(String(item.id)) : null;
+          return {
+            id: item.id != null ? item.id : null,
+            nombre: String(item.nombre || (producto ? producto.nombre : 'Producto')),
+            precio: Number(item.precio != null ? item.precio : producto ? producto.precio : 0) || 0,
+            imagen: String(item.imagen || (producto ? imagenDe(producto) : '')),
+            cantidad: Math.max(1, parseInt(item.cantidad, 10) || 1),
+          };
+        });
+    } catch (error) {
+      return [];
     }
-}
+  }
 
-window.renderExpedienteSeleccionado = function(mascotaId) {
-    mascotaId = parseInt(mascotaId); // Castear a número porque el ID viene de SQL (INT)
-    const mascota = mascotas.find(m => m.id === mascotaId);
-    if (!mascota) return;
+  function guardarCarrito() {
+    try {
+      window.localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito));
+    } catch (error) {
+      /* Sin almacenamiento: el carrito vive solo en esta página. */
+    }
+  }
 
-    const dueno = propietarios.find(p => p.id === mascota.duenoId);
-    document.getElementById('expNombreMascota').textContent = mascota.nombre;
-    document.getElementById('expDetallesMascota').textContent = `${mascota.especie} • Raza: ${mascota.raza} • Sexo: ${mascota.sexo}`;
-    
-    if (dueno) {
-        document.getElementById('expDuenoMascota').textContent = `Dueño: ${dueno.nombre} ${dueno.apellido} (Tel: ${dueno.tel})`;
-        // Actualizar el letrero de Alergias dinámicamente
-      const badgeAlergia = document.getElementById('expAlergiaMascota');
-      if (mascota.alergias && mascota.alergias.trim() !== '') {
-          badgeAlergia.textContent = `⚠️ Alergia: ${mascota.alergias}`;
-          badgeAlergia.style.backgroundColor = '#fee2e2'; // Fondo rojo claro
-          badgeAlergia.style.color = '#b91c1c'; // Letra roja oscura
-          badgeAlergia.style.borderColor = '#f87171';
-      } else {
-          badgeAlergia.textContent = '✓ Sin alergias registradas';
-          badgeAlergia.style.backgroundColor = '#dcfce7'; // Fondo verde claro
-          badgeAlergia.style.color = '#15803d'; // Letra verde oscura
-          badgeAlergia.style.borderColor = '#86efac';
+  function totales() {
+    const subtotal = carrito.reduce((suma, item) => suma + item.precio * item.cantidad, 0);
+    const iva = subtotal * IVA;
+    return { subtotal, iva, total: subtotal + iva };
+  }
+
+  function actualizarContador() {
+    const contador = $('#cartCount');
+    const resumen = $('#cartResumen');
+    const unidades = carrito.reduce((suma, item) => suma + item.cantidad, 0);
+
+    if (contador) {
+      contador.textContent = unidades;
+      if (unidades > 0) {
+        animar(contador, { scale: [1.35, 1], duration: 320, ease: 'outBack' });
       }
     }
 
-    // Por ahora mostramos un mensaje, en la próxima fase inyectaremos las consultas de SQL
-    document.getElementById('timelineConsultas').innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">(En la Fase 5 conectaremos las consultas y recetas desde la base de datos).</p>';
-};
-
-// ==========================================
-// FORMULARIOS CONECTADOS A FLASK (SQL SERVER)
-// ==========================================
-document.getElementById('formPropietario').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-        cedula: document.getElementById('propCedula').value.trim(),
-        nombre: document.getElementById('propNombre').value.trim(),
-        apellido: document.getElementById('propApellido').value.trim(),
-        tel: document.getElementById('propTel').value.trim()
-    };
-
-    const res = await fetch('/api/cliente', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    const result = await res.json();
-    
-    if (result.success) {
-        data.id = result.id; // Asignamos el ID real de SQL Server
-        propietarios.push(data); // Actualizamos la vista local
-        actualizarSelectores();
-        alert(`✅ Propietario ${data.nombre} guardado correctamente en la Base de Datos.`);
-        e.target.reset();
-    } else {
-        alert(`❌ Ocurrió un error (Ej. Cédula duplicada): ${result.error}`);
+    if (resumen) {
+      resumen.textContent = unidades === 1 ? '1 producto' : unidades + ' productos';
     }
-});
+  }
 
-document.getElementById('formMascota').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-        duenoId: parseInt(document.getElementById('selectDuenoAsignado').value),
-        nombre: document.getElementById('mascotaNombre').value.trim(),
-        especie: document.getElementById('mascotaEspecie').value,
-        raza: document.getElementById('mascotaRaza').value.trim() || 'Criollo',
-        sexo: document.getElementById('mascotaSexo').value,
-        alergias: document.getElementById('mascotaAlergias').value.trim()
-    };
+  function renderCarrito() {
+    const lista = $('#cartItemsList');
+    if (!lista) return;
 
-    const res = await fetch('/api/mascota', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
-    });
-    const result = await res.json();
-    
-    if (result.success) {
-        data.id = result.id; // Asignamos el ID de la mascota y del expediente
-        mascotas.push(data);
-        actualizarSelectores();
-        alert(`🐾 Mascota "${data.nombre}" guardada y Expediente Clínico inicializado en SQL.`);
-        e.target.reset();
-        
-        // Mover a la pestaña del expediente
-        const tabBtns = document.querySelectorAll('.portal-tab-btn');
-        cambiarPortalTab('expediente', tabBtns[1]);
+    if (carrito.length === 0) {
+      lista.innerHTML = `
+        <div class="cart-empty">
+          <span>🐾</span>
+          <strong>Tu carrito está vacío</strong>
+          <p>Agrega productos desde el catálogo de la tienda.</p>
+        </div>`;
     } else {
-        alert(`❌ Error al guardar mascota: ${result.error}`);
+      lista.innerHTML = carrito.map((item, indice) => {
+        const imagen = item.imagen
+          ? `<img src="${escapar(item.imagen)}" alt="${escapar(item.nombre)}">`
+          : '<span style="font-size:1.5rem">🐾</span>';
+        return `
+          <div class="cart-item" data-indice="${indice}">
+            <div class="cart-item-img">${imagen}</div>
+            <div class="cart-item-info">
+              <strong>${escapar(item.nombre)}</strong>
+              <small>${dinero(item.precio)} c/u</small>
+              <div class="qty-controls">
+                <button type="button" class="qty-btn" data-cantidad="${indice}" data-delta="-1" aria-label="Quitar una unidad">−</button>
+                <span class="qty-value">${item.cantidad}</span>
+                <button type="button" class="qty-btn" data-cantidad="${indice}" data-delta="1" aria-label="Agregar una unidad">+</button>
+              </div>
+              <div class="cart-item-subtotal">${dinero(item.precio * item.cantidad)}</div>
+            </div>
+            <button type="button" class="cart-remove" data-quitar="${indice}" aria-label="Quitar ${escapar(item.nombre)}">✕</button>
+          </div>`;
+      }).join('');
     }
-});
 
-// Desactivar temporalmente la consulta para el siguiente paso
-document.getElementById('formNuevaConsulta').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = {
-        mascotaId: parseInt(document.getElementById('selectPacienteConsulta').value),
-        peso: document.getElementById('consultaPeso').value,
-        motivo: document.getElementById('consultaMotivo').value.trim(),
-        diagnostico: document.getElementById('consultaDiagnostico').value.trim(),
-        farmaco: document.getElementById('recetaFarmaco').value.trim(),
-        dosis: document.getElementById('recetaDosis').value.trim(),
-        duracion: document.getElementById('recetaDuracion').value.trim()
-    };
+    const { subtotal, iva, total } = totales();
+    const subtotalEl = $('#cartSubtotalText');
+    const ivaEl = $('#cartIvaText');
+    const totalEl = $('#cartTotalText');
 
-    const res = await fetch('/api/consulta', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify(data)
+    if (subtotalEl) subtotalEl.textContent = dinero(subtotal);
+    if (ivaEl) ivaEl.textContent = dinero(iva);
+    if (totalEl) totalEl.textContent = dinero(total);
+
+    actualizarContador();
+
+    animar($$('.cart-item', lista), {
+      opacity: [0, 1],
+      translateX: [14, 0],
+      duration: 300,
+      delay: hasAnime ? window.anime.stagger(30) : 0,
+      ease: 'outCubic',
     });
-    const result = await res.json();
-    
-    if (result.success) {
-        alert('🩺 Consulta guardada exitosamente.\n💉 Vacuna registrada en inventario.\n📧 Recordatorio de refuerzo programado (n8n).');
-        
-        // Inyectamos visualmente la tarjeta de la consulta en el expediente (Línea de tiempo)
-        const timeline = document.getElementById('timelineConsultas');
-        
-        // Si estaba el mensaje de advertencia ("En la Fase 5..."), lo borramos
-        if(timeline.innerHTML.includes('Fase 5')) { timeline.innerHTML = ''; }
-        
-        const nuevaCard = document.createElement('div');
-        nuevaCard.className = 'history-card-item';
-        nuevaCard.innerHTML = `
-        <div class="history-top-row">
-            <strong>${data.motivo}</strong>
-            <small style="color: #64748b;">Hoy</small>
+  }
+
+  function agregarProducto(id, cantidad) {
+    const producto = porId.get(String(id));
+    if (!producto) return;
+
+    const stock = Number(producto.stock) || 0;
+    if (stock <= 0) {
+      avisar('Ese producto está agotado por el momento.', 'error');
+      return;
+    }
+
+    const existente = carrito.find((item) => String(item.id) === String(id));
+    if (existente) {
+      existente.cantidad += cantidad || 1;
+    } else {
+      carrito.push({
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: Number(producto.precio) || 0,
+        imagen: imagenDe(producto),
+        cantidad: cantidad || 1,
+      });
+    }
+
+    guardarCarrito();
+    renderCarrito();
+    avisar(`“${producto.nombre}” se agregó al carrito.`);
+  }
+
+  /* ------------------------------------------------------------------------
+     Detalle de producto
+     ------------------------------------------------------------------------ */
+
+  function abrirDetalleProducto(id) {
+    const producto = porId.get(String(id));
+    const modal = $('#modalProducto');
+    const cuerpo = $('#detalleProducto');
+    const titulo = $('#tituloProducto');
+    if (!producto || !modal || !cuerpo) return;
+
+    const stock = estadoStock(producto);
+    const agotado = stock.clase === 'agotado';
+    const descripcion = producto.descripcion && producto.descripcion.trim()
+      ? producto.descripcion
+      : 'Producto veterinario seleccionado por nuestro equipo. Consulta disponibilidad y recomendaciones con el personal de la clínica.';
+
+    if (titulo) titulo.textContent = producto.nombre;
+
+    cuerpo.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-img">
+          <img src="${escapar(imagenDe(producto))}" alt="${escapar(producto.nombre)}">
         </div>
-        <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Peso:</strong> ${data.peso} kg</p>
-        <p style="font-size: 0.85rem; margin-bottom: 4px;"><strong>Diagnóstico:</strong> ${data.diagnostico}</p>
-        <p style="font-size: 0.85rem; color: #475569;"><strong>Prescripción:</strong> ${data.farmaco} (${data.dosis}) por ${data.duracion} días.</p>
-        <p style="font-size: 0.85rem; color: var(--vet-green-dark); margin-top: 8px;"><strong>💉 Vacuna Aplicada y Recordatorio de refuerzo programado para 30 días</strong></p>
-        `;
-        timeline.prepend(nuevaCard);
-        
-        e.target.reset();
-        
-        // Nos pasamos a la pestaña de Expediente para ver la tarjeta agregada
-        const tabBtns = document.querySelectorAll('.portal-tab-btn');
-        cambiarPortalTab('expediente', tabBtns[1]);
-    } else {
-        alert(`❌ Error al guardar la consulta: ${result.error}`);
-    }
-});
+        <div>
+          <span class="detail-cat">${escapar(producto.categoria)}</span>
+          <h3 class="detail-name">${escapar(producto.nombre)}</h3>
+          <p class="detail-desc">${escapar(descripcion)}</p>
+          <div class="detail-meta">
+            <span>${escapar(producto.unidad)}</span>
+            <span>${stock.texto}</span>
+            <span>${producto.controla_vencimiento ? 'Controla vencimiento' : 'Sin vencimiento'}</span>
+            <span>Mínimo: ${Number(producto.minimo) || 0}</span>
+          </div>
+          <div class="detail-price">${dinero(producto.precio)} <small>+ IVA</small></div>
+          <button type="button" class="btn-primary detail-add" data-agregar="${producto.id}" ${agotado ? 'disabled' : ''}>
+            ${agotado ? 'Producto agotado' : 'Agregar al carrito'}
+          </button>
+        </div>
+      </div>`;
 
-// Arrancar funciones de inicio
-document.addEventListener("DOMContentLoaded", () => {
-    actualizarSelectores();
-});
+    modal.hidden = false;
+    document.body.classList.add('no-scroll');
+    animar($('.shop-modal-card', modal), {
+      opacity: [0, 1],
+      translateY: [18, 0],
+      scale: [0.98, 1],
+      duration: 300,
+      ease: 'outCubic',
+    });
+  }
+
+  function cerrarDetalleProducto() {
+    const modal = $('#modalProducto');
+    if (modal) modal.hidden = true;
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  /* ------------------------------------------------------------------------
+     Carrito visual y confirmación
+     ------------------------------------------------------------------------ */
+
+  function abrirCarrito() {
+    const cajon = $('#cartDrawer');
+    const fondo = $('#cartBackdrop');
+    if (!cajon || !fondo) return;
+
+    cajon.classList.add('active');
+    cajon.setAttribute('aria-hidden', 'false');
+    fondo.classList.add('active');
+    document.body.classList.add('no-scroll');
+
+    animar(cajon, { translateX: [24, 0], opacity: [0.4, 1], duration: 320, ease: 'outCubic' });
+  }
+
+  function cerrarCarrito() {
+    const cajon = $('#cartDrawer');
+    const fondo = $('#cartBackdrop');
+    if (!cajon || !fondo) return;
+
+    cajon.classList.remove('active');
+    cajon.setAttribute('aria-hidden', 'true');
+    fondo.classList.remove('active');
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  function modalAbierto() {
+    return $$('.shop-modal').some((modal) => !modal.hidden);
+  }
+
+  function abrirModalConfirmarCompra() {
+    if (!carrito.length) {
+      avisar('Agrega al menos un producto antes de confirmar el pedido.', 'error');
+      return;
+    }
+
+    const resumen = $('#checkoutSummaryList');
+    const totalEl = $('#checkoutModalTotal');
+
+    if (resumen) {
+      resumen.innerHTML = carrito.map((item) => `
+        <div class="checkout-item">
+          <span>${escapar(item.nombre)} <strong>×${item.cantidad}</strong></span>
+          <strong>${dinero(item.precio * item.cantidad)}</strong>
+        </div>`).join('');
+    }
+
+    if (totalEl) totalEl.textContent = dinero(totales().total);
+
+    const modal = $('#modalConfirmarCompra');
+    if (modal) modal.hidden = false;
+    document.body.classList.add('no-scroll');
+
+    animar($('#modalConfirmarCompra .shop-modal-card'), {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      scale: [0.98, 1],
+      duration: 300,
+      ease: 'outCubic',
+    });
+  }
+
+  function cerrarModalConfirmarCompra() {
+    const modal = $('#modalConfirmarCompra');
+    if (modal) modal.hidden = true;
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  function finalizarPedidoConfirmado() {
+    if (!carrito.length) return;
+    const payload = {
+      auto_print: true,
+      items: carrito.map((item) => ({
+        id: item.id,
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precio: item.precio,
+      })),
+    };
+
+    cerrarModalConfirmarCompra();
+
+    // Generar comprobante imprimible/PDF en una nueva pestaña.
+    try {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/tienda/comprobante';
+      form.target = '_blank';
+
+      const campo = document.createElement('input');
+      campo.type = 'hidden';
+      campo.name = 'datos';
+      campo.value = JSON.stringify(payload);
+      form.appendChild(campo);
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
+    } catch (error) {
+      /* Si falla la apertura, se continúa con la confirmación. */
+    }
+
+    carrito = [];
+    guardarCarrito();
+    renderCarrito();
+    window.setTimeout(() => {
+      cerrarCarrito();
+      avisar('Pedido confirmado. Se generó tu comprobante para imprimir o guardar en PDF.');
+    }, 180);
+  }
+
+  function cambiarCantidad(indice, delta) {
+    const item = carrito[indice];
+    if (!item) return;
+
+    item.cantidad += delta;
+    if (item.cantidad <= 0) carrito.splice(indice, 1);
+
+    guardarCarrito();
+    renderCarrito();
+  }
+
+  function quitarDelCarrito(indice) {
+    const item = carrito[indice];
+    if (!item) return;
+    carrito.splice(indice, 1);
+    guardarCarrito();
+    renderCarrito();
+    avisar(`“${item.nombre}” se quitó del carrito.`);
+  }
+
+  function vaciarCarrito() {
+    if (!carrito.length) {
+      avisar('El carrito ya está vacío.');
+      return;
+    }
+    carrito = [];
+    guardarCarrito();
+    renderCarrito();
+    avisar('Carrito vaciado.');
+  }
+
+  /* ------------------------------------------------------------------------
+     Eventos
+     ------------------------------------------------------------------------ */
+
+  // Delegación de clics del catálogo, carrito y detalle.
+  document.addEventListener('click', (evento) => {
+    const agregar = evento.target.closest('[data-agregar]');
+    if (agregar) {
+      evento.preventDefault();
+      agregarProducto(agregar.dataset.agregar, 1);
+      return;
+    }
+
+    const detalle = evento.target.closest('[data-detalle]');
+    if (detalle) {
+      evento.preventDefault();
+      abrirDetalleProducto(detalle.dataset.detalle);
+      return;
+    }
+
+    const cantidad = evento.target.closest('[data-cantidad]');
+    if (cantidad) {
+      cambiarCantidad(Number(cantidad.dataset.cantidad), Number(cantidad.dataset.delta));
+      return;
+    }
+
+    const quitar = evento.target.closest('[data-quitar]');
+    if (quitar) {
+      quitarDelCarrito(Number(quitar.dataset.quitar));
+      return;
+    }
+
+    const chip = evento.target.closest('.cat-chip');
+    if (chip) {
+      aplicarFiltroCategoria(chip.dataset.categoria);
+      return;
+    }
+
+    const filtrar = evento.target.closest('[data-filtrar]');
+    if (filtrar) {
+      evento.preventDefault();
+      const categoria = filtrar.dataset.filtrar;
+      aplicarFiltroCategoria(categoria);
+      const destino = $('#catalogo');
+      if (destino) destino.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+      return;
+    }
+
+    // Cerrar modales al hacer clic en el fondo oscuro.
+    if (evento.target.classList.contains('shop-modal')) {
+      evento.target.hidden = true;
+      if (!modalAbierto()) document.body.classList.remove('no-scroll');
+    }
+  });
+
+  const buscador = $('#buscarProducto');
+  if (buscador) {
+    buscador.addEventListener('input', () => {
+      estado.texto = sinAcentos(buscador.value.trim());
+      estado.visibles = TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  const orden = $('#ordenProducto');
+  if (orden) {
+    orden.addEventListener('change', () => {
+      estado.orden = orden.value;
+      estado.visibles = TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  const verMas = $('#btnVerMas');
+  if (verMas) {
+    verMas.addEventListener('click', () => {
+      estado.visibles += TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key !== 'Escape') return;
+    cerrarCarrito();
+    cerrarModalConfirmarCompra();
+    cerrarDetalleProducto();
+  });
+
+  /* API usada por los botones del HTML */
+  window.abrirCarrito = abrirCarrito;
+  window.cerrarCarrito = cerrarCarrito;
+  window.abrirModalConfirmarCompra = abrirModalConfirmarCompra;
+  window.cerrarModalConfirmarCompra = cerrarModalConfirmarCompra;
+  window.finalizarPedidoConfirmado = finalizarPedidoConfirmado;
+  window.vaciarCarrito = vaciarCarrito;
+  window.cerrarDetalleProducto = cerrarDetalleProducto;
+
+  /* ------------------------------------------------------------------------
+     Arranque
+     ------------------------------------------------------------------------ */
+
+  function iniciar() {
+    renderCatalogo();
+    renderCarrito();
+
+    animar($$('.hero-copy > *'), {
+      opacity: [0, 1],
+      translateY: [18, 0],
+      duration: 520,
+      delay: hasAnime ? window.anime.stagger(70) : 0,
+      ease: 'outCubic',
+    });
+
+    animar($$('.hero-photo'), {
+      opacity: [0, 1],
+      scale: [0.94, 1],
+      duration: 620,
+      delay: hasAnime ? window.anime.stagger(80, { start: 180 }) : 0,
+      ease: 'outCubic',
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciar);
+  } else {
+    iniciar();
+  }
+})();

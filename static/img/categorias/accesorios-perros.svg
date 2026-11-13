@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Accesorios para perros">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="270" cy="42" r="48" fill="#e9dfc8"/>
+  <circle cx="50" cy="184" r="44" fill="#efe6d0"/>
+  <path d="M80 82c0-18 24-18 24 0v50c0 18-24 18-24 0z" fill="#c4682a"/>
+  <path d="M104 82c0-18 24-18 24 0v50c0 18-24 18-24 0z" fill="#e17055"/>
+  <rect x="104" y="76" width="24" height="62" fill="#b1872f"/>
+  <circle cx="116" cy="76" r="12" fill="#f6f0e2" stroke="#9d927a" stroke-width="3"/>
+  <path d="M152 108h58c6 0 12 6 12 12s-6 12-12 12h-58c-6 0-12-6-12-12s6-12 12-12z" fill="#244414"/>
+  <circle cx="262" cy="120" r="12" fill="#f6f0e2" stroke="#9d927a" stroke-width="3"/>
+  <path d="M206 104c20-16 40-16 60 0" stroke="#3d6721" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <path d="M70 148c-10-14-28-8-28 6 0 14 28 28 28 28s28-14 28-28c0-14-18-20-28-6z" fill="#5a9629"/>
+  <circle cx="246" cy="158" r="5" fill="#e17055"/>
+  <circle cx="260" cy="170" r="4" fill="#e17055"/>
+</svg>

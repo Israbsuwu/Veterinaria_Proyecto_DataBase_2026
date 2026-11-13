@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprobante de compra — Veterinaria Pepe &amp; Pepito</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:wght@500;600;700&family=Montserrat:wght@600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --forest:#244414; --ink:#2d2a20; --muted:#857c68; --line:#ded0b1; --paper:#fffdf6; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', sans-serif; color: var(--ink); background: #f4eddb; padding: 24px; }
+    .sheet { max-width: 760px; margin: 0 auto; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; padding: 28px 30px; box-shadow: 0 20px 40px -30px rgba(0,0,0,.35); }
+    .head { display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start; border-bottom: 2px dashed var(--line); padding-bottom: 14px; margin-bottom: 14px; }
+    .brand h1 { font-family: 'Lora', serif; font-size: 1.5rem; color: var(--forest); font-weight: 600; }
+    .brand p { font-size: 0.72rem; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+    .doc { text-align: right; }
+    .doc strong { display: block; font-family: 'Montserrat', sans-serif; font-size: 0.62rem; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+    .doc span { display: block; font-family: 'Lora', serif; font-size: 1.2rem; color: var(--forest); }
+    .meta { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 8px 16px; margin-bottom: 16px; font-size: 0.78rem; }
+    .meta div { padding: 6px 0; border-bottom: 1px solid #efe6d0; }
+    .meta b { font-size: 0.58rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); display: block; margin-bottom: 2px; }
+    table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 0.78rem; }
+    th, td { padding: 8px 6px; text-align: left; border-bottom: 1px solid #e9dfc8; }
+    th { font-family: 'Montserrat', sans-serif; font-size: 0.58rem; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); }
+    .num { text-align: right; white-space: nowrap; }
+    .totals { margin-left: auto; width: min(320px, 100%); }
+    .row { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.8rem; }
+    .row.total { border-top: 2px dashed var(--line); margin-top: 4px; padding-top: 8px; font-weight: 700; color: var(--forest); font-size: 1.05rem; }
+    .row.total span:last-child { font-family: 'Lora', serif; font-size: 1.25rem; }
+    .foot { margin-top: 18px; padding-top: 12px; border-top: 1px solid #efe6d0; font-size: 0.68rem; color: var(--muted); line-height: 1.6; text-align: center; }
+    .actions { display: flex; gap: 8px; justify-content: center; margin: 18px auto 0; max-width: 760px; }
+    .btn { padding: 10px 16px; border-radius: 8px; border: 1px solid #d9c9a8; background: var(--forest); color: #fffdf6; font-family: 'Montserrat', sans-serif; font-size: 0.65rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; cursor: pointer; text-decoration: none; }
+    .btn.alt { background: #fffdf6; color: var(--forest); }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .sheet { box-shadow: none; border: 0; border-radius: 0; max-width: none; }
+      .actions { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="sheet">
+    <div class="head">
+      <div class="brand">
+        <h1>Veterinaria Pepe &amp; Pepito</h1>
+        <p>Monseñor Lezcano, Managua, Nicaragua<br>Tel: (505) 2266-0000 · 8888-1234<br>Atención: Lunes a sábado, 8:00 AM - 6:00 PM</p>
+      </div>
+      <div class="doc">
+        <strong>Comprobante de compra</strong>
+        <span>{{ numero }}</span>
+        <small style="color:var(--muted); font-size:0.7rem;">{{ fecha }}</small>
+      </div>
+    </div>
+
+    <div class="meta">
+      <div><b>Cliente</b>{{ cliente_nombre or 'Cliente de mostrador' }}</div>
+      <div><b>Correo</b>{{ cliente_correo or '—' }}</div>
+      <div><b>Teléfono</b>{{ cliente_telefono or '—' }}</div>
+      <div><b>Atendido por</b>{{ atendido or 'Tienda en línea' }}</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th class="num">Cant.</th>
+          <th class="num">Precio (C$)</th>
+          <th class="num">Subtotal (C$)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in items %}
+          <tr>
+            <td>{{ item.nombre }}</td>
+            <td class="num">{{ item.cantidad }}</td>
+            <td class="num">{{ item.precio|moneda }}</td>
+            <td class="num">{{ item.subtotal|moneda }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4" style="color:var(--muted);">Sin productos en el comprobante.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <div class="totals">
+      <div class="row"><span>Subtotal</span><span>{{ subtotal|moneda }}</span></div>
+      <div class="row"><span>IVA (15%)</span><span>{{ iva|moneda }}</span></div>
+      <div class="row total"><span>Total</span><span>{{ total|moneda }}</span></div>
+    </div>
+
+    <div class="foot">
+      Precios expresados en córdobas nicaragüenses (C$). Este comprobante corresponde al pedido realizado en la tienda.
+      La entrega o retiro se coordina con el equipo de la veterinaria. Gracias por su preferencia.
+    </div>
+  </div>
+
+  <div class="actions">
+    <button class="btn" type="button" onclick="window.print()">Imprimir / Guardar PDF</button>
+    <a class="btn alt" href="{{ url_for('index') }}">Volver a la tienda</a>
+  </div>
+
+  {% if auto_print %}
+  <script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 250); });</script>
+  {% endif %}
+</body>
+</html>

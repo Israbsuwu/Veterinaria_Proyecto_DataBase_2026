@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi cuenta — Veterinaria Pepe &amp; Pepito</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cuenta.css') }}">
+</head>
+<body>
+
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="5.9" cy="9.6" rx="2.1" ry="2.9"/><ellipse cx="10.2" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="15.1" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="19.4" cy="9.6" rx="2.1" ry="2.9"/><path d="M12.7 12.4c3.7 0 6.5 2.8 6.5 5.9 0 2.2-1.9 3.3-3.9 3.3-1 0-1.7-.4-2.6-.4s-1.6.4-2.6.4c-2 0-3.9-1.1-3.9-3.3 0-3.1 2.8-5.9 6.5-5.9z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.8 7l7.1 5.2c.7.5 1.5.5 2.2 0L20.2 7"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.4 3.5h3l1.5 4-2 1.6a12.5 12.5 0 006 6l1.6-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.4 5.7a2 2 0 012-2.2z"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-5.7 7-11a7 7 0 10-14 0c0 5.3 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-id" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.4c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5"/><path d="M14.5 10h4"/><path d="M14.5 13.5h4"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M10 4.5H5.5a1.5 1.5 0 00-1.5 1.5v12a1.5 1.5 0 001.5 1.5H10"/><path d="M14 8l4 4-4 4"/><path d="M18 12H7"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('mi_cuenta') }}">
+      <span class="brand-badge"><svg class="ico ico-solid"><use href="#i-paw"/></svg></span>
+      <span class="brand-text">
+        <strong>Veterinaria Pepe &amp; Pepito</strong>
+        <span>Portal de clientes</span>
+      </span>
+    </a>
+
+    <div class="topbar-right">
+      <span class="who">Hola, <strong>{{ cliente.nombre }}</strong></span>
+      <span class="role-chip">{{ session.get('user_rol', 'Cliente') }}</span>
+      <a class="btn-logout" href="{{ url_for('logout') }}">
+        <svg class="ico"><use href="#i-out"/></svg> Salir
+      </a>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <p class="eyebrow">Mi cuenta</p>
+      <h1>{{ cliente.nombre }} {{ cliente.apellido }}</h1>
+      <p>Este es el resumen de tus datos y de las mascotas registradas a tu nombre en la veterinaria.</p>
+    </section>
+
+    <div class="grid">
+      <section class="card">
+        <h2>Mis datos</h2>
+        <dl class="datos">
+          <div>
+            <dt>Correo</dt>
+            <dd>{{ cliente.correo or '—' }}</dd>
+          </div>
+          <div>
+            <dt>Teléfono</dt>
+            <dd>{{ cliente.telefono or '—' }}</dd>
+          </div>
+          <div>
+            <dt>Cédula</dt>
+            <dd>{{ cliente.cedula or '—' }}</dd>
+          </div>
+          <div>
+            <dt>Dirección</dt>
+            <dd>{{ cliente.direccion or '—' }}</dd>
+          </div>
+        </dl>
+        <p class="hint">Si algún dato está incorrecto, pide que lo actualicen en recepción.</p>
+      </section>
+
+      <section class="card">
+        <h2>Mis mascotas <span class="count">{{ mascotas|length }}</span></h2>
+
+        {% if mascotas %}
+          <ul class="pets">
+            {% for m in mascotas %}
+              <li>
+                <span class="pet-avatar"><svg class="ico ico-solid"><use href="#i-paw"/></svg></span>
+                <div class="pet-info">
+                  <strong>{{ m.nombre }}</strong>
+                  <span>
+                    {{ m.especie or 'Sin especie' }}
+                    {% if m.raza %} · {{ m.raza }}{% endif %}
+                    {% if m.sexo %} · {{ m.sexo }}{% endif %}
+                  </span>
+                  {% if m.condiciones %}
+                    <em>Condiciones / análisis: {{ m.condiciones }}</em>
+                  {% elif m.observaciones %}
+                    <em>Observaciones: {{ m.observaciones }}</em>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="empty">
+            Todavía no tienes mascotas registradas a tu nombre.
+            Pide en recepción que agreguen la ficha de tu mascota.
+          </p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="card" style="margin-top: 1rem;">
+      <h2>Compras en la tienda</h2>
+      <p class="hint" style="margin-bottom: 0.7rem;">Puedes comprar alimentos, medicamentos y accesorios en la tienda. Al confirmar tu pedido se genera un comprobante imprimible (PDF) con el detalle de tu compra.</p>
+      <a class="btn-logout" href="{{ url_for('index') }}" style="display:inline-flex; text-decoration:none; background:#244414; color:#fffdf6; border-color:#244414;">Ir a la tienda y carrito</a>
+    </section>
+
+    <p class="page-foot">© 2026 Veterinaria Pepe &amp; Pepito · Managua, Nicaragua</p>
+  </main>
+</body>
+</html>

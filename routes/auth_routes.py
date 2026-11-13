@@ -34,9 +34,16 @@ def _start_session(user: dict) -> None:
     session["rol"] = user["rol"]
     session["cliente_id"] = user.get("cliente_id")
     session["vet_id"] = user.get("veterinario_id")
+    # Claves compatibles con el frontend del compañero (templates/JS).
+    session["user_id"] = user["id"]
+    session["user_nombre"] = user["nombre"]
+    session["user_apellido"] = user.get("apellido", "")
+    session["user_correo"] = user["correo"]
+    session["user_rol"] = user["rol"]
+    session["user_tipo"] = "personal" if user["rol"] in Config.STAFF_ROLES else "cliente"
 
 
-@auth_bp.route("/")
+@auth_bp.route("/inicio")
 def index():
     if session.get("rol") == Config.ROLE_CLIENT:
         return redirect(url_for("shop.home"))
@@ -63,7 +70,7 @@ def login():
             return redirect(_safe_next(url_for("admin.dashboard")))
         except BusinessError as error:
             flash(error.message, "danger")
-    return render_template("login.html")
+    return render_template("login.html", tab="login", correo="", datos={}, roles=[])
 
 
 @auth_bp.route("/logout")

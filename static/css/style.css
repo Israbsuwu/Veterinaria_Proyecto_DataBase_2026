@@ -380,8 +380,6 @@ input:focus, select:focus, textarea:focus {
 }
 
 .toast.hidden { display: none; }
-.toast-error { background: #ef4444; color: #fff; }
-.toast-info { background: #0284c7; color: #fff; }
 
 /* RESPONSIVE: Mobile First (celular) */
 @media (max-width: 768px) {

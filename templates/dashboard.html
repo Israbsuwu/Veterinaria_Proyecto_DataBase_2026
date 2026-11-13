@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1f3a12">
+  <title>Panel de gestión — Veterinaria Pepe &amp; Pepito</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+</head>
+<body class="dash-body">
+
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="5.9" cy="9.6" rx="2.1" ry="2.9"/><ellipse cx="10.2" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="15.1" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="19.4" cy="9.6" rx="2.1" ry="2.9"/><path d="M12.7 12.4c3.7 0 6.5 2.8 6.5 5.9 0 2.2-1.9 3.3-3.9 3.3-1 0-1.7-.4-2.6-.4s-1.6.4-2.6.4c-2 0-3.9-1.1-3.9-3.3 0-3.1 2.8-5.9 6.5-5.9z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></symbol>
+    <symbol id="i-box" viewBox="0 0 24 24"><path d="M3.5 8.2L12 3.5l8.5 4.7v7.6L12 20.5l-8.5-4.7z"/><path d="M3.8 8.4L12 13l8.2-4.6"/><path d="M12 13v7.2"/><path d="M7.7 6l8.4 4.7"/></symbol>
+    <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6.5 3.5h11"/><path d="M6.5 20.5h11"/><path d="M8 3.5v3.2c0 1.6 3.1 3.5 4 5.3.9-1.8 4-3.7 4-5.3V3.5"/><path d="M8 20.5v-3.2c0-1.6 3.1-3.5 4-5.3.9 1.8 4 3.7 4 5.3v3.2"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="15" rx="2.4"/><path d="M7.5 3.2v4.2"/><path d="M16.5 3.2v4.2"/><path d="M3.8 10.5h16.4"/><path d="M7.5 14h2"/><path d="M14.5 14h2"/><path d="M7.5 17.5h2"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3.5 6.5h10v10h-10z"/><path d="M13.5 10h4l3 3v3.5h-7z"/><circle cx="7" cy="18.2" r="1.8"/><circle cx="17.2" cy="18.2" r="1.8"/><path d="M3.5 16.4h1.6"/><path d="M8.9 16.4h6.6"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M5 3.5h14v17l-2.3-1.5-2.3 1.5-2.4-1.5-2.3 1.5-2.4-1.5L5 20.5z"/><path d="M8.5 8h7"/><path d="M8.5 11.5h7"/><path d="M8.5 15h4.5"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.8 20.2c0-3.4 2.8-5.6 6.2-5.6s6.2 2.2 6.2 5.6"/><path d="M15.6 5.1a3.2 3.2 0 010 6.2"/><path d="M17.3 14.8c2.2.4 3.9 1.9 3.9 4.4"/></symbol>
+    <symbol id="i-badge" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="11" r="2.2"/><path d="M5.8 16.4c.5-1.6 1.7-2.5 3.2-2.5s2.7.9 3.2 2.5"/><path d="M14.5 10h4"/><path d="M14.5 13.5h4"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h11"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.8 15.8L21 21"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4.5v15"/><path d="M4.5 12h15"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5.5 5.5l13 13"/><path d="M18.5 5.5l-13 13"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4.5 12h15"/><path d="M13.5 6l6 6-6 6"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3.5L21 20H3z"/><path d="M12 9.5v4.2"/><circle cx="12" cy="17" r="0.6" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5V20h16V9.5"/><path d="M3 9.5l2.2-5.5h13.6L21 9.5"/><path d="M3 9.5c0 1.5 1.2 2.6 2.7 2.6S8.4 11 8.4 9.5c0 1.5 1.2 2.6 2.7 2.6s2.7-1.1 2.7-2.6c0 1.5 1.2 2.6 2.7 2.6s2.7-1.1 2.7-2.6"/><path d="M9.5 20v-5.5h5V20"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4.5H5.5a1.5 1.5 0 00-1.5 1.5v12a1.5 1.5 0 001.5 1.5H10"/><path d="M14 8l4 4-4 4"/><path d="M18 12H7"/></symbol>
+    <symbol id="i-money" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2.3"/><circle cx="12" cy="12" r="2.6"/><path d="M6.5 9.2v5.6"/><path d="M17.5 9.2v5.6"/></symbol>
+    <symbol id="i-trend" viewBox="0 0 24 24"><path d="M4 17l5.5-5.5 3.4 3.4L20 8"/><path d="M15 8h5v5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.4 3.5h3l1.5 4-2 1.6a12.5 12.5 0 006 6l1.6-2 4 1.5v3a2 2 0 01-2.2 2A17.5 17.5 0 014.4 5.7a2 2 0 012-2.2z"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.8 7l7.1 5.2c.7.5 1.5.5 2.2 0L20.2 7"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-5.7 7-11a7 7 0 10-14 0c0 5.3 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 5.5v4.8h-4.8"/><path d="M4 18.5v-4.8h4.8"/><path d="M5.4 9.3A7.2 7.2 0 0118.9 7"/><path d="M18.6 14.7A7.2 7.2 0 015.1 17"/></symbol>
+  </svg>
+
+  <div class="dash-shell" id="dashShell">
+
+    <!-- ===================== BARRA LATERAL ===================== -->
+    <aside class="sidebar" id="sidebar">
+      <a class="side-brand" href="{{ url_for('dashboard') }}">
+        <span class="side-seal" aria-hidden="true"><svg class="ico ico-solid"><use href="#i-paw"/></svg></span>
+        <span class="side-brand-text">
+          <strong>Veterinaria<br>Pepe &amp; Pepito</strong>
+          <small>Panel de gestión</small>
+        </span>
+      </a>
+
+      <nav class="side-nav" aria-label="Secciones del panel">
+        <p class="nav-label">Operación</p>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'resumen' %}active{% endif %}" data-view="resumen">
+          <span class="nav-ico"><svg class="ico"><use href="#i-grid"/></svg></span>
+          <span class="nav-text"><strong>Resumen</strong><small>Estado del negocio</small></span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'inventario' %}active{% endif %}" data-view="inventario">
+          <span class="nav-ico"><svg class="ico"><use href="#i-box"/></svg></span>
+          <span class="nav-text"><strong>Inventario</strong><small>Productos y stock</small></span>
+          <span class="nav-count">{{ kpis.productos }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'productos' %}active{% endif %}" data-view="productos">
+          <span class="nav-ico"><svg class="ico"><use href="#i-store"/></svg></span>
+          <span class="nav-text"><strong>Productos</strong><small>Tienda e imágenes</small></span>
+          <span class="nav-count">{{ kpis.productos }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'vencimientos' %}active{% endif %}" data-view="vencimientos">
+          <span class="nav-ico"><svg class="ico"><use href="#i-hourglass"/></svg></span>
+          <span class="nav-text"><strong>Vencimientos</strong><small>Lotes y caducidad</small></span>
+          <span class="nav-count">{{ kpis.lotes_365 }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'citas' %}active{% endif %}" data-view="citas">
+          <span class="nav-ico"><svg class="ico"><use href="#i-calendar"/></svg></span>
+          <span class="nav-text"><strong>Citas médicas</strong><small>Agenda clínica</small></span>
+          <span class="nav-count">{{ kpis.citas_programadas }}</span>
+        </button>
+
+        <p class="nav-label">Administración</p>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'proveedores' %}active{% endif %}" data-view="proveedores">
+          <span class="nav-ico"><svg class="ico"><use href="#i-truck"/></svg></span>
+          <span class="nav-text"><strong>Proveedores</strong><small>Compras y contacto</small></span>
+          <span class="nav-count">{{ kpis.proveedores }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'facturas' %}active{% endif %}" data-view="facturas">
+          <span class="nav-ico"><svg class="ico"><use href="#i-receipt"/></svg></span>
+          <span class="nav-text"><strong>Facturas</strong><small>Ventas y cobros</small></span>
+          <span class="nav-count">{{ kpis.facturas }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'clientes' %}active{% endif %}" data-view="clientes">
+          <span class="nav-ico"><svg class="ico"><use href="#i-users"/></svg></span>
+          <span class="nav-text"><strong>Clientes</strong><small>Dueños y mascotas</small></span>
+          <span class="nav-count">{{ kpis.clientes }}</span>
+        </button>
+
+        <button type="button" class="nav-item {% if vista_inicial == 'equipo' %}active{% endif %}" data-view="equipo">
+          <span class="nav-ico"><svg class="ico"><use href="#i-badge"/></svg></span>
+          <span class="nav-text"><strong>Equipo</strong><small>Personal y roles</small></span>
+          <span class="nav-count">{{ kpis.personal }}</span>
+        </button>
+      </nav>
+
+      <div class="side-foot">
+        <div class="side-user">
+          <span class="avatar">{{ usuario.iniciales }}</span>
+          <span class="side-user-text">
+            <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+            <span>{{ usuario.rol }}</span>
+          </span>
+        </div>
+        <div class="side-links">
+          <a href="{{ url_for('index') }}"><svg class="ico"><use href="#i-store"/></svg> Ver tienda</a>
+          <a href="{{ url_for('logout') }}"><svg class="ico"><use href="#i-logout"/></svg> Cerrar sesión</a>
+        </div>
+        <p class="side-note">Datos en vivo de la clínica · {{ hoy|fecha('%d/%m/%Y') }}</p>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <!-- ===================== CONTENIDO ===================== -->
+    <div class="dash-main">
+
+      <header class="topbar">
+        <button type="button" class="menu-btn" id="menuBtn" aria-label="Abrir menú">
+          <svg class="ico"><use href="#i-menu"/></svg>
+        </button>
+
+        <div class="crumb">
+          <span>Panel</span>
+          <span class="crumb-sep">/</span>
+          <strong id="crumbVista">Resumen</strong>
+        </div>
+
+        <div class="topbar-right">
+          <span class="date-chip">
+            <svg class="ico"><use href="#i-clock"/></svg>
+            {{ generado|fecha('%d %b %Y') }} · {{ generado|hora }}
+          </span>
+          <a class="top-store" href="{{ url_for('index') }}">
+            <svg class="ico"><use href="#i-store"/></svg>
+            <span>Tienda</span>
+          </a>
+          <span class="top-avatar" title="{{ usuario.nombre }} {{ usuario.apellido }}">{{ usuario.iniciales }}</span>
+        </div>
+      </header>
+
+      <main class="views" id="views">
+
+        {% if errores %}
+          <details class="db-alert">
+            <summary><svg class="ico"><use href="#i-alert"/></svg> Algunas secciones no se pudieron cargar</summary>
+            <ul>
+              {% for error in errores %}<li>{{ error }}</li>{% endfor %}
+            </ul>
+          </details>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-stack" role="status" aria-live="polite">
+              {% for categoria, mensaje in messages %}
+                <div class="flash flash--{{ categoria if categoria in ['error','success','info'] else 'info' }}">
+                  <svg class="ico"><use href="#{{ 'i-check' if categoria == 'success' else 'i-alert' }}"/></svg>
+                  <span>{{ mensaje }}</span>
+                  <button type="button" class="flash-close" data-dismiss-flash aria-label="Cerrar aviso">
+                    <svg class="ico"><use href="#i-close"/></svg>
+                  </button>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- ============================================================
+             VISTA: RESUMEN
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'resumen' %}active{% endif %}" id="view-resumen"
+                 data-view="resumen" data-title="Resumen">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 01 · Vista general</p>
+              <h1>El negocio, de un vistazo.</h1>
+              <p>Existencias, agenda, vencimientos y facturación del día a día. Todo lo que hay que vigilar, en una sola página.</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-outline" data-go="inventario">
+                Revisar inventario <svg class="ico"><use href="#i-arrow"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="kpi-grid">
+            <article class="kpi kpi--green">
+              <div class="kpi-top"><span class="kpi-index">01</span><span class="kpi-ic"><svg class="ico"><use href="#i-box"/></svg></span></div>
+              <p class="kpi-label">Productos en catálogo</p>
+              <p class="kpi-value" data-count="{{ kpis.productos }}">0</p>
+              <p class="kpi-foot">{{ kpis.categorias }} categorías · {{ kpis.stock_total|numero }} unidades</p>
+            </article>
+
+            <article class="kpi kpi--orange">
+              <div class="kpi-top"><span class="kpi-index">02</span><span class="kpi-ic"><svg class="ico"><use href="#i-alert"/></svg></span></div>
+              <p class="kpi-label">Stock bajo</p>
+              <p class="kpi-value" data-count="{{ kpis.stock_bajo }}">0</p>
+              <p class="kpi-foot">{{ kpis.agotados }} agotados · revisar reposición</p>
+            </article>
+
+            <article class="kpi kpi--gold">
+              <div class="kpi-top"><span class="kpi-index">03</span><span class="kpi-ic"><svg class="ico"><use href="#i-hourglass"/></svg></span></div>
+              <p class="kpi-label">Lotes por vencer</p>
+              <p class="kpi-value" data-count="{{ kpis.lotes_365 }}">0</p>
+              <p class="kpi-foot">{{ kpis.lotes_90 }} en 90 días · {{ kpis.lotes_vencidos }} vencidos</p>
+            </article>
+
+            <article class="kpi kpi--blue">
+              <div class="kpi-top"><span class="kpi-index">04</span><span class="kpi-ic"><svg class="ico"><use href="#i-calendar"/></svg></span></div>
+              <p class="kpi-label">Citas programadas</p>
+              <p class="kpi-value" data-count="{{ kpis.citas_programadas }}">0</p>
+              <p class="kpi-foot">{{ kpis.citas_hoy }} hoy · {{ kpis.citas_atendidas }} atendidas</p>
+            </article>
+
+            <article class="kpi kpi--ink">
+              <div class="kpi-top"><span class="kpi-index">05</span><span class="kpi-ic"><svg class="ico"><use href="#i-money"/></svg></span></div>
+              <p class="kpi-label">Facturación registrada</p>
+              <p class="kpi-value" data-count="{{ kpis.facturado }}" data-money="1">C$ 0.00</p>
+              <p class="kpi-foot">{{ kpis.facturas }} facturas · {{ kpis.ingresos_30|moneda }} en 30 días</p>
+            </article>
+          </div>
+
+          <div class="dash-grid">
+
+            <section class="panel span-7">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Facturación</p>
+                  <h2>Ventas de los últimos 6 meses</h2>
+                </div>
+                <span class="panel-tag">{{ kpis.facturas }} facturas</span>
+              </header>
+
+              {% if ventas_mes %}
+                <div class="sales-chart" role="img" aria-label="Ventas mensuales de los últimos seis meses">
+                  {% for mes in ventas_mes %}
+                    <div class="sales-col" title="{{ mes.etiqueta }}: {{ mes.total|moneda }} · {{ mes.facturas }} facturas">
+                      <span class="sales-value">{{ mes.total|moneda }}</span>
+                      <div class="sales-track"><span class="sales-bar" data-pct="{{ mes.pct }}"></span></div>
+                      <span class="sales-label">{{ mes.etiqueta }}</span>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% else %}
+                <p class="empty-state">Todavía no hay ventas registradas.</p>
+              {% endif %}
+
+              <div class="panel-footline">
+                <span><strong>{{ kpis.ingresos_30|moneda }}</strong> cobrados en los últimos 30 días</span>
+                <span><strong>{{ kpis.ticket|moneda }}</strong> ticket promedio</span>
+              </div>
+            </section>
+
+            <section class="panel span-5">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Cobros</p>
+                  <h2>Cómo pagan los clientes</h2>
+                </div>
+              </header>
+
+              {% if metodos %}
+                <ul class="meter-list">
+                  {% for metodo in metodos %}
+                    <li>
+                      <div class="meter-head">
+                        <span class="meter-name">{{ metodo.metodo }}</span>
+                        <span class="meter-total">{{ metodo.total|moneda }}</span>
+                      </div>
+                      <div class="meter-track"><span data-pct="{{ metodo.pct }}"></span></div>
+                      <p class="meter-foot">{{ metodo.pagos }} pagos · {{ '%.1f'|format(metodo.pct) }}% del total</p>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="empty-state">Sin pagos registrados.</p>
+              {% endif %}
+            </section>
+
+            <section class="panel span-7">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Reposición</p>
+                  <h2>Inventario en riesgo</h2>
+                </div>
+                <button type="button" class="panel-link" data-go="inventario">Ver todo <svg class="ico"><use href="#i-arrow"/></svg></button>
+              </header>
+
+              {% if riesgo %}
+                <div class="table-wrap table-wrap--short">
+                  <table class="ledger">
+                    <thead>
+                      <tr>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th class="num">Stock</th>
+                        <th class="num">Mín.</th>
+                        <th>Estado</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for producto in riesgo %}
+                        <tr>
+                          <td><strong>{{ producto.nombre }}</strong><small>{{ producto.unidad }}</small></td>
+                          <td class="cell-muted">{{ producto.categoria }}</td>
+                          <td class="num {% if producto.clase != 'ok' %}num-alert{% endif %}">{{ producto.stock }}</td>
+                          <td class="num">{{ producto.minimo }}</td>
+                          <td><span class="pill pill--{{ producto.clase }}">{{ producto.estado }}</span></td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="empty-state">No hay productos registrados.</p>
+              {% endif %}
+            </section>
+
+            <section class="panel span-5">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Agenda</p>
+                  <h2>Próximas citas</h2>
+                </div>
+                <button type="button" class="panel-link" data-go="citas">Ver agenda <svg class="ico"><use href="#i-arrow"/></svg></button>
+              </header>
+
+              {% if proximas_citas %}
+                <ul class="agenda">
+                  {% for cita in proximas_citas %}
+                    <li>
+                      <span class="agenda-date">
+                        <strong>{{ cita.inicio|fecha('%d') }}</strong>
+                        <span>{{ cita.inicio|fecha('%b') }}</span>
+                      </span>
+                      <span class="agenda-body">
+                        <strong>{{ cita.mascota }}</strong>
+                        <span>{{ cita.cliente }} · {{ cita.veterinario }}</span>
+                        <small>{{ cita.motivo }}</small>
+                        {% if cita.pasada %}<em class="past-flag">Fecha pasada</em>{% endif %}
+                      </span>
+                      <span class="pill pill--{{ cita.clase }}">{{ cita.estado }}</span>
+                    </li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="empty-state">No hay citas programadas.</p>
+              {% endif %}
+            </section>
+
+            <section class="panel span-7">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Lotes</p>
+                  <h2>Próximos vencimientos</h2>
+                </div>
+                <button type="button" class="panel-link" data-go="vencimientos">Ver vencimientos <svg class="ico"><use href="#i-arrow"/></svg></button>
+              </header>
+
+              {% if lotes_proximos %}
+                <div class="table-wrap table-wrap--short">
+                  <table class="ledger">
+                    <thead>
+                      <tr>
+                        <th>Lote</th>
+                        <th>Producto</th>
+                        <th>Vence</th>
+                        <th class="num">Días</th>
+                        <th class="num">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for lote in lotes_proximos %}
+                        <tr>
+                          <td><span class="mono">{{ lote.codigo }}</span></td>
+                          <td><strong>{{ lote.producto }}</strong><small>{{ lote.categoria }}</small></td>
+                          <td class="mono">{{ lote.vence|fecha }}</td>
+                          <td class="num {% if lote.dias is not none and lote.dias <= 90 %}num-alert{% endif %}">{{ lote.dias }}</td>
+                          <td class="num">{{ lote.stock }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="empty-state">No hay lotes con fecha de vencimiento.</p>
+              {% endif %}
+            </section>
+
+            <section class="panel span-5">
+              <header class="panel-head">
+                <div>
+                  <p class="panel-kicker">Rotación</p>
+                  <h2>Lo más vendido</h2>
+                </div>
+              </header>
+
+              {% if top_productos %}
+                <ol class="rank-list">
+                  {% for producto in top_productos %}
+                    <li>
+                      <span class="rank-number">{{ '%02d'|format(loop.index) }}</span>
+                      <span class="rank-body">
+                        <span class="rank-top">
+                          <strong>{{ producto.nombre }}</strong>
+                          <span class="mono">{{ producto.unidades }} u.</span>
+                        </span>
+                        <span class="rank-track"><i data-pct="{{ producto.pct }}"></i></span>
+                        <small>{{ producto.total|moneda }}</small>
+                      </span>
+                    </li>
+                  {% endfor %}
+                </ol>
+              {% else %}
+                <p class="empty-state">Todavía no hay productos vendidos.</p>
+              {% endif %}
+            </section>
+          </div>
+        </section>
+
+        <!-- ============================================================
+             VISTA: INVENTARIO
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'inventario' %}active{% endif %}" id="view-inventario"
+                 data-view="inventario" data-title="Inventario">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 02 · Catálogo y existencias</p>
+              <h1>Inventario</h1>
+              <p>El stock se calcula con las entradas y salidas de cada lote. Los productos por debajo del mínimo quedan marcados para reposición.</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-outline" data-go="vencimientos">
+                Ir a vencimientos <svg class="ico"><use href="#i-arrow"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.productos }}</strong><span>productos</span></span>
+            <span class="stat"><strong>{{ kpis.stock_total|numero }}</strong><span>unidades netas</span></span>
+            <span class="stat stat--warn"><strong>{{ kpis.stock_bajo }}</strong><span>stock bajo</span></span>
+            <span class="stat stat--danger"><strong>{{ kpis.agotados }}</strong><span>agotados</span></span>
+            <span class="stat"><strong>{{ kpis.categorias }}</strong><span>categorías</span></span>
+          </div>
+
+          {% if categorias_stock %}
+            <div class="category-rail">
+              {% for categoria in categorias_stock[:5] %}
+                <article class="cat-card">
+                  <span class="cat-name">{{ categoria.nombre }}</span>
+                  <strong class="cat-value">{{ categoria.stock|numero }}</strong>
+                  <div class="cat-track"><i data-pct="{{ categoria.pct }}"></i></div>
+                  <small>{{ categoria.productos }} productos · {{ categoria.bajo }} en alerta</small>
+                </article>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarInventario" placeholder="Buscar producto, categoría o unidad…" autocomplete="off">
+              </label>
+              <div class="chip-row" data-filtro-inventario>
+                <button type="button" class="chip active" data-filtro="todos">Todos</button>
+                <button type="button" class="chip" data-filtro="ok">Disponibles</button>
+                <button type="button" class="chip" data-filtro="warn">Stock bajo</button>
+                <button type="button" class="chip" data-filtro="danger">Agotados</button>
+              </div>
+              <span class="result-count" id="contadorInventario">{{ productos|length }} productos</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaInventario">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Unidad</th>
+                    <th class="num">Stock</th>
+                    <th class="num">Mínimo</th>
+                    <th>Estado</th>
+                    <th class="num">Precio</th>
+                    <th>Próx. vencimiento</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for producto in productos %}
+                    <tr data-estado="{{ producto.clase }}"
+                        data-buscar="{{ (producto.nombre ~ ' ' ~ producto.categoria ~ ' ' ~ producto.unidad)|lower }}">
+                      <td><strong>{{ producto.nombre }}</strong><small>#{{ '%03d'|format(producto.id) }}</small></td>
+                      <td class="cell-muted">{{ producto.categoria }}</td>
+                      <td>{{ producto.unidad }}</td>
+                      <td class="num {% if producto.clase != 'ok' %}num-alert{% endif %}">{{ producto.stock }}</td>
+                      <td class="num">{{ producto.minimo }}</td>
+                      <td><span class="pill pill--{{ producto.clase }}">{{ producto.estado }}</span></td>
+                      <td class="num">{{ producto.precio|moneda }}</td>
+                      <td class="mono">{{ producto.proximo_vencimiento|fecha }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioInventario" hidden>No hay productos que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: PRODUCTOS (TIENDA)
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'productos' %}active{% endif %}" id="view-productos"
+                 data-view="productos" data-title="Productos">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 03 · Catálogo de la tienda</p>
+              <h1>Productos</h1>
+              <p>Administra lo que se muestra en la tienda: características de la base, precio en córdobas e imagen de referencia. Los productos nuevos aparecen de inmediato en el catálogo.</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-primary" data-open="modalProducto">
+                <svg class="ico"><use href="#i-plus"/></svg> Agregar producto
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.productos }}</strong><span>productos</span></span>
+            <span class="stat"><strong>{{ kpis.categorias }}</strong><span>categorías</span></span>
+            <span class="stat stat--warn"><strong>{{ kpis.stock_bajo }}</strong><span>stock bajo</span></span>
+            <span class="stat stat--danger"><strong>{{ kpis.agotados }}</strong><span>agotados</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarProductos" placeholder="Buscar producto, categoría o descripción…" autocomplete="off">
+              </label>
+              <span class="result-count" id="contadorProductosDash">{{ productos|length }} productos</span>
+            </div>
+
+            <div class="product-admin-grid" id="grillaProductos">
+              {% for producto in productos %}
+                {% set foto = imagen_producto(producto.id) %}
+                <article class="product-admin-card"
+                         data-buscar="{{ (producto.nombre ~ ' ' ~ producto.categoria ~ ' ' ~ (producto.descripcion or '') ~ ' ' ~ producto.unidad)|lower }}">
+                  <div class="product-admin-img">
+                    <img src="{{ foto or arte_categoria(producto.categoria) }}"
+                         alt="{{ producto.nombre }}" loading="lazy">
+                    {% if foto %}<span class="product-admin-flag">Foto propia</span>{% endif %}
+                  </div>
+                  <div class="product-admin-body">
+                    <span class="product-admin-cat">{{ producto.categoria }}</span>
+                    <h3>{{ producto.nombre }}</h3>
+                    <p class="product-admin-desc">{{ producto.descripcion or 'Sin descripción registrada en la base.' }}</p>
+                    <div class="product-admin-meta">
+                      <strong>{{ producto.precio|moneda }}</strong>
+                      <span class="pill pill--{{ producto.clase }}">{{ producto.stock }} en stock</span>
+                    </div>
+                    <div class="product-admin-foot">
+                      <span class="mono">#{{ '%03d'|format(producto.id) }} · {{ producto.unidad }}</span>
+                      <button type="button" class="mini-btn"
+                              data-imagen="{{ producto.id }}"
+                              data-nombre="{{ producto.nombre }}"
+                              data-url="{{ url_for('dashboard_producto_imagen', id_producto=producto.id) }}">
+                        <svg class="ico"><use href="#i-eye"/></svg> Imagen
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+            <p class="empty-state" id="vacioProductos" hidden>No hay productos que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: VENCIMIENTOS
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'vencimientos' %}active{% endif %}" id="view-vencimientos"
+                 data-view="vencimientos" data-title="Vencimientos">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 03 · Control de caducidad</p>
+              <h1>Vencimientos</h1>
+              <p>Cada lote con fecha de caducidad, su stock y los días que le quedan. Desde aquí también se registran entradas y salidas.</p>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ lotes|length }}</strong><span>lotes con fecha</span></span>
+            <span class="stat stat--danger"><strong>{{ kpis.lotes_vencidos }}</strong><span>vencidos</span></span>
+            <span class="stat stat--warn"><strong>{{ kpis.lotes_90 }}</strong><span>en 90 días</span></span>
+            <span class="stat"><strong>{{ kpis.lotes_365 }}</strong><span>en 12 meses</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarVencimientos" placeholder="Buscar lote, producto o categoría…" autocomplete="off">
+              </label>
+              <div class="chip-row" data-filtro-vencimientos>
+                <button type="button" class="chip active" data-filtro="todos">Todos</button>
+                <button type="button" class="chip" data-filtro="vencido">Vencidos</button>
+                <button type="button" class="chip" data-filtro="30">≤ 30 días</button>
+                <button type="button" class="chip" data-filtro="90">≤ 90 días</button>
+                <button type="button" class="chip" data-filtro="180">≤ 180 días</button>
+                <button type="button" class="chip" data-filtro="365">≤ 1 año</button>
+                <button type="button" class="chip" data-filtro="lejano">+ 1 año</button>
+              </div>
+              <span class="result-count" id="contadorVencimientos">{{ lotes|length }} lotes</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaVencimientos">
+                <thead>
+                  <tr>
+                    <th>Lote</th>
+                    <th>Producto</th>
+                    <th>Categoría</th>
+                    <th>Ingreso</th>
+                    <th>Vence</th>
+                    <th class="num">Días</th>
+                    <th class="num">Stock</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for lote in lotes %}
+                    <tr data-dias="{{ lote.dias if lote.dias is not none else 99999 }}"
+                        data-buscar="{{ (lote.codigo ~ ' ' ~ lote.producto ~ ' ' ~ lote.categoria)|lower }}">
+                      <td><span class="mono">{{ lote.codigo }}</span></td>
+                      <td><strong>{{ lote.producto }}</strong><small>{{ lote.estado_bd }}</small></td>
+                      <td class="cell-muted">{{ lote.categoria }}</td>
+                      <td class="mono">{{ lote.ingreso|fecha }}</td>
+                      <td class="mono">{{ lote.vence|fecha }}</td>
+                      <td class="num {% if lote.dias is not none and lote.dias <= 90 %}num-alert{% endif %}">{{ lote.dias }}</td>
+                      <td class="num">{{ lote.stock }}</td>
+                      <td><span class="pill pill--{{ lote.clase }}">{{ lote.estado }}</span></td>
+                      <td>
+                        <button type="button" class="mini-btn" data-movimiento
+                                data-lote="{{ lote.id }}"
+                                data-codigo="{{ lote.codigo }}"
+                                data-producto="{{ lote.producto }}"
+                                data-stock="{{ lote.stock }}">
+                          Movimiento
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioVencimientos" hidden>No hay lotes que coincidan con ese filtro.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: CITAS
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'citas' %}active{% endif %}" id="view-citas"
+                 data-view="citas" data-title="Citas médicas">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 04 · Agenda clínica</p>
+              <h1>Citas médicas</h1>
+              <p>Reservas del portal, llamadas y WhatsApp. Marca una cita como atendida o cancélala sin salir del panel.</p>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat stat--warn"><strong id="statCitasProgramadas">{{ kpis.citas_programadas }}</strong><span>programadas</span></span>
+            <span class="stat"><strong>{{ kpis.citas_hoy }}</strong><span>hoy</span></span>
+            <span class="stat stat--ok"><strong id="statCitasAtendidas">{{ kpis.citas_atendidas }}</strong><span>atendidas</span></span>
+            <span class="stat stat--danger"><strong id="statCitasCanceladas">{{ citas|selectattr('estado','equalto','CANCELADA')|list|length }}</strong><span>canceladas</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarCitas" placeholder="Buscar mascota, dueño, veterinario o motivo…" autocomplete="off">
+              </label>
+              <div class="chip-row" data-filtro-citas>
+                <button type="button" class="chip active" data-filtro="PROGRAMADA">Programadas</button>
+                <button type="button" class="chip" data-filtro="ATENDIDA">Atendidas</button>
+                <button type="button" class="chip" data-filtro="CANCELADA">Canceladas</button>
+                <button type="button" class="chip" data-filtro="TODAS">Todas</button>
+              </div>
+              <span class="result-count" id="contadorCitas">{{ kpis.citas_programadas }} programadas</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaCitas">
+                <thead>
+                  <tr>
+                    <th>Fecha y hora</th>
+                    <th>Mascota</th>
+                    <th>Dueño</th>
+                    <th>Veterinario</th>
+                    <th>Canal</th>
+                    <th>Motivo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cita in citas %}
+                    <tr data-estado="{{ cita.estado }}" data-id="{{ cita.id }}"
+                        data-buscar="{{ (cita.mascota ~ ' ' ~ cita.cliente ~ ' ' ~ cita.veterinario ~ ' ' ~ cita.motivo ~ ' ' ~ cita.especie)|lower }}">
+                      <td>
+                        <span class="mono">{{ cita.inicio|fecha('%d/%m/%Y') }}</span>
+                        <small>{{ cita.inicio|hora }} – {{ cita.fin|hora }}</small>
+                        {% if cita.pasada %}<em class="past-flag">Fecha pasada</em>{% endif %}
+                      </td>
+                      <td><strong>{{ cita.mascota }}</strong><small>{{ cita.especie }}{% if cita.raza != '—' %} · {{ cita.raza }}{% endif %}</small></td>
+                      <td>{{ cita.cliente }}<small>{{ cita.telefono }}</small></td>
+                      <td>{{ cita.veterinario }}</td>
+                      <td><span class="canal">{{ cita.canal }}</span></td>
+                      <td class="cell-motivo">{{ cita.motivo }}</td>
+                      <td><span class="pill pill--{{ cita.clase }}">{{ cita.estado }}</span></td>
+                      <td>
+                        {% if cita.estado == 'PROGRAMADA' %}
+                          <div class="row-actions">
+                            <button type="button" class="mini-btn mini-btn--ok" data-cita-estado
+                                    data-url="{{ url_for('dashboard_cita_estado', id_reserva=cita.id) }}"
+                                    data-estado="ATENDIDA">Atender</button>
+                            <button type="button" class="mini-btn mini-btn--danger" data-cita-estado
+                                    data-url="{{ url_for('dashboard_cita_estado', id_reserva=cita.id) }}"
+                                    data-estado="CANCELADA">Cancelar</button>
+                          </div>
+                        {% else %}
+                          <span class="muted">—</span>
+                        {% endif %}
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioCitas" hidden>No hay citas con ese filtro.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: PROVEEDORES
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'proveedores' %}active{% endif %}" id="view-proveedores"
+                 data-view="proveedores" data-title="Proveedores">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 05 · Compras y abastecimiento</p>
+              <h1>Proveedores</h1>
+              <p>Contactos, compras acumuladas y último movimiento de cada proveedor. Los nuevos se registran como activos.</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-primary" data-open="modalProveedor">
+                <svg class="ico"><use href="#i-plus"/></svg> Nuevo proveedor
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ proveedores|length }}</strong><span>proveedores</span></span>
+            <span class="stat stat--ok"><strong>{{ kpis.proveedores_activos }}</strong><span>activos</span></span>
+            <span class="stat"><strong>{{ proveedores|map(attribute='compras')|sum }}</strong><span>compras registradas</span></span>
+            <span class="stat"><strong>{{ proveedores|map(attribute='total')|sum|moneda }}</strong><span>comprado</span></span>
+          </div>
+
+          <div class="toolbar-simple">
+            <label class="search-box">
+              <svg class="ico"><use href="#i-search"/></svg>
+              <input type="search" id="buscarProveedores" placeholder="Buscar proveedor, correo o teléfono…" autocomplete="off">
+            </label>
+            <span class="result-count" id="contadorProveedores">{{ proveedores|length }} proveedores</span>
+          </div>
+
+          {% if proveedores %}
+            <div class="provider-grid" id="grillaProveedores">
+              {% for proveedor in proveedores %}
+                <article class="provider-card"
+                         data-buscar="{{ (proveedor.nombre ~ ' ' ~ proveedor.telefono ~ ' ' ~ proveedor.correo ~ ' ' ~ proveedor.direccion)|lower }}">
+                  <div class="provider-head">
+                    <span class="provider-seal">{{ proveedor.nombre[:1]|upper }}</span>
+                    <span class="pill pill--{{ 'ok' if proveedor.estado == 'ACTIVO' else 'muted' }}">{{ proveedor.estado }}</span>
+                  </div>
+                  <h3>{{ proveedor.nombre }}</h3>
+                  <ul class="provider-contact">
+                    <li><svg class="ico"><use href="#i-phone"/></svg> {{ proveedor.telefono }}</li>
+                    <li><svg class="ico"><use href="#i-mail"/></svg> {{ proveedor.correo }}</li>
+                    <li><svg class="ico"><use href="#i-pin"/></svg> {{ proveedor.direccion }}</li>
+                  </ul>
+                  <div class="provider-stats">
+                    <div><strong>{{ proveedor.compras }}</strong><span>compras</span></div>
+                    <div><strong>{{ proveedor.total|moneda }}</strong><span>comprado</span></div>
+                  </div>
+                  <p class="provider-last">Última compra: <span class="mono">{{ proveedor.ultima|fecha }}</span></p>
+                </article>
+              {% endfor %}
+            </div>
+            <p class="empty-state" id="vacioProveedores" hidden>No hay proveedores que coincidan con la búsqueda.</p>
+          {% else %}
+            <p class="empty-state">Todavía no hay proveedores registrados.</p>
+          {% endif %}
+
+          <section class="panel panel--spaced">
+            <header class="panel-head">
+              <div>
+                <p class="panel-kicker">Movimientos</p>
+                <h2>Últimas compras</h2>
+              </div>
+              <span class="panel-tag">{{ compras|length }} recientes</span>
+            </header>
+
+            {% if compras %}
+              <div class="table-wrap table-wrap--short">
+                <table class="ledger">
+                  <thead>
+                    <tr><th>Documento</th><th>Proveedor</th><th>Fecha</th><th>Estado</th><th class="num">Total</th></tr>
+                  </thead>
+                  <tbody>
+                    {% for compra in compras %}
+                      <tr>
+                        <td><span class="mono">{{ compra.documento }}</span></td>
+                        <td><strong>{{ compra.proveedor }}</strong></td>
+                        <td class="mono">{{ compra.fecha|fecha }}</td>
+                        <td><span class="pill pill--info">{{ compra.estado }}</span></td>
+                        <td class="num">{{ compra.total|moneda }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <p class="empty-state">Sin compras registradas.</p>
+            {% endif %}
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: FACTURAS
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'facturas' %}active{% endif %}" id="view-facturas"
+                 data-view="facturas" data-title="Facturas">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 06 · Ventas y cobros</p>
+              <h1>Facturas</h1>
+              <p>El detalle de cada venta, su cliente, el vendedor y el pago recibido. Abre una factura para ver sus líneas completas.</p>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.facturado|moneda }}</strong><span>facturado</span></span>
+            <span class="stat stat--ok"><strong>{{ kpis.pagado|moneda }}</strong><span>cobrado</span></span>
+            <span class="stat stat--warn"><strong>{{ (kpis.facturado - kpis.pagado)|moneda }}</strong><span>pendiente</span></span>
+            <span class="stat"><strong>{{ kpis.ticket|moneda }}</strong><span>ticket promedio</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarFacturas" placeholder="Buscar factura, cliente o vendedor…" autocomplete="off">
+              </label>
+              <div class="chip-row" data-filtro-facturas>
+                <button type="button" class="chip active" data-filtro="TODAS">Todas</button>
+                <button type="button" class="chip" data-filtro="PAGADA">Pagadas</button>
+                <button type="button" class="chip" data-filtro="PENDIENTE">Pendientes</button>
+                <button type="button" class="chip" data-filtro="ANULADA">Anuladas</button>
+              </div>
+              <span class="result-count" id="contadorFacturas">{{ facturas|length }} facturas</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaFacturas">
+                <thead>
+                  <tr>
+                    <th>Factura</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Vendedor</th>
+                    <th class="num">Líneas</th>
+                    <th class="num">Total</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for factura in facturas %}
+                    <tr data-estado="{{ factura.estado }}"
+                        data-buscar="{{ (factura.numero ~ ' ' ~ factura.cliente ~ ' ' ~ factura.vendedor ~ ' ' ~ factura.metodo)|lower }}">
+                      <td><span class="mono">{{ factura.numero }}</span></td>
+                      <td class="mono">{{ factura.fecha|fecha('%d/%m/%Y') }}<small>{{ factura.fecha|hora }}</small></td>
+                      <td><strong>{{ factura.cliente }}</strong><small>{{ factura.cedula }}</small></td>
+                      <td>{{ factura.vendedor }}</td>
+                      <td class="num">{{ factura.lineas }}</td>
+                      <td class="num"><strong>{{ factura.total|moneda }}</strong><small>{{ factura.unidades }} unidades</small></td>
+                      <td><span class="canal">{{ factura.metodo }}</span></td>
+                      <td><span class="pill pill--{{ factura.clase }}">{{ factura.estado }}</span></td>
+                      <td>
+                        <button type="button" class="mini-btn" data-factura
+                                data-url="{{ url_for('api_factura', id_venta=factura.id) }}">
+                          <svg class="ico"><use href="#i-eye"/></svg> Ver
+                        </button>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioFacturas" hidden>No hay facturas que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: CLIENTES
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'clientes' %}active{% endif %}" id="view-clientes"
+                 data-view="clientes" data-title="Clientes">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 07 · Dueños y mascotas</p>
+              <h1>Clientes</h1>
+              <p>Quiénes son, cómo contactarlos, cuántas mascotas tienen y cuánto han comprado en la veterinaria.</p>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.clientes }}</strong><span>clientes</span></span>
+            <span class="stat"><strong>{{ kpis.mascotas }}</strong><span>mascotas</span></span>
+            <span class="stat"><strong>{{ clientes|selectattr('notificaciones', 'equalto', true)|list|length }}</strong><span>con notificaciones</span></span>
+            <span class="stat"><strong>{{ clientes|map(attribute='compras')|sum }}</strong><span>compras</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarClientes" placeholder="Buscar cliente, cédula, correo o teléfono…" autocomplete="off">
+              </label>
+              <span class="result-count" id="contadorClientes">{{ clientes|length }} clientes</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaClientes">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Cédula</th>
+                    <th>Contacto</th>
+                    <th>Dirección</th>
+                    <th class="num">Mascotas</th>
+                    <th class="num">Compras</th>
+                    <th class="num">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for cliente in clientes %}
+                    <tr data-buscar="{{ (cliente.nombre ~ ' ' ~ cliente.apellido ~ ' ' ~ cliente.cedula ~ ' ' ~ cliente.correo ~ ' ' ~ cliente.telefono)|lower }}">
+                      <td><strong>{{ cliente.nombre }} {{ cliente.apellido }}</strong><small>#{{ '%03d'|format(cliente.id) }}</small></td>
+                      <td class="mono">{{ cliente.cedula }}</td>
+                      <td>{{ cliente.correo }}<small>{{ cliente.telefono }}</small></td>
+                      <td class="cell-muted cell-clip">{{ cliente.direccion }}</td>
+                      <td class="num">{{ cliente.mascotas }}</td>
+                      <td class="num">{{ cliente.compras }}</td>
+                      <td class="num">{{ cliente.total|moneda }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioClientes" hidden>No hay clientes que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: EQUIPO
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'equipo' %}active{% endif %}" id="view-equipo"
+                 data-view="equipo" data-title="Equipo">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 08 · Personal y roles</p>
+              <h1>Equipo</h1>
+              <p>Las cuentas del personal, su rol dentro de la clínica y el estado de acceso al sistema.</p>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.personal }}</strong><span>cuentas</span></span>
+            <span class="stat stat--ok"><strong>{{ kpis.personal_activo }}</strong><span>activas</span></span>
+            <span class="stat"><strong>{{ kpis.roles }}</strong><span>roles</span></span>
+            <span class="stat"><strong>{{ equipo|map(attribute='rol')|unique|list|length }}</strong><span>áreas</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarEquipo" placeholder="Buscar por nombre, correo o rol…" autocomplete="off">
+              </label>
+              <span class="result-count" id="contadorEquipo">{{ equipo|length }} cuentas</span>
+            </div>
+
+            <div class="table-wrap">
+              <table class="ledger" id="tablaEquipo">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Rol</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for persona in equipo %}
+                    <tr data-buscar="{{ (persona.nombre ~ ' ' ~ persona.apellido ~ ' ' ~ persona.correo ~ ' ' ~ persona.rol)|lower }}">
+                      <td><strong>{{ persona.nombre }} {{ persona.apellido }}</strong><small>#{{ '%03d'|format(persona.id) }}</small></td>
+                      <td><span class="pill pill--info">{{ persona.rol }}</span></td>
+                      <td>{{ persona.correo }}</td>
+                      <td class="mono">{{ persona.telefono }}</td>
+                      <td><span class="pill pill--{{ 'ok' if persona.estado == 'ACTIVO' else 'danger' }}">{{ persona.estado }}</span></td>
+                      <td class="mono">{{ persona.registro|fecha }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="vacioEquipo" hidden>No hay cuentas que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: NUEVO PRODUCTO ===================== -->
+  <div class="modal-layer" id="modalProducto" role="dialog" aria-modal="true" aria-labelledby="tituloProductoModal" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Catálogo de la tienda</p>
+          <h2 id="tituloProductoModal">Agregar producto</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="{{ url_for('dashboard_producto') }}" enctype="multipart/form-data" class="modal-form">
+        <label class="field">
+          <span>Nombre del producto <b>*</b></span>
+          <input type="text" name="nombre" maxlength="150" minlength="3" placeholder="Ej. Alimento premium para perro adulto 15 kg" required>
+        </label>
+
+        <label class="field">
+          <span>Descripción</span>
+          <textarea name="descripcion" rows="2" maxlength="255" placeholder="Características, presentación o recomendaciones de uso…"></textarea>
+        </label>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Categoría <b>*</b></span>
+            <select name="id_categoria" required>
+              {% for categoria in categorias_stock %}
+                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Unidad de medida <b>*</b></span>
+            <select name="unidad" required>
+              <option value="UNIDAD">Unidad</option>
+              <option value="BOLSA">Bolsa</option>
+              <option value="CAJA">Caja</option>
+              <option value="FRASCO">Frasco</option>
+              <option value="SOBRE">Sobre</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Precio de venta (C$) <b>*</b></span>
+            <input type="number" name="precio" min="0.01" step="0.01" placeholder="375.00" required>
+          </label>
+          <label class="field">
+            <span>Precio de compra (C$)</span>
+            <input type="number" name="costo_compra" min="0" step="0.01" placeholder="Costo del proveedor">
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Proveedor (costo/oferta)</span>
+            <select name="id_proveedor">
+              <option value="">Sin proveedor asociado</option>
+              {% for proveedor in proveedores %}
+                <option value="{{ proveedor.id }}">{{ proveedor.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Stock mínimo <b>*</b></span>
+            <input type="number" name="stock_minimo" min="0" step="1" value="5" required>
+          </label>
+        </div>
+
+        <label class="field field-check">
+          <input type="checkbox" name="controla_vencimiento" value="1" checked>
+          <span>Este producto controla fecha de vencimiento</span>
+        </label>
+
+        <label class="field">
+          <span>Imagen de referencia</span>
+          <input type="file" name="imagen" id="imagenNuevoProducto" accept="image/png,image/jpeg,image/webp">
+        </label>
+        <div class="image-preview" id="previewNuevoProducto" hidden>
+          <img alt="Vista previa de la imagen del producto">
+          <small>Vista previa · la foto se guarda con el id del producto</small>
+        </div>
+
+        <p class="form-note">El precio se guarda en córdobas. En la tienda el IVA (15%) se muestra por separado al confirmar la compra. La imagen es opcional; si no subes una, se usa la ilustración de la categoría.</p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: IMAGEN DE PRODUCTO ===================== -->
+  <div class="modal-layer" id="modalImagenProducto" role="dialog" aria-modal="true" aria-labelledby="tituloImagenProducto" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Foto de referencia</p>
+          <h2 id="tituloImagenProducto">Imagen del producto</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="" enctype="multipart/form-data" class="modal-form" id="formImagenProducto">
+        <p class="form-note">Sube una foto JPG, PNG o WEBP de hasta 6 MB. La imagen anterior del producto se reemplaza automáticamente.</p>
+
+        <label class="field">
+          <span>Nueva imagen <b>*</b></span>
+          <input type="file" name="imagen" id="imagenProductoExistente" accept="image/png,image/jpeg,image/webp" required>
+        </label>
+
+        <div class="image-preview" id="previewImagenProducto" hidden>
+          <img alt="Vista previa de la nueva imagen">
+          <small>Vista previa antes de guardar</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Actualizar imagen</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: MOVIMIENTO DE STOCK ===================== -->
+  <div class="modal-layer" id="modalMovimiento" role="dialog" aria-modal="true" aria-labelledby="tituloMovimiento" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Inventario</p>
+          <h2 id="tituloMovimiento">Registrar movimiento</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="{{ url_for('dashboard_movimiento') }}" class="modal-form">
+        <input type="hidden" name="id_lote" id="movLoteId" value="">
+
+        <div class="mov-lot">
+          <div>
+            <span class="mini-label">Lote</span>
+            <strong class="mono" id="movLoteCodigo">—</strong>
+          </div>
+          <div>
+            <span class="mini-label">Producto</span>
+            <strong id="movProducto">—</strong>
+          </div>
+          <div>
+            <span class="mini-label">Stock actual</span>
+            <strong class="mono" id="movStock">0</strong>
+          </div>
+        </div>
+
+        <fieldset class="field-block">
+          <legend>Tipo de movimiento</legend>
+          <div class="segmented">
+            <label class="segmented-option">
+              <input type="radio" name="tipo" value="ENTRADA" checked>
+              <span><svg class="ico"><use href="#i-plus"/></svg> Entrada</span>
+            </label>
+            <label class="segmented-option">
+              <input type="radio" name="tipo" value="SALIDA">
+              <span><svg class="ico"><use href="#i-arrow"/></svg> Salida</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Cantidad</span>
+            <input type="number" name="cantidad" min="1" step="1" value="1" required>
+          </label>
+          <label class="field">
+            <span>Motivo</span>
+            <input type="text" name="motivo" maxlength="255" placeholder="Compra, ajuste, merma…">
+          </label>
+        </div>
+
+        <p class="form-note">Una salida no puede superar el stock disponible del lote. El movimiento queda registrado con tu usuario.</p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Registrar movimiento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: NUEVO PROVEEDOR ===================== -->
+  <div class="modal-layer" id="modalProveedor" role="dialog" aria-modal="true" aria-labelledby="tituloProveedor" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Abastecimiento</p>
+          <h2 id="tituloProveedor">Nuevo proveedor</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="{{ url_for('dashboard_proveedor') }}" class="modal-form">
+        <label class="field">
+          <span>Nombre del proveedor <b>*</b></span>
+          <input type="text" name="nombre" maxlength="150" minlength="3" placeholder="Distribuidora…" required>
+        </label>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Teléfono</span>
+            <input type="tel" name="telefono" maxlength="20" placeholder="2222-0000">
+          </label>
+          <label class="field">
+            <span>Correo</span>
+            <input type="email" name="correo" maxlength="100" placeholder="compras@proveedor.com">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Dirección</span>
+          <input type="text" name="direccion" maxlength="255" placeholder="Zona, calle, referencia…">
+        </label>
+
+        <p class="form-note">El proveedor se guarda como <strong>ACTIVO</strong> y aparecerá disponible para las compras.</p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar proveedor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: DETALLE DE FACTURA ===================== -->
+  <div class="modal-layer" id="modalFactura" role="dialog" aria-modal="true" aria-labelledby="tituloFactura" aria-hidden="true">
+    <div class="modal-card modal-card--wide">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Comprobante</p>
+          <h2 id="tituloFactura">Detalle de factura</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+      <div id="facturaCuerpo" class="invoice-body">
+        <p class="empty-state">Selecciona una factura para ver su detalle.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="{{ url_for('static', filename='js/anime.iife.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

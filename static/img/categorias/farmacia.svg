@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Farmacia y primeros auxilios">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="266" cy="48" r="48" fill="#e9dfc8"/>
+  <circle cx="48" cy="182" r="42" fill="#efe6d0"/>
+  <rect x="82" y="76" width="112" height="92" rx="12" fill="#244414"/>
+  <rect x="118" y="62" width="40" height="18" rx="6" fill="#3d6721"/>
+  <path d="M138 96v46m-23-23h46" stroke="#f6f0e2" stroke-width="14" stroke-linecap="round"/>
+  <path d="M220 96h44v62c0 8-6 14-14 14h-16c-8 0-14-6-14-14z" fill="#e17055"/>
+  <rect x="232" y="80" width="20" height="18" fill="#c4682a"/>
+  <rect x="228" y="116" width="28" height="26" rx="4" fill="#f6f0e2"/>
+  <path d="M238 126h8m-4-4v8" stroke="#356575" stroke-width="3" stroke-linecap="round"/>
+  <path d="M64 120c14-10 28 0 28 14s-14 22-28 30c-14-8-28-16-28-30s14-24 28-14z" fill="#5a9629" opacity=".85"/>
+  <path d="M218 62l18 18m-18 0l18-18" stroke="#b1872f" stroke-width="4" stroke-linecap="round"/>
+</svg>
