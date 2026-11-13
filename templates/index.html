@@ -850,9 +850,22 @@
           <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Rol: {{ session['user_rol'] }}</span>
       </div>
 
-      <button class="btn-toggle-portal" onclick="togglePortalClinico()">
-        <span>🩺</span> Portal Clínico
+      <button class="cart-indicator-btn" type="button" onclick="abrirCarrito()" title="Ver mi carrito">
+        🛒 Carrito <span id="cartCount">0</span>
       </button>
+
+      {% if es_personal %}
+        <a href="{{ url_for('dashboard') }}" class="btn-toggle-portal" style="text-decoration: none;">
+          <span>🩺</span> Panel de gestión
+        </a>
+        <button class="btn-toggle-portal" onclick="togglePortalClinico()">
+          <span>📋</span> Portal Clínico
+        </button>
+      {% else %}
+        <a href="{{ url_for('mi_cuenta') }}" class="btn-toggle-portal" style="text-decoration: none;">
+          <span>🐾</span> Mi cuenta
+        </a>
+      {% endif %}
 
       <!-- Botón de Cerrar Sesión (Apunta a la ruta logout de Flask) -->
       <a href="{{ url_for('logout') }}" class="cart-indicator-btn" style="text-decoration: none; color: #dc2626;">
@@ -883,7 +896,8 @@
       </div>
     </section>
 
-    <!-- PORTAL DE EXPEDIENTES -->
+    {% if es_personal %}
+    <!-- PORTAL DE EXPEDIENTES (solo personal de la clínica) -->
     <section class="portal-section-wrap" id="portalClinicoWrap" style="display: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
         <h2 style="font-family: var(--font-heading); color: var(--vet-green-dark); font-size: 1.3rem;">
@@ -1055,6 +1069,7 @@
         </div>
       </div>
     </section>
+{% endif %}
 
     <!-- PRODUCTOS DESTACADOS: TUS FOTOS REALES -->
     <h2 class="section-headline">Productos Destacados</h2>
@@ -1179,6 +1194,7 @@
     </div>
   </div>
 
+  {% if es_personal %}
   <!-- MODAL CONFIRMACION GENERICO -->
   <div id="modalConfirmacion" class="modal-backdrop hidden">
     <div class="modal-white-card">
@@ -1284,6 +1300,7 @@
       </div>
     </div>
   </div>
+{% endif %}
 
   <div id="server-data" 
       data-clientes="{{ clientes | tojson | forceescape }}" 
@@ -1291,6 +1308,7 @@
       style="display: none;">
   </div>
 
+  <script src="{{ url_for('static', filename='js/anime.iife.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
