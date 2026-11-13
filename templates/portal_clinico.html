@@ -59,6 +59,9 @@
         <button type="button" class="portal-tab-btn" onclick="cambiarPortalTab('expediente', this)">
           📖 Expediente clínico y recetas
         </button>
+        <button type="button" class="portal-tab-btn" onclick="cambiarPortalTab('vacunas', this)">
+          💉 Carta de vacunas
+        </button>
         <button type="button" class="portal-tab-btn" onclick="cambiarPortalTab('consulta', this)">
           ➕ Nueva consulta médica
         </button>
@@ -228,6 +231,75 @@
 
         <h4 style="font-family: var(--font-display); color: var(--forest); margin-bottom: 0.7rem;">📋 Historial de atenciones médicas</h4>
         <div id="timelineConsultas"></div>
+      </div>
+
+      <!-- VISTA: CARTA DE VACUNAS -->
+      <div id="pview-vacunas" class="portal-view-panel">
+        <div class="card-clean-form" style="margin-bottom: 1rem;">
+          <div class="form-field-row" style="align-items: end;">
+            <div class="form-field" style="margin-bottom: 0;">
+              <label for="selectPacienteVacuna">Paciente (expediente)</label>
+              <select id="selectPacienteVacuna"></select>
+            </div>
+            <div class="form-field" style="margin-bottom: 0;">
+              <button type="button" class="btn-green-solid" onclick="cargarCartaVacunas()" style="margin-top: 0;">Ver carta de vacunas</button>
+            </div>
+          </div>
+          <p style="font-size: 0.72rem; color: var(--muted); margin-top: 0.5rem;">Usa el expediente de la mascota para registrar vacunaciones y controles preventivos. Si es mascota nueva, primero regístrala para crear su expediente.</p>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="card-clean-form">
+            <h3>💉 Registrar vacunación / preventivo</h3>
+            <form id="formPreventivo">
+              <div class="form-field">
+                <label for="prevTipo">Tipo de procedimiento <b>*</b></label>
+                <select id="prevTipo" required>
+                  <option value="">Seleccionar…</option>
+                  <option value="VACUNACION">Vacunación</option>
+                  <option value="DESPARASITACION">Desparasitación</option>
+                  <option value="CONTROL_PULGAS">Control de pulgas/garrapatas</option>
+                  <option value="CONTROL_PREVENTIVO">Control preventivo</option>
+                  <option value="OTRO">Otro</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label for="prevProducto">Producto / vacuna aplicada</label>
+                <input type="text" id="prevProducto" placeholder="Nombre del producto o vacuna">
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="prevFecha">Fecha de aplicación <b>*</b></label>
+                  <input type="date" id="prevFecha" required>
+                </div>
+                <div class="form-field">
+                  <label for="prevProxima">Próxima aplicación</label>
+                  <input type="date" id="prevProxima">
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="prevDosis">Dosis aplicada</label>
+                <input type="text" id="prevDosis" placeholder="Ej. 1 ml, según peso">
+              </div>
+              <div class="form-field">
+                <label for="prevObs">Observaciones</label>
+                <textarea id="prevObs" rows="2" placeholder="Notas del procedimiento…"></textarea>
+              </div>
+              <button type="submit" class="btn-green-solid">Registrar en carta de vacunas</button>
+            </form>
+          </div>
+
+          <div class="card-clean-form">
+            <h3>📋 Historial y seguimiento</h3>
+            <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:0.7rem;">
+              <button type="button" class="btn-act" onclick="cargarCartaVacunas()">Actualizar</button>
+              <button type="button" class="btn-act" onclick="imprimirSeguimientoVacunas()">PDF de seguimiento</button>
+            </div>
+            <div id="listaPreventivos" style="max-height: 420px; overflow:auto;">
+              <p style="color: var(--muted); font-size: 0.82rem;">Selecciona un paciente para ver su carta de vacunas.</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- VISTA: NUEVA CONSULTA -->

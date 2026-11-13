@@ -1300,6 +1300,205 @@ def guardar_analisis_alergia():
             conn.close()
 
 
+@app.route('/api/mascota/<int:id_mascota>/preventivos')
+def api_preventivos_mascota(id_mascota):
+    """Lista registros preventivos (carta de vacunas) de una mascota."""
+    if not es_personal():
+        return jsonify({'error': 'No autorizado.'}), 403
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT RP.IdRegistroPreventivo, RP.TipoProcedimiento, RP.NombreProductoAplicado,
+                   RP.FechaAplicacion, RP.ProximaAplicacion, RP.DosisAplicada, RP.Observaciones,
+                   RP.IdLote, RP.IdConsulta
+            FROM REGISTRO_PREVENTIVO RP
+            INNER JOIN EXPEDIENTE_CLINICO E ON E.IdExpediente = RP.IdExpediente
+            WHERE E.IdMascota = ?
+            ORDER BY RP.FechaAplicacion DESC, RP.IdRegistroPreventivo DESC
+        """, (id_mascota,))
+        registros = []
+        for r in cursor.fetchall():
+            registros.append({
+                'id': int(r.IdRegistroPreventivo),
+                'tipo': r.TipoProcedimiento or '',
+                'producto': r.NombreProductoAplicado or '',
+                'fecha_aplicacion': r.FechaAplicacion.strftime('%Y-%m-%d') if r.FechaAplicacion else '',
+                'proxima': r.ProximaAplicacion.strftime('%Y-%m-%d') if r.ProximaAplicacion else '',
+                'dosis': r.DosisAplicada or '',
+                'observaciones': r.Observaciones or '',
+                'id_lote': r.IdLote,
+                'id_consulta': r.IdConsulta,
+            })
+        return jsonify({'success': True, 'registros': registros})
+    except Exception as exc:
+        return jsonify({'error': str(exc)}), 500
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/api/preventivo', methods=['POST'])
+def crear_preventivo():
+    """Registra un procedimiento preventivo/vacunación en el expediente (carta de vacunas)."""
+    if not es_personal():
+        return jsonify({'success': False, 'error': 'No autorizado.'}), 403
+
+    datos = request.get_json(silent=True) or {}
+    try:
+        id_mascota = int(datos.get('id_mascota') or 0)
+    except (TypeError, ValueError):
+        id_mascota = 0
+
+    tipo = limpiar(datos.get('tipo_procedimiento'))
+    producto = limpiar(datos.get('producto'))
+    fecha = limpiar(datos.get('fecha_aplicacion'))
+    proxima = limpiar(datos.get('proxima_aplicacion')) or None
+    dosis = limpiar(datos.get('dosis')) or None
+    observaciones = limpiar(datos.get('observaciones')) or None
+
+    if not id_mascota or not tipo or not fecha:
+        return jsonify({'success': False, 'error': 'Selecciona mascota, tipo de procedimiento y fecha de aplicación.'}), 400
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Obtener o crear expediente de la mascota.
+        cursor.execute("SELECT IdExpediente FROM EXPEDIENTE_CLINICO WHERE IdMascota = ?", (id_mascota,))
+        fila = cursor.fetchone()
+        if fila:
+            id_expediente = int(fila[0])
+        else:
+            columnas_exp = columnas_tabla(cursor, 'EXPEDIENTE_CLINICO')
+            col_estado = ('EstadoRegistro' if 'estadoregistro' in columnas_exp
+                          else 'EstadoReg' if 'estadoreg' in columnas_exp else None)
+            col_alergias = nombre_columna_alergias(cursor)
+            campos = ['FechaApertura', col_alergias, 'IdMascota']
+            parametros = [date.today(), '', id_mascota]
+            marcas = ['?', '?', '?']
+            if col_estado:
+                campos.append(col_estado); parametros.append(valor_estado_expediente(cursor, col_estado)); marcas.append('?')
+            col_exp_id = columna_id(cursor, 'EXPEDIENTE_CLINICO', 'IdExpediente', 'IdExp')
+            if not columna_es_identidad(cursor, 'EXPEDIENTE_CLINICO', col_exp_id):
+                cursor.execute(f"SELECT ISNULL(MAX({col_exp_id}), 0) + 1 FROM EXPEDIENTE_CLINICO")
+                campos.insert(0, col_exp_id); parametros.insert(0, int(cursor.fetchone()[0])); marcas.insert(0, '?')
+            cursor.execute(f"INSERT INTO EXPEDIENTE_CLINICO ({', '.join(campos)}) VALUES ({', '.join(marcas)})", parametros)
+            cursor.execute("SELECT IdExpediente FROM EXPEDIENTE_CLINICO WHERE IdMascota = ?", (id_mascota,))
+            id_expediente = int(cursor.fetchone()[0])
+
+        cols_rp = columnas_tabla(cursor, 'REGISTRO_PREVENTIVO')
+        id_rp_col = 'IdRegistroPreventivo'
+        campos = ['IdExpediente', 'TipoProcedimiento', 'NombreProductoAplicado',
+                  'FechaAplicacion', 'ProximaAplicacion', 'DosisAplicada', 'Observaciones']
+        parametros = [id_expediente, tipo, producto or None, fecha, proxima, dosis, observaciones]
+        marcas = ['?', '?', '?', '?', '?', '?', '?']
+
+        # IdConsulta e IdLote opcionales (se omiten si no se envían)
+        id_consulta = datos.get('id_consulta')
+        id_lote = datos.get('id_lote')
+        if id_consulta and 'idconsulta' in cols_rp:
+            campos.append('IdConsulta'); parametros.append(int(id_consulta)); marcas.append('?')
+        if id_lote and 'idlote' in cols_rp:
+            campos.append('IdLote'); parametros.append(int(id_lote)); marcas.append('?')
+
+        if not columna_es_identidad(cursor, 'REGISTRO_PREVENTIVO', id_rp_col):
+            cursor.execute(f"SELECT ISNULL(MAX({id_rp_col}), 0) + 1 FROM REGISTRO_PREVENTIVO")
+            nuevo_id = int(cursor.fetchone()[0])
+            campos.insert(0, id_rp_col); parametros.insert(0, nuevo_id); marcas.insert(0, '?')
+            cursor.execute(f"INSERT INTO REGISTRO_PREVENTIVO ({', '.join(campos)}) VALUES ({', '.join(marcas)})", parametros)
+        else:
+            cursor.execute(f"""
+                INSERT INTO REGISTRO_PREVENTIVO ({', '.join(campos)})
+                OUTPUT INSERTED.{id_rp_col}
+                VALUES ({', '.join(marcas)})
+            """, parametros)
+            nuevo_id = int(cursor.fetchone()[0])
+
+        conn.commit()
+        return jsonify({'success': True, 'id': nuevo_id, 'id_expediente': id_expediente})
+    except Exception as exc:
+        if conn is not None:
+            conn.rollback()
+        return jsonify({'success': False, 'error': str(exc)})
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/tienda/comprobante', methods=['POST'])
+def comprobante_tienda():
+    """Genera un comprobante imprimible/PDF de la compra realizada en la tienda."""
+    datos = request.get_json(silent=True) or {}
+    if not datos:
+        try:
+            import json as _json
+            datos = _json.loads(request.form.get('datos') or '{}')
+        except Exception:
+            datos = {}
+
+    items_raw = datos.get('items') or []
+    items = []
+    subtotal = 0.0
+    for it in items_raw:
+        try:
+            cantidad = max(1, int(it.get('cantidad') or 1))
+            precio = float(it.get('precio') or 0)
+        except (TypeError, ValueError):
+            continue
+        nombre = limpiar(it.get('nombre')) or 'Producto'
+        sub = round(cantidad * precio, 2)
+        subtotal += sub
+        items.append({'nombre': nombre, 'cantidad': cantidad, 'precio': precio, 'subtotal': sub})
+
+    subtotal = round(subtotal, 2)
+    iva = round(subtotal * 0.15, 2)
+    total = round(subtotal + iva, 2)
+    numero = f"WEB-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+    cliente_nombre = cliente_correo = cliente_telefono = ''
+    if session.get('user_tipo') == 'cliente':
+        cliente_nombre = f"{session.get('user_nombre','')} {session.get('user_apellido','')}".strip()
+        cliente_correo = session.get('user_correo') or ''
+        # intentar obtener telefono
+        conn = None
+        try:
+            conn = get_db_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT Telefono, Correo FROM CLIENTE WHERE IdCliente = ?", (session.get('cliente_id'),))
+            fila = cur.fetchone()
+            if fila:
+                cliente_telefono = fila.Telefono or ''
+                if not cliente_correo:
+                    cliente_correo = fila.Correo or ''
+            cur.close()
+        except Exception:
+            pass
+        finally:
+            if conn is not None:
+                conn.close()
+    elif es_personal():
+        cliente_nombre = datos.get('cliente_nombre') or 'Compra en mostrador'
+
+    return render_template(
+        'factura_tienda.html',
+        numero=numero,
+        fecha=datetime.now().strftime('%d/%m/%Y · %I:%M %p'),
+        items=items,
+        subtotal=subtotal,
+        iva=iva,
+        total=total,
+        cliente_nombre=cliente_nombre,
+        cliente_correo=cliente_correo,
+        cliente_telefono=cliente_telefono,
+        atendido='Tienda en línea',
+        auto_print=bool(datos.get('auto_print', True)),
+    )
+
+
 @app.errorhandler(413)
 def archivo_demasiado_grande(error):
     destino = request.referrer or url_for('dashboard', _anchor='productos')

@@ -93,6 +93,7 @@
     const selDueno = $('#selectDuenoAsignado');
     const selExpediente = $('#selectExpediente');
     const selPacienteConsulta = $('#selectPacienteConsulta');
+    const selPacienteVacuna = $('#selectPacienteVacuna');
 
     if (!selDueno || !selExpediente || !selPacienteConsulta) return;
 
@@ -103,12 +104,14 @@
 
     selExpediente.innerHTML = '';
     selPacienteConsulta.innerHTML = '';
+    if (selPacienteVacuna) selPacienteVacuna.innerHTML = '';
     mascotas.forEach((m) => {
       const dueno = propietarios.find((p) => String(p.id) === String(m.duenoId));
       const duenoTxt = dueno ? `${dueno.nombre} ${dueno.apellido}` : 'Sin dueño';
       const opcion = `<option value="${escapar(m.id)}">${escapar(m.nombre)} (${escapar(m.especie)}) — Propietario: ${escapar(duenoTxt)}</option>`;
       selExpediente.innerHTML += opcion;
       selPacienteConsulta.innerHTML += opcion;
+      if (selPacienteVacuna) selPacienteVacuna.innerHTML += opcion;
     });
 
     if (mascotas.length > 0) {
@@ -319,6 +322,163 @@
       }
     });
   }
+
+  /* ------------------------------------------------------------------------
+     Carta de vacunas / preventivos
+     ------------------------------------------------------------------------ */
+
+  let preventivosActuales = [];
+
+  function formatoFechaISO(valor) {
+    if (!valor) return '—';
+    const m = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return valor;
+    return `${m[3]}/${m[2]}/${m[1]}`;
+  }
+
+  function renderPreventivos(lista) {
+    const cont = $('#listaPreventivos');
+    if (!cont) return;
+    preventivosActuales = lista || [];
+    if (!preventivosActuales.length) {
+      cont.innerHTML = '<p style="color: var(--muted); font-size: 0.82rem;">No hay registros preventivos para este paciente.</p>';
+      return;
+    }
+    cont.innerHTML = preventivosActuales.map((r) => `
+      <div class="history-card-item">
+        <div class="history-top-row">
+          <strong style="color: var(--forest); font-size: 0.78rem;">${escapar(r.tipo || 'Preventivo')}</strong>
+          <span style="font-size: 0.7rem; color: var(--muted);">${escapar(formatoFechaISO(r.fecha_aplicacion))}</span>
+        </div>
+        <div style="font-size: 0.74rem; line-height: 1.45;">
+          ${r.producto ? `<div><strong>Producto:</strong> ${escapar(r.producto)}</div>` : ''}
+          ${r.dosis ? `<div><strong>Dosis:</strong> ${escapar(r.dosis)}</div>` : ''}
+          <div><strong>Próxima aplicación:</strong> ${escapar(formatoFechaISO(r.proxima))}</div>
+          ${r.observaciones ? `<div><strong>Observaciones:</strong> ${escapar(r.observaciones)}</div>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  window.cargarCartaVacunas = async function () {
+    const sel = $('#selectPacienteVacuna') || $('#selectExpediente');
+    const idMascota = sel ? sel.value : '';
+    if (!idMascota) {
+      avisar('Selecciona un paciente para ver su carta de vacunas.', 'error');
+      return;
+    }
+    const cont = $('#listaPreventivos');
+    if (cont) cont.innerHTML = '<p style="color: var(--muted); font-size: 0.82rem;">Cargando carta de vacunas…</p>';
+    try {
+      const resp = await fetch(`/api/mascota/${idMascota}/preventivos`);
+      const data = await resp.json();
+      if (!resp.ok || data.error) throw new Error(data.error || 'No se pudo cargar.');
+      renderPreventivos(data.registros || []);
+    } catch (error) {
+      if (cont) cont.innerHTML = '<p style="color: var(--rust); font-size: 0.82rem;">No se pudo cargar la carta de vacunas.</p>';
+    }
+  };
+
+  const formPreventivo = $('#formPreventivo');
+  if (formPreventivo) {
+    formPreventivo.addEventListener('submit', async (evento) => {
+      evento.preventDefault();
+      const sel = $('#selectPacienteVacuna') || $('#selectExpediente');
+      const idMascota = sel ? sel.value : '';
+      if (!idMascota) {
+        avisar('Selecciona un paciente antes de registrar el procedimiento.', 'error');
+        return;
+      }
+      const datos = {
+        id_mascota: Number(idMascota),
+        tipo_procedimiento: $('#prevTipo') ? $('#prevTipo').value : '',
+        producto: $('#prevProducto') ? $('#prevProducto').value.trim() : '',
+        fecha_aplicacion: $('#prevFecha') ? $('#prevFecha').value : '',
+        proxima_aplicacion: $('#prevProxima') ? $('#prevProxima').value : '',
+        dosis: $('#prevDosis') ? $('#prevDosis').value.trim() : '',
+        observaciones: $('#prevObs') ? $('#prevObs').value.trim() : '',
+      };
+      try {
+        const resp = await fetch('/api/preventivo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(datos),
+        });
+        const resultado = await resp.json();
+        if (resultado.success) {
+          avisar('Procedimiento registrado en la carta de vacunas.');
+          formPreventivo.reset();
+          window.cargarCartaVacunas();
+        } else {
+          avisar(resultado.error || 'No se pudo registrar el procedimiento.', 'error');
+        }
+      } catch (error) {
+        avisar('No se pudo conectar con el servidor.', 'error');
+      }
+    });
+  }
+
+  window.imprimirSeguimientoVacunas = function () {
+    const sel = $('#selectPacienteVacuna') || $('#selectExpediente');
+    const idMascota = sel ? sel.value : '';
+    const mascota = mascotas.find((m) => String(m.id) === String(idMascota));
+    if (!mascota) {
+      avisar('Selecciona un paciente para generar el seguimiento.', 'error');
+      return;
+    }
+    const dueno = propietarios.find((p) => String(p.id) === String(mascota.duenoId)) || {};
+    const pendientes = preventivosActuales.filter((r) => r.proxima);
+    const filas = (pendientes.length ? pendientes : preventivosActuales).map((r) => `
+      <tr>
+        <td>${escapar(r.tipo || '—')}</td>
+        <td>${escapar(r.producto || '—')}</td>
+        <td>${escapar(formatoFechaISO(r.fecha_aplicacion))}</td>
+        <td><strong>${escapar(formatoFechaISO(r.proxima))}</strong></td>
+        <td>${escapar(r.observaciones || r.dosis || '—')}</td>
+      </tr>`).join('');
+
+    const hoy = new Date().toLocaleDateString('es-NI');
+    const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+      <title>Seguimiento preventivo — ${escapar(mascota.nombre)}</title>
+      <style>
+        body{font-family:Arial,sans-serif;color:#2d2a20;padding:24px}
+        .sheet{max-width:800px;margin:0 auto;border:1px solid #ded0b1;border-radius:10px;padding:24px}
+        h1{font-size:1.4rem;color:#244414;margin:0 0 4px} p{margin:2px 0;font-size:0.85rem;color:#6e6653}
+        .meta{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin:14px 0;font-size:0.82rem}
+        table{width:100%;border-collapse:collapse;margin-top:10px;font-size:0.8rem}
+        th,td{border-bottom:1px solid #e9dfc8;padding:8px 6px;text-align:left}
+        th{font-size:0.7rem;text-transform:uppercase;letter-spacing:.5px;color:#857c68}
+        .foot{margin-top:14px;font-size:0.72rem;color:#857c68}
+        .actions{margin:16px auto;max-width:800px;text-align:center}
+        button{background:#244414;color:#fff;border:0;padding:10px 16px;border-radius:8px;font-weight:700;cursor:pointer}
+        @media print{.actions{display:none} body{padding:0} .sheet{border:0}}
+      </style></head><body>
+      <div class="sheet">
+        <h1>Seguimiento preventivo y vacunas</h1>
+        <p>Veterinaria Pepe &amp; Pepito · Managua, Nicaragua</p>
+        <div class="meta">
+          <div><strong>Paciente:</strong> ${escapar(mascota.nombre)} (${escapar(mascota.especie || '—')})</div>
+          <div><strong>Propietario:</strong> ${escapar((dueno.nombre || '') + ' ' + (dueno.apellido || '')) || '—'}</div>
+          <div><strong>Fecha de emisión:</strong> ${hoy}</div>
+          <div><strong>Registros considerados:</strong> ${(pendientes.length ? 'Próximas aplicaciones' : 'Historial preventivo')}</div>
+        </div>
+        <table>
+          <thead><tr><th>Procedimiento</th><th>Producto/Vacuna</th><th>Aplicación</th><th>Próxima fecha</th><th>Notas/seguimiento</th></tr></thead>
+          <tbody>${filas || '<tr><td colspan="5">Sin registros disponibles.</td></tr>'}</tbody>
+        </table>
+        <p class="foot">Este documento indica las próximas fechas registradas de vacunas, medicamentos o tratamientos preventivos que requieren seguimiento. Ante cualquier reacción o duda, consulte con el veterinario.</p>
+      </div>
+      <div class="actions"><button onclick="window.print()">Imprimir / Guardar PDF</button></div>
+      </body></html>`;
+    const win = window.open('', '_blank');
+    if (win) {
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { try { win.print(); } catch (e) {} }, 300);
+    } else {
+      avisar('Permite las ventanas emergentes para generar el PDF de seguimiento.', 'error');
+    }
+  };
 
   /* ------------------------------------------------------------------------
      Modales

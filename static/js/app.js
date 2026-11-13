@@ -489,14 +489,43 @@
   }
 
   function finalizarPedidoConfirmado() {
-    const total = dinero(totales().total);
+    if (!carrito.length) return;
+    const payload = {
+      auto_print: true,
+      items: carrito.map((item) => ({
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precio: item.precio,
+      })),
+    };
+
     cerrarModalConfirmarCompra();
+
+    // Generar comprobante imprimible/PDF en una nueva pestaña.
+    try {
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = '/tienda/comprobante';
+      form.target = '_blank';
+
+      const campo = document.createElement('input');
+      campo.type = 'hidden';
+      campo.name = 'datos';
+      campo.value = JSON.stringify(payload);
+      form.appendChild(campo);
+      document.body.appendChild(form);
+      form.submit();
+      form.remove();
+    } catch (error) {
+      /* Si falla la apertura, se continúa con la confirmación. */
+    }
+
     carrito = [];
     guardarCarrito();
     renderCarrito();
     window.setTimeout(() => {
       cerrarCarrito();
-      avisar(`¡Pedido confirmado por ${total}! Te contactaremos para coordinar la entrega.`);
+      avisar('Pedido confirmado. Se generó tu comprobante para imprimir o guardar en PDF.');
     }, 180);
   }
 
