@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Producto veterinario">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="56" cy="46" r="48" fill="#e9dfc8"/>
+  <circle cx="268" cy="180" r="50" fill="#efe6d0"/>
+  <path d="M92 78l68-34 68 34v78l-68 34-68-34z" fill="#5a9629"/>
+  <path d="M92 78l68 34 68-34-68-34z" fill="#6e9a35"/>
+  <path d="M160 112v78l-68-34V78z" fill="#3d6721"/>
+  <path d="M160 112l68-34v78l-68 34z" fill="#46791e"/>
+  <ellipse cx="140" cy="64" rx="9" ry="12" fill="#f6f0e2"/>
+  <ellipse cx="128" cy="58" rx="5" ry="7" fill="#f6f0e2"/>
+  <ellipse cx="152" cy="58" rx="5" ry="7" fill="#f6f0e2"/>
+  <ellipse cx="120" cy="72" rx="4" ry="6" fill="#f6f0e2"/>
+  <ellipse cx="160" cy="72" rx="4" ry="6" fill="#f6f0e2"/>
+  <path d="M180 150h32m-16-16v32" stroke="#e9dfc8" stroke-width="7" stroke-linecap="round"/>
+</svg>

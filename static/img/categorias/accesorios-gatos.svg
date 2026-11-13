@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Accesorios para gatos">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="52" cy="44" r="48" fill="#e9dfc8"/>
+  <circle cx="272" cy="180" r="50" fill="#efe6d0"/>
+  <path d="M128 72c16-10 32-10 48 0v42c0 18-14 28-24 28s-24-10-24-28z" fill="#356575"/>
+  <path d="M128 72l-8-24 22 14m34 10l8-24-22 14" fill="#356575"/>
+  <circle cx="152" cy="88" r="5" fill="#f6f0e2"/>
+  <circle cx="176" cy="88" r="5" fill="#f6f0e2"/>
+  <path d="M164 100l-4 6h8z" fill="#e17055"/>
+  <path d="M152 112c4 5 10 5 14 0" stroke="#f6f0e2" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="200" cy="112" r="10" fill="#e17055"/>
+  <path d="M176 142c10-18 34-18 44 0 8 14-6 24-22 24s-30-10-22-24z" fill="#5a9629"/>
+  <path d="M220 148l28-16 6 10-28 16z" fill="#b1872f"/>
+  <path d="M96 154h56v26H96z" fill="#244414"/>
+  <path d="M96 154l28-18 28 18" fill="#3d6721"/>
+  <circle cx="86" cy="120" r="5" fill="#c4682a"/>
+  <circle cx="74" cy="136" r="4" fill="#c4682a"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Suplementos nutricionales">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="270" cy="44" r="48" fill="#e9dfc8"/>
+  <circle cx="48" cy="180" r="44" fill="#efe6d0"/>
+  <rect x="94" y="68" width="80" height="112" rx="12" fill="#356575"/>
+  <path d="M104 68h60v18h-60z" fill="#244414"/>
+  <rect x="108" y="102" width="52" height="40" rx="6" fill="#f6f0e2"/>
+  <path d="M118 122c8-12 24-12 32 0" stroke="#5a9629" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <ellipse cx="212" cy="126" rx="30" ry="14" fill="#e17055" transform="rotate(-25 212 126)"/>
+  <ellipse cx="212" cy="126" rx="14" ry="7" fill="#f6f0e2" transform="rotate(-25 212 126)"/>
+  <ellipse cx="248" cy="144" rx="26" ry="12" fill="#b1872f" transform="rotate(20 248 144)"/>
+  <ellipse cx="248" cy="144" rx="12" ry="6" fill="#f6f0e2" transform="rotate(20 248 144)"/>
+  <path d="M206 78c14-24 38-24 46-18-2 20-22 34-46 18z" fill="#5a9629"/>
+  <path d="M206 78c10 6 22 8 34 4" stroke="#244414" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M88 194h140" stroke="#c9b98f" stroke-width="4" stroke-linecap="round"/>
+</svg>

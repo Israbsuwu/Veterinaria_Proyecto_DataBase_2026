@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Alimento para perros">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="270" cy="38" r="52" fill="#e9dfc8"/>
+  <circle cx="42" cy="192" r="44" fill="#efe6d0"/>
+  <path d="M74 72h58l10 28v72H64V100z" fill="#5a9629"/>
+  <path d="M74 72h58l-6 22H80z" fill="#46791e"/>
+  <rect x="83" y="108" width="40" height="34" rx="5" fill="#f6f0e2"/>
+  <circle cx="93" cy="120" r="4" fill="#c4682a"/>
+  <circle cx="103" cy="128" r="4" fill="#c4682a"/>
+  <circle cx="113" cy="118" r="4" fill="#c4682a"/>
+  <path d="M164 132h100c0 28-18 46-50 46s-50-18-50-46z" fill="#244414"/>
+  <ellipse cx="214" cy="132" rx="50" ry="10" fill="#3d6721"/>
+  <circle cx="190" cy="126" r="7" fill="#b1872f"/>
+  <circle cx="210" cy="122" r="6" fill="#c4682a"/>
+  <circle cx="230" cy="127" r="7" fill="#b1872f"/>
+  <circle cx="247" cy="123" r="5" fill="#c4682a"/>
+  <path d="M152 60c8-12 24-12 30 0 6-12 22-12 30 0 10 16-8 28-30 38-22-10-40-22-30-38z" fill="#e17055" opacity=".9"/>
+  <path d="M168 66l8 7m14-7l8 7" stroke="#f6f0e2" stroke-width="3" stroke-linecap="round"/>
+  <path d="M60 196h200" stroke="#c9b98f" stroke-width="4" stroke-linecap="round"/>
+</svg>

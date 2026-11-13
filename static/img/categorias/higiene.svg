@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Higiene y cuidado">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="58" cy="46" r="48" fill="#e9dfc8"/>
+  <circle cx="270" cy="178" r="52" fill="#efe6d0"/>
+  <path d="M116 72h64v112h-64z" fill="#356575"/>
+  <path d="M130 52h36v20h-36z" fill="#244414"/>
+  <path d="M138 42h20v10h-20z" fill="#c4682a"/>
+  <rect x="128" y="94" width="40" height="40" rx="7" fill="#f6f0e2"/>
+  <circle cx="142" cy="108" r="4" fill="#5a9629"/>
+  <circle cx="155" cy="120" r="4" fill="#5a9629"/>
+  <circle cx="142" cy="122" r="3" fill="#e17055"/>
+  <circle cx="236" cy="58" r="14" fill="#f6f0e2" stroke="#9d927a" stroke-width="2"/>
+  <circle cx="266" cy="82" r="9" fill="#f6f0e2" stroke="#9d927a" stroke-width="2"/>
+  <circle cx="248" cy="104" r="6" fill="#f6f0e2" stroke="#9d927a" stroke-width="2"/>
+  <path d="M212 130h54v16c0 16-12 26-27 26s-27-10-27-26z" fill="#e17055"/>
+  <path d="M224 172c0 16 10 26 26 26" stroke="#9d927a" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M84 152c22-18 44-18 66 0" stroke="#3d6721" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>

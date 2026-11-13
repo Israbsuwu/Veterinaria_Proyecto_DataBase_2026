@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" role="img" aria-label="Insumos clínicos">
+  <rect width="320" height="220" fill="#f6f0e2"/>
+  <circle cx="52" cy="44" r="48" fill="#e9dfc8"/>
+  <circle cx="270" cy="180" r="50" fill="#efe6d0"/>
+  <path d="M72 86c0-14 18-18 30-18s30 4 30 18v50c0 16-14 26-30 26s-30-10-30-26z" fill="#356575"/>
+  <path d="M102 68v-12m-20 18l-12-10m52 10l12-10" stroke="#244414" stroke-width="6" stroke-linecap="round"/>
+  <path d="M146 90h50v70h-50z" fill="#e17055"/>
+  <rect x="158" y="76" width="26" height="16" rx="5" fill="#c4682a"/>
+  <rect x="160" y="110" width="22" height="34" rx="3" fill="#f6f0e2"/>
+  <path d="M166 120h10m-5 5v14" stroke="#356575" stroke-width="3" stroke-linecap="round"/>
+  <path d="M224 92l22-46 14 8-22 46z" fill="#244414"/>
+  <circle cx="252" cy="150" r="26" fill="#f6f0e2" stroke="#3d6721" stroke-width="5"/>
+  <path d="M252 134v16l10 8" stroke="#3d6721" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M66 178h188" stroke="#c9b98f" stroke-width="4" stroke-linecap="round"/>
+</svg>
