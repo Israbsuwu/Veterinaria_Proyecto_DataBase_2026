@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#244414">
+  <title>Portal clínico — Veterinaria Pepe &amp; Pepito</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body>
+
+  <div class="top-strip">
+    <div class="top-strip-left">
+      <span>Monseñor Lezcano, Managua</span>
+      <span>(505) 2266-0000 · 8888-1234</span>
+      <span>Lunes a sábado · 8:00 AM a 6:00 PM</span>
+    </div>
+    <div class="top-strip-right">Portal clínico · Personal autorizado</div>
+  </div>
+
+  <header class="clinic-header">
+    <a class="clinic-brand" href="{{ url_for('index') }}">
+      <span class="brand-mark">🐾</span>
+      <span class="brand-copy">
+        <strong>Pepe &amp; Pepito</strong>
+        <small>Portal clínico</small>
+      </span>
+    </a>
+
+    <div class="clinic-actions">
+      <div class="user-chip">
+        <strong>{{ usuario.nombre }} {{ usuario.apellido }}</strong>
+        <small>{{ usuario.rol }}</small>
+      </div>
+      <a class="btn-link" href="{{ url_for('index') }}">Ver tienda</a>
+      <a class="btn-link btn-link--primary" href="{{ url_for('dashboard') }}">Panel de gestión</a>
+      <a class="btn-link btn-link--danger" href="{{ url_for('logout') }}">Salir</a>
+    </div>
+  </header>
+
+  <main class="clinic-main">
+    <section class="clinic-hero">
+      <div>
+        <p class="eyebrow">Expedientes y pacientes</p>
+        <h1>Sistema clínico digital</h1>
+        <p>Registra propietarios y mascotas, consulta el expediente de cada paciente y prepara la atención médica. Los datos se guardan directamente en la base de la veterinaria.</p>
+      </div>
+    </section>
+
+    <section class="portal-section-wrap" id="portalClinicoWrap">
+      <div class="portal-nav-bar" role="tablist" aria-label="Secciones del portal clínico">
+        <button type="button" class="portal-tab-btn active" onclick="cambiarPortalTab('registro', this)">
+          👥 Registro propietario / mascota
+        </button>
+        <button type="button" class="portal-tab-btn" onclick="cambiarPortalTab('expediente', this)">
+          📖 Expediente clínico y recetas
+        </button>
+        <button type="button" class="portal-tab-btn" onclick="cambiarPortalTab('consulta', this)">
+          ➕ Nueva consulta médica
+        </button>
+      </div>
+
+      <!-- VISTA: REGISTRO -->
+      <div id="pview-registro" class="portal-view-panel active">
+        <div class="form-grid-2">
+          <div class="card-clean-form">
+            <h3>👤 Registrar propietario</h3>
+            <form id="formPropietario">
+              <div class="form-field">
+                <label for="propCedula">Cédula de identidad</label>
+                <input type="text" id="propCedula" placeholder="001-000000-0000X" required>
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="propNombre">Nombre</label>
+                  <input type="text" id="propNombre" placeholder="Jhonny" required>
+                </div>
+                <div class="form-field">
+                  <label for="propApellido">Apellido</label>
+                  <input type="text" id="propApellido" placeholder="Garay" required>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="propTel">Teléfono</label>
+                <input type="tel" id="propTel" placeholder="8888-8888" required>
+              </div>
+              <button type="submit" class="btn-green-solid">Guardar propietario</button>
+            </form>
+          </div>
+
+          <div class="card-clean-form">
+            <h3>🐕 Registrar mascota</h3>
+            <form id="formMascota">
+              <div class="form-field">
+                <label for="selectDuenoAsignado">Dueño asignado</label>
+                <select id="selectDuenoAsignado" required></select>
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="mascotaNombre">Nombre mascota</label>
+                  <input type="text" id="mascotaNombre" placeholder="Jerry" required>
+                </div>
+                <div class="form-field">
+                  <label for="mascotaEspecie">Especie</label>
+                  <select id="mascotaEspecie">
+                    <option value="Canino">Canino</option>
+                    <option value="Felino">Felino</option>
+                    <option value="Otro">Otro</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field-row">
+                <div class="form-field">
+                  <label for="mascotaRaza">Raza</label>
+                  <input type="text" id="mascotaRaza" placeholder="Criollo">
+                </div>
+                <div class="form-field">
+                  <label for="mascotaSexo">Sexo</label>
+                  <select id="mascotaSexo">
+                    <option value="Macho">Macho</option>
+                    <option value="Hembra">Hembra</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-field">
+                <label for="mascotaAlergias">Alergias conocidas</label>
+                <input type="text" id="mascotaAlergias" placeholder="Ej. Alérgico a penicilina">
+              </div>
+              <button type="submit" class="btn-green-solid">Registrar mascota y expediente</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- VISTA: EXPEDIENTES -->
+      <div id="pview-expediente" class="portal-view-panel">
+        <div class="card-clean-form" style="margin-bottom: 1rem;">
+          <div class="form-field" style="margin-bottom: 0;">
+            <label for="selectExpediente">Seleccionar expediente del paciente</label>
+            <select id="selectExpediente" onchange="renderExpedienteSeleccionado(this.value)"></select>
+          </div>
+        </div>
+
+        <div class="patient-clinical-header">
+          <div>
+            <div class="clinical-name" id="expNombreMascota">—</div>
+            <p id="expDetallesMascota" style="font-size: 0.82rem; color: #6e6653;">—</p>
+            <p id="expDuenoMascota" style="font-size: 0.82rem; color: var(--forest-mid); font-weight: 700;">Dueño: —</p>
+          </div>
+          <div>
+            <span class="badge-allergy" id="expAlergiaMascota">Sin alergias registradas</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap;">
+          <button type="button" class="btn-act" onclick="abrirModalEditarPaciente()">✏️ Editar datos</button>
+          <button type="button" class="btn-act btn-act-danger" onclick="solicitarEliminarPaciente()">🗑️ Eliminar paciente</button>
+        </div>
+
+        <h4 style="font-family: var(--font-display); color: var(--forest); margin-bottom: 0.7rem;">📋 Historial de atenciones médicas</h4>
+        <div id="timelineConsultas"></div>
+      </div>
+
+      <!-- VISTA: NUEVA CONSULTA -->
+      <div id="pview-consulta" class="portal-view-panel">
+        <div class="card-clean-form">
+          <h3>🩺 Registrar consulta y emitir receta</h3>
+          <form id="formNuevaConsulta">
+            <div class="form-field-row">
+              <div class="form-field">
+                <label for="selectPacienteConsulta">Paciente</label>
+                <select id="selectPacienteConsulta" required></select>
+              </div>
+              <div class="form-field">
+                <label for="consultaPeso">Peso actual (kg) — dosificación</label>
+                <input type="number" step="0.01" id="consultaPeso" placeholder="Ej. 14.50" required>
+              </div>
+            </div>
+            <div class="form-field">
+              <label for="consultaMotivo">Motivo de consulta</label>
+              <input type="text" id="consultaMotivo" placeholder="Ej. Control preventivo y vacunación" required>
+            </div>
+            <div class="form-field">
+              <label for="consultaDiagnostico">Diagnóstico</label>
+              <textarea rows="2" id="consultaDiagnostico" placeholder="Evaluación clínica…" required></textarea>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--line); margin: 1rem 0;">
+            <h4 style="font-family: var(--font-display); font-size: 1rem; color: var(--forest); margin-bottom: 0.6rem;">Prescripción médica</h4>
+
+            <div class="form-field">
+              <label for="recetaFarmaco">Medicamento</label>
+              <input type="text" id="recetaFarmaco" placeholder="Ej. Multivitamínico canino" required>
+            </div>
+            <div class="form-field-row">
+              <div class="form-field">
+                <label for="recetaDosis">Dosis</label>
+                <input type="text" id="recetaDosis" placeholder="1 tableta cada 24 hrs" required>
+              </div>
+              <div class="form-field">
+                <label for="recetaDuracion">Duración (días)</label>
+                <input type="number" id="recetaDuracion" placeholder="30" required>
+              </div>
+            </div>
+            <button type="submit" class="btn-green-solid">Guardar consulta y generar receta</button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL CONFIRMACIÓN GENÉRICO -->
+  <div id="modalConfirmacion" class="modal-backdrop hidden">
+    <div class="modal-white-card">
+      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚠️</div>
+      <h3 id="confirmTitle">Función en preparación</h3>
+      <p id="confirmMessage" style="font-size: 0.82rem; color: var(--muted); margin-top: 0.4rem;">Esta acción se habilitará en una próxima fase.</p>
+      <div class="modal-btn-row">
+        <button type="button" class="btn-cancel-modal" onclick="cerrarModalConfirmacion()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL EDITAR PACIENTE -->
+  <div id="modalEditarPaciente" class="modal-backdrop hidden">
+    <div class="modal-white-card" style="max-width: 520px; text-align: left;">
+      <h3 style="color: var(--forest); margin-bottom: 1rem;">✏️ Modificar paciente y dueño</h3>
+      <form id="formModalEditarPaciente">
+        <input type="hidden" id="editMascotaId">
+        <input type="hidden" id="editDuenoId">
+
+        <div class="form-field-row">
+          <div class="form-field">
+            <label for="editDuenoNombre">Nombre dueño</label>
+            <input type="text" id="editDuenoNombre" required>
+          </div>
+          <div class="form-field">
+            <label for="editDuenoApellido">Apellido dueño</label>
+            <input type="text" id="editDuenoApellido" required>
+          </div>
+        </div>
+        <div class="form-field-row">
+          <div class="form-field">
+            <label for="editDuenoCedula">Cédula</label>
+            <input type="text" id="editDuenoCedula" required>
+          </div>
+          <div class="form-field">
+            <label for="editDuenoTel">Teléfono</label>
+            <input type="tel" id="editDuenoTel" required>
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--line); margin: 0.8rem 0;">
+
+        <div class="form-field-row">
+          <div class="form-field">
+            <label for="editMascotaNombre">Nombre mascota</label>
+            <input type="text" id="editMascotaNombre" required>
+          </div>
+          <div class="form-field">
+            <label for="editMascotaEspecie">Especie</label>
+            <select id="editMascotaEspecie">
+              <option value="Canino">Canino</option>
+              <option value="Felino">Felino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="editMascotaAlergias">Alergias / condiciones</label>
+          <input type="text" id="editMascotaAlergias">
+        </div>
+
+        <div class="modal-btn-row">
+          <button type="submit" class="btn-green-solid" style="margin-top: 0;">Guardar cambios</button>
+          <button type="button" class="btn-cancel-modal" onclick="cerrarModalEditarPaciente()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL RECETA IMPRIMIBLE -->
+  <div id="modalReceta" class="modal-backdrop hidden">
+    <div class="receta-paper-clean">
+      <div class="receta-hdr">
+        <h2>VETERINARIA PEPE &amp; PEPITO</h2>
+        <p style="font-size: 0.78rem; color: var(--muted);">Monseñor Lezcano, Managua · Tel: 2266-0000</p>
+        <strong style="color: var(--forest); font-size: 0.8rem; display: block; margin-top: 6px; letter-spacing: 0.5px;">
+          RECETA MÉDICA VETERINARIA
+        </strong>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8rem; margin-bottom: 1rem; background: #f5efdf; padding: 0.75rem; border-radius: 6px;">
+        <div><strong>Paciente:</strong> <span id="recetaModalMascota">—</span></div>
+        <div><strong>Propietario:</strong> <span id="recetaModalDueno">—</span></div>
+        <div><strong>Fecha:</strong> <span id="recetaModalFecha">—</span></div>
+        <div><strong>Peso:</strong> <span id="recetaModalPeso">—</span></div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--line); padding-bottom: 0.8rem; margin-bottom: 1rem;">
+        <h4 id="recetaModalFarmaco" style="color: var(--forest); font-size: 1rem;">—</h4>
+        <p style="font-size: 0.82rem; margin-top: 4px;"><strong>Indicación:</strong> <span id="recetaModalDosis">—</span></p>
+        <p style="font-size: 0.82rem;"><strong>Duración del tratamiento:</strong> <span id="recetaModalDuracion">—</span> días</p>
+      </div>
+
+      <div style="text-align: center; border-top: 1px solid var(--line); padding-top: 0.8rem; margin-bottom: 1rem;">
+        <small style="color: var(--muted);">Firma del médico veterinario responsable</small>
+      </div>
+
+      <div class="modal-btn-row">
+        <button type="button" class="btn-green-solid" style="margin-top: 0;" onclick="window.print()">🖨️ Imprimir receta</button>
+        <button type="button" class="btn-cancel-modal" onclick="cerrarModalReceta()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="clinic-toast" id="avisoClinico" role="status" aria-live="polite" hidden></div>
+
+  <div id="server-data"
+       data-clientes="{{ clientes | tojson | forceescape }}"
+       data-mascotas="{{ mascotas | tojson | forceescape }}"
+       style="display: none;"></div>
+
+  <script src="{{ url_for('static', filename='js/anime.iife.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/portal.js') }}"></script>
+</body>
+</html>

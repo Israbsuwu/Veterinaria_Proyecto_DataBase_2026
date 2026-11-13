@@ -1,1313 +1,301 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Veterinaria Pepe y Pepito — Salud Animal & Tienda</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#244414">
+  <title>Tienda — Veterinaria Pepe &amp; Pepito</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
-  <style>
-    :root {
-      --vet-green: #5a9629;
-      --vet-green-dark: #46791e;
-      --vet-green-light: #70b038;
-      --bg-light: #f8fafc;
-      --border-gray: #e2e8f0;
-      --text-dark: #1e293b;
-      --text-muted: #64748b;
-      --font-heading: 'Montserrat', sans-serif;
-      --font-body: 'Open Sans', sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: var(--font-body);
-    }
-
-    body {
-      background-color: #f1f5f9;
-      color: var(--text-dark);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .top-strip {
-      background: #27272a;
-      color: #d4d4d8;
-      font-size: 0.78rem;
-      padding: 0.4rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .site-header {
-      background: #ffffff;
-      border-bottom: 2px solid #e2e8f0;
-      padding: 0.9rem 1.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 90;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-    }
-
-    .brand-group {
-      display: flex;
-      align-items: center;
-      gap: 0.9rem;
-    }
-
-    .brand-logo-badge {
-      width: 46px;
-      height: 46px;
-      background: var(--vet-green);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 1.6rem;
-      box-shadow: 0 4px 12px rgba(90, 150, 41, 0.35);
-    }
-
-    .brand-title h1 {
-      font-family: var(--font-heading);
-      font-size: 1.35rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-      line-height: 1.1;
-    }
-
-    .brand-title span {
-      font-size: 0.76rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.8rem;
-    }
-
-    .btn-toggle-portal {
-      background: var(--vet-green);
-      color: #fff;
-      border: none;
-      padding: 0.65rem 1.2rem;
-      border-radius: 8px;
-      font-family: var(--font-heading);
-      font-weight: 700;
-      font-size: 0.82rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: background 0.2s;
-    }
-
-    .btn-toggle-portal:hover {
-      background: var(--vet-green-dark);
-    }
-
-    .cart-indicator-btn {
-      background: #f1f5f9;
-      border: 1px solid var(--border-gray);
-      padding: 0.65rem 1.1rem;
-      border-radius: 8px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-    }
-
-    .cart-indicator-btn:hover {
-      background: #e2e8f0;
-      border-color: #cbd5e1;
-    }
-
-    .cart-badge-count {
-      background: var(--vet-green);
-      color: #ffffff;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 800;
-    }
-
-    .main-wrap {
-      max-width: 1280px;
-      width: 100%;
-      margin: 0 auto;
-      padding: 1.5rem 1rem 4rem;
-    }
-
-    .services-banner-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1rem;
-      margin-bottom: 2.2rem;
-    }
-
-    .service-banner-box {
-      background: var(--vet-green);
-      color: #ffffff;
-      border-radius: 4px;
-      padding: 2.2rem 1.2rem;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.2rem;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(90, 150, 41, 0.25);
-      transition: transform 0.2s, background 0.2s;
-    }
-
-    .service-banner-box:hover {
-      background: var(--vet-green-dark);
-      transform: translateY(-3px);
-    }
-
-    .service-banner-title {
-      font-family: var(--font-heading);
-      font-size: 1rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-    }
-
-    .service-banner-icon {
-      font-size: 4rem;
-      line-height: 1;
-    }
-
-    .section-headline {
-      font-family: var(--font-heading);
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-      margin-bottom: 1.2rem;
-    }
-
-    .products-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1.25rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .product-card {
-      background: #ffffff;
-      border: 1.5px solid #e17055;
-      border-radius: 4px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .product-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    }
-
-    .product-btn-add {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--vet-green);
-      color: #fff;
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.15rem;
-      cursor: pointer;
-      z-index: 5;
-      transition: background 0.2s, transform 0.1s;
-    }
-
-    .product-btn-add:hover {
-      background: var(--vet-green-dark);
-      transform: scale(1.05);
-    }
-
-    .product-img-box {
-      width: 100%;
-      height: 250px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0.8rem;
-      background: #fff;
-    }
-
-    .product-img-box img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
-
-    .product-body {
-      background: #e2e8f0;
-      padding: 0.85rem 1rem 1rem;
-      border-top: 1px solid #cbd5e1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .product-name {
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #475569;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
-    }
-
-    .product-price {
-      font-family: var(--font-heading);
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-    }
-
-    .product-price span {
-      font-size: 0.78rem;
-      color: #64748b;
-      font-weight: 600;
-    }
-
-    .btn-detail {
-      align-self: flex-start;
-      background: var(--vet-green);
-      color: #fff;
-      border: none;
-      padding: 0.4rem 0.9rem;
-      border-radius: 3px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 0.2rem;
-    }
-
-    .btn-detail:hover {
-      background: var(--vet-green-dark);
-    }
-
-    /* ================= SIDEBAR DEL CARRITO ================= */
-    .cart-drawer-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.45);
-      backdrop-filter: blur(3px);
-      z-index: 150;
-      display: none;
-    }
-
-    .cart-drawer-backdrop.active {
-      display: block;
-    }
-
-    .cart-drawer {
-      position: fixed;
-      top: 0;
-      right: -420px;
-      width: 100%;
-      max-width: 400px;
-      height: 100vh;
-      background: #ffffff;
-      box-shadow: -10px 0 30px rgba(0,0,0,0.15);
-      z-index: 160;
-      display: flex;
-      flex-direction: column;
-      transition: right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .cart-drawer.active {
-      right: 0;
-    }
-
-    .cart-drawer-header {
-      padding: 1.2rem;
-      background: #f8fafc;
-      border-bottom: 2px solid var(--border-gray);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .cart-drawer-header h3 {
-      font-family: var(--font-heading);
-      font-size: 1.15rem;
-      color: var(--vet-green-dark);
-      font-weight: 800;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .cart-btn-close {
-      background: transparent;
-      border: none;
-      font-size: 1.2rem;
-      cursor: pointer;
-      color: var(--text-muted);
-      padding: 0.3rem;
-    }
-
-    .cart-items-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.85rem;
-    }
-
-    .cart-empty-state {
-      text-align: center;
-      color: var(--text-muted);
-      margin-top: 3rem;
-    }
-
-    .cart-item-card {
-      background: #f8fafc;
-      border: 1px solid var(--border-gray);
-      border-radius: 8px;
-      padding: 0.8rem;
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-    }
-
-    .cart-item-img {
-      width: 55px;
-      height: 55px;
-      background: #fff;
-      border-radius: 6px;
-      padding: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 1px solid var(--border-gray);
-      flex-shrink: 0;
-    }
-
-    .cart-item-img img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
-    }
-
-    .cart-item-info {
-      flex: 1;
-    }
-
-    .cart-item-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-dark);
-      line-height: 1.2;
-      margin-bottom: 4px;
-    }
-
-    .cart-item-price-unit {
-      font-size: 0.78rem;
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
-    .cart-item-subtotal {
-      font-size: 0.85rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-      margin-top: 3px;
-    }
-
-    .cart-qty-controls {
-      display: flex;
-      align-items: center;
-      gap: 0.35rem;
-      margin-top: 6px;
-    }
-
-    .btn-qty {
-      width: 24px;
-      height: 24px;
-      background: #ffffff;
-      border: 1px solid var(--border-gray);
-      border-radius: 4px;
-      cursor: pointer;
-      font-weight: 800;
-      font-size: 0.8rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-dark);
-    }
-
-    .btn-qty:hover {
-      background: #e2e8f0;
-    }
-
-    .qty-display-number {
-      font-size: 0.85rem;
-      font-weight: 700;
-      min-width: 20px;
-      text-align: center;
-    }
-
-    .btn-remove-item {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #dc2626;
-      width: 30px;
-      height: 30px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-    }
-
-    .btn-remove-item:hover {
-      background: #fee2e2;
-    }
-
-    .cart-drawer-footer {
-      padding: 1.2rem;
-      background: #f8fafc;
-      border-top: 2px solid var(--border-gray);
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
-
-    .cart-total-row {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .cart-total-row.final-total {
-      font-size: 1.15rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-      border-top: 1px dashed var(--border-gray);
-      padding-top: 0.6rem;
-      margin-top: 0.2rem;
-    }
-
-    .btn-confirm-purchase {
-      width: 100%;
-      background: var(--vet-green);
-      color: #ffffff;
-      border: none;
-      padding: 0.85rem;
-      border-radius: 8px;
-      font-family: var(--font-heading);
-      font-weight: 800;
-      font-size: 0.95rem;
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.2s, transform 0.1s;
-      margin-top: 0.4rem;
-      box-shadow: 0 4px 12px rgba(90, 150, 41, 0.3);
-    }
-
-    .btn-confirm-purchase:hover {
-      background: var(--vet-green-dark);
-      transform: translateY(-1px);
-    }
-
-    .btn-clear-cart {
-      background: transparent;
-      border: none;
-      color: #dc2626;
-      font-size: 0.78rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-align: center;
-      margin-top: 0.2rem;
-    }
-
-    .btn-clear-cart:hover {
-      text-decoration: underline;
-    }
-
-    /* ================= PORTAL CLINICO ================= */
-    .portal-section-wrap {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 1.8rem;
-      border: 1px solid var(--border-gray);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-      margin-bottom: 2rem;
-    }
-
-    .portal-nav-bar {
-      display: flex;
-      gap: 0.5rem;
-      border-bottom: 2px solid #e2e8f0;
-      padding-bottom: 0.75rem;
-      margin-bottom: 1.5rem;
-      overflow-x: auto;
-    }
-
-    .portal-tab-btn {
-      background: transparent;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      border-radius: 6px;
-      font-family: var(--font-heading);
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      white-space: nowrap;
-    }
-
-    .portal-tab-btn.active {
-      background: var(--vet-green);
-      color: #ffffff;
-    }
-
-    .portal-view-panel { display: none; }
-    .portal-view-panel.active { display: block; }
-
-    .form-grid-2 {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .card-clean-form {
-      background: #f8fafc;
-      border: 1px solid var(--border-gray);
-      border-radius: 8px;
-      padding: 1.4rem;
-    }
-
-    .card-clean-form h3 {
-      font-family: var(--font-heading);
-      font-size: 1.05rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-      margin-bottom: 1rem;
-    }
-
-    .form-field {
-      margin-bottom: 0.85rem;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .form-field-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-    }
-
-    label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #475569;
-      margin-bottom: 0.35rem;
-      text-transform: uppercase;
-    }
-
-    input, select, textarea {
-      width: 100%;
-      background: #ffffff;
-      border: 1px solid #cbd5e1;
-      border-radius: 6px;
-      padding: 0.65rem 0.85rem;
-      font-size: 0.9rem;
-      color: var(--text-dark);
-      outline: none;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--vet-green);
-      box-shadow: 0 0 0 3px rgba(90, 150, 41, 0.15);
-    }
-
-    .btn-green-solid {
-      width: 100%;
-      background: var(--vet-green);
-      color: #fff;
-      border: none;
-      padding: 0.75rem 1.2rem;
-      border-radius: 6px;
-      font-family: var(--font-heading);
-      font-weight: 700;
-      font-size: 0.9rem;
-      cursor: pointer;
-      margin-top: 0.5rem;
-    }
-
-    .btn-green-solid:hover {
-      background: var(--vet-green-dark);
-    }
-
-    .patient-clinical-header {
-      background: #eef7e6;
-      border-left: 5px solid var(--vet-green);
-      border-radius: 6px;
-      padding: 1.1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1.2rem;
-    }
-
-    .clinical-name {
-      font-family: var(--font-heading);
-      font-size: 1.3rem;
-      font-weight: 800;
-      color: var(--vet-green-dark);
-    }
-
-    .badge-allergy {
-      background: #fee2e2;
-      color: #b91c1c;
-      border: 1px solid #f87171;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 0.35rem 0.75rem;
-      border-radius: 999px;
-    }
-
-    .history-card-item {
-      background: #ffffff;
-      border: 1px solid var(--border-gray);
-      border-left: 4px solid var(--vet-green);
-      border-radius: 6px;
-      padding: 1rem;
-      margin-bottom: 0.85rem;
-    }
-
-    .history-top-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 0.5rem;
-    }
-
-    .history-actions {
-      display: flex;
-      gap: 0.5rem;
-      margin-top: 0.75rem;
-    }
-
-    .btn-act {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      padding: 0.4rem 0.75rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .btn-act:hover { background: #e2e8f0; }
-
-    .btn-act-danger {
-      background: #fef2f2;
-      border-color: #fecaca;
-      color: #dc2626;
-    }
-
-    .btn-act-danger:hover { background: #fee2e2; }
-
-    /* ================= MODALES ================= */
-    .modal-backdrop {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(4px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      padding: 1rem;
-    }
-
-    .modal-backdrop.hidden { display: none; }
-
-    .modal-white-card {
-      background: #ffffff;
-      border-radius: 12px;
-      padding: 1.8rem;
-      max-width: 440px;
-      width: 100%;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-
-    .modal-btn-row {
-      display: flex;
-      gap: 0.75rem;
-    }
-
-    .modal-btn-row button {
-      flex: 1;
-      padding: 0.65rem;
-      border-radius: 6px;
-      font-weight: 700;
-      cursor: pointer;
-      font-size: 0.85rem;
-    }
-
-    .btn-cancel-modal {
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #475569;
-    }
-
-    .btn-delete-modal {
-      background: #dc2626;
-      border: none;
-      color: #ffffff;
-    }
-
-    .receta-paper-clean {
-      background: #ffffff;
-      border: 2px solid var(--vet-green);
-      border-radius: 12px;
-      padding: 1.8rem;
-      max-width: 500px;
-      width: 100%;
-    }
-
-    .receta-hdr {
-      text-align: center;
-      border-bottom: 2px dashed #cbd5e1;
-      padding-bottom: 0.8rem;
-      margin-bottom: 1rem;
-    }
-
-    .receta-hdr h2 {
-      font-family: var(--font-heading);
-      color: var(--vet-green-dark);
-      font-size: 1.3rem;
-      font-weight: 800;
-    }
-
-    @media (max-width: 768px) {
-      .services-banner-grid { grid-template-columns: 1fr; }
-      .top-strip { display: none; }
-      .site-header { flex-wrap: wrap; gap: 0.8rem; }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Montserrat:wght@500;600;700;800&family=Open+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/tienda.css') }}">
 </head>
-<body>
+<body class="shop-body">
+
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display:none">
+    <symbol id="i-paw" viewBox="0 0 24 24"><ellipse cx="5.9" cy="9.6" rx="2.1" ry="2.9"/><ellipse cx="10.2" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="15.1" cy="6.3" rx="2.2" ry="3.2"/><ellipse cx="19.4" cy="9.6" rx="2.1" ry="2.9"/><path d="M12.7 12.4c3.7 0 6.5 2.8 6.5 5.9 0 2.2-1.9 3.3-3.9 3.3-1 0-1.7-.4-2.6-.4s-1.6.4-2.6.4c-2 0-3.9-1.1-3.9-3.3 0-3.1 2.8-5.9 6.5-5.9z"/></symbol>
+    <symbol id="i-cart" viewBox="0 0 24 24"><circle cx="9.5" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M3 4h2.2l2.4 11.2h11.1L21 7.5H6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.6"/><path d="M15.8 15.8L21 21"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M5.5 5.5l13 13"/><path d="M18.5 5.5l-13 13"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.2c0-3.8 3.2-6.2 7.5-6.2s7.5 2.4 7.5 6.2"/></symbol>
+    <symbol id="i-store" viewBox="0 0 24 24"><path d="M4 9.5V20h16V9.5"/><path d="M3 9.5l2.2-5.5h13.6L21 9.5"/><path d="M3 9.5c0 1.5 1.2 2.6 2.7 2.6S8.4 11 8.4 9.5c0 1.5 1.2 2.6 2.7 2.6s2.7-1.1 2.7-2.6c0 1.5 1.2 2.6 2.7 2.6s2.7-1.1 2.7-2.6"/><path d="M9.5 20v-5.5h5V20"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20.3S4 15.4 4 9.9A4.3 4.3 0 0112 7a4.3 4.3 0 018 2.9c0 5.5-8 10.4-8 10.4z"/></symbol>
+    <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3.5 6.5h10v10h-10z"/><path d="M13.5 10h4l3 3v3.5h-7z"/><circle cx="7" cy="18.2" r="1.8"/><circle cx="17.2" cy="18.2" r="1.8"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3.2l7 2.6v5.4c0 4.6-3.1 7.7-7 9.6-3.9-1.9-7-5-7-9.6V5.8z"/><path d="M8.8 12.2l2.2 2.2 4.4-4.4"/></symbol>
+  </svg>
 
   <div class="top-strip">
     <div class="top-strip-left">
-      <span>📍 Monseñor Lezcano, Managua</span>
-      <span>📞 (505) 2266-0000 / 8888-1234</span>
-      <span>🕒 Lunes a Sábado: 8:00 AM - 6:00 PM</span>
+      <span>Monseñor Lezcano, Managua</span>
+      <span>(505) 2266-0000 · 8888-1234</span>
+      <span>Lunes a sábado · 8:00 AM a 6:00 PM</span>
     </div>
-    <div class="top-strip-right">
-      <span>🇳🇮 Managua, Nicaragua</span>
-    </div>
+    <div class="top-strip-right">Precios en córdobas (C$) · Nicaragua</div>
   </div>
 
-  <header class="site-header">
-    <div class="header-actions">
-      <!-- Mostramos datos del usuario desde Flask Jinja2 -->
-      <div style="text-align: right; margin-right: 15px; line-height: 1.2;">
-          <strong style="display: block; font-size: 0.9rem; color: var(--vet-green-dark);">Hola, {{ session['user_nombre'] }}</strong>
-          <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: bold;">Rol: {{ session['user_rol'] }}</span>
+  <header class="shop-header">
+    <a class="shop-brand" href="{{ url_for('index') }}">
+      <span class="brand-mark"><svg width="24" height="24" fill="currentColor"><use href="#i-paw"/></svg></span>
+      <span class="brand-copy">
+        <strong>Pepe &amp; Pepito</strong>
+        <small>Tienda veterinaria</small>
+      </span>
+    </a>
+
+    <nav class="shop-nav" aria-label="Secciones de la tienda">
+      <a href="#inicio">Inicio</a>
+      <a href="#catalogo">Catálogo</a>
+      <a href="#categorias">Categorías</a>
+      <a href="#servicios">Servicios</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+
+    <div class="shop-actions">
+      <div class="user-chip">
+        <strong>Hola, {{ session.get('user_nombre', 'visitante') }}</strong>
+        <small>{{ session.get('user_rol') or 'Cliente de la tienda' }}</small>
       </div>
 
-      <button class="cart-indicator-btn" type="button" onclick="abrirCarrito()" title="Ver mi carrito">
-        🛒 Carrito <span id="cartCount">0</span>
-      </button>
-
       {% if es_personal %}
-        <a href="{{ url_for('dashboard') }}" class="btn-toggle-portal" style="text-decoration: none;">
-          <span>🩺</span> Panel de gestión
+        <a class="btn-account" href="{{ url_for('dashboard') }}">
+          <svg width="15" height="15" fill="currentColor"><use href="#i-grid"/></svg> Panel
         </a>
-        <button class="btn-toggle-portal" onclick="togglePortalClinico()">
-          <span>📋</span> Portal Clínico
-        </button>
+        <a class="btn-account" href="{{ url_for('portal_clinico') }}">
+          <svg width="15" height="15" fill="currentColor"><use href="#i-heart"/></svg> Portal clínico
+        </a>
       {% else %}
-        <a href="{{ url_for('mi_cuenta') }}" class="btn-toggle-portal" style="text-decoration: none;">
-          <span>🐾</span> Mi cuenta
+        <a class="btn-account" href="{{ url_for('mi_cuenta') }}">
+          <svg width="15" height="15" fill="currentColor"><use href="#i-user"/></svg> Mi cuenta
         </a>
       {% endif %}
 
-      <!-- Botón de Cerrar Sesión (Apunta a la ruta logout de Flask) -->
-      <a href="{{ url_for('logout') }}" class="cart-indicator-btn" style="text-decoration: none; color: #dc2626;">
-        🚪 Salir
-      </a>
+      <button class="btn-cart" type="button" onclick="abrirCarrito()" aria-label="Abrir carrito de compras">
+        <svg width="15" height="15" fill="currentColor"><use href="#i-cart"/></svg>
+        Carrito <span id="cartCount">0</span>
+      </button>
+
+      <a class="btn-logout" href="{{ url_for('logout') }}">Salir</a>
     </div>
   </header>
 
-  <main class="main-wrap">
+  <main class="shop-main">
 
-    <section class="services-banner-grid">
-      <div class="service-banner-box" onclick="abrirPortalEnTab('expedientes')">
-        <div class="service-banner-title">SALUD ANIMAL</div>
-        <div class="service-banner-icon">💉</div>
-        <small style="opacity: 0.9; font-weight: 600;">Vacunación, Cirugías y Consultas</small>
+    <!-- ============================ PORTADA ============================ -->
+    <section class="hero" id="inicio">
+      <div class="hero-copy">
+        <p class="eyebrow">Farmacia y tienda veterinaria · Managua</p>
+        <h1>Todo para cuidar a tu mejor compañero.</h1>
+        <p>
+          Alimento, medicina, higiene y accesorios seleccionados por nuestro equipo veterinario.
+          Compra en línea y recoge en la clínica, con asesoría real cuando la necesites.
+        </p>
+        <div class="hero-actions">
+          <a class="btn-primary" href="#catalogo">Ver catálogo</a>
+          <a class="btn-ghost" href="#servicios">Servicios de la clínica</a>
+        </div>
+        <ul class="hero-stats">
+          <li><strong>{{ productos|length }}</strong><span>productos disponibles</span></li>
+          <li><strong>{{ categorias|length }}</strong><span>categorías</span></li>
+          <li><strong>C$</strong><span>precios en córdobas</span></li>
+        </ul>
       </div>
 
-      <div class="service-banner-box" onclick="alert('Servicios de Control Sanitario, Desinfección y Control de Plagas Ambientales')">
-        <div class="service-banner-title">SALUD AMBIENTAL</div>
-        <div class="service-banner-icon">👨‍🌾</div>
-        <small style="opacity: 0.9; font-weight: 600;">Desinfección & Control Sanitario</small>
+      <div class="hero-art" aria-hidden="true">
+        <figure class="hero-photo hero-photo--a">
+          <img src="{{ url_for('static', filename='img/100kg.jpg') }}" alt="Alimento para perros">
+        </figure>
+        <figure class="hero-photo hero-photo--b">
+          <img src="{{ url_for('static', filename='img/purina.jpg') }}" alt="Alimento para gatos">
+        </figure>
+        <figure class="hero-photo hero-photo--c">
+          <img src="{{ url_for('static', filename='img/perro.jpg') }}" alt="Comida húmeda para perros">
+        </figure>
+        <figure class="hero-photo hero-photo--d">
+          <img src="{{ url_for('static', filename='img/talco.jpg') }}" alt="Producto de higiene veterinaria">
+        </figure>
+        <span class="hero-stamp">Atención<br>veterinaria<br>de verdad</span>
       </div>
+    </section>
 
-      <div class="service-banner-box" onclick="abrirPortalEnTab('pacientes')">
-        <div class="service-banner-title">MASCOTAS</div>
-        <div class="service-banner-icon">🐕‍🦺</div>
-        <small style="opacity: 0.9; font-weight: 600;">Expedientes Digitales & Control de Peso</small>
+    <!-- ========================== CATEGORÍAS =========================== -->
+    <section class="category-strip" id="categorias">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Encuentra rápido</p>
+          <h2>Compra por categoría</h2>
+        </div>
+        <span class="result-count" id="categoriasResumen">{{ categorias|length }} categorías</span>
+      </div>
+      <div class="category-chips" id="categoryChips" role="group" aria-label="Filtrar por categoría">
+        <button type="button" class="cat-chip active" data-categoria="todas">Todas <span>({{ productos|length }})</span></button>
+        {% for categoria in categorias %}
+          <button type="button" class="cat-chip" data-categoria="{{ categoria.nombre }}">
+            {{ categoria.nombre }} <span>({{ categoria.productos }})</span>
+          </button>
+        {% endfor %}
       </div>
     </section>
 
-    {% if es_personal %}
-    <!-- PORTAL DE EXPEDIENTES (solo personal de la clínica) -->
-    <section class="portal-section-wrap" id="portalClinicoWrap" style="display: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem;">
-        <h2 style="font-family: var(--font-heading); color: var(--vet-green-dark); font-size: 1.3rem;">
-          🏥 Sistema Clínico Digital — Pepe & Pepito
-        </h2>
-        <button class="btn-act" onclick="togglePortalClinico()">✕ Cerrar Portal</button>
-      </div>
-
-      <div class="portal-nav-bar">
-        <button class="portal-tab-btn active" onclick="cambiarPortalTab('registro', this)">
-          👥 Registro Propietario / Mascota
-        </button>
-        <button class="portal-tab-btn" onclick="cambiarPortalTab('expediente', this)">
-          📖 Expediente Clínico & Recetas
-        </button>
-        <button class="portal-tab-btn" onclick="cambiarPortalTab('consulta', this)">
-          ➕ Nueva Consulta Médica
-        </button>
-      </div>
-
-      <!-- VISTA: REGISTRO -->
-      <div id="pview-registro" class="portal-view-panel active">
-        <div class="form-grid-2">
-          <div class="card-clean-form">
-            <h3>👤 Registrar Propietario</h3>
-            <form id="formPropietario">
-              <div class="form-field">
-                <label>Cédula de Identidad</label>
-                <input type="text" id="propCedula" placeholder="001-000000-0000X" required />
-              </div>
-              <div class="form-field-row">
-                <div class="form-field">
-                  <label>Nombre</label>
-                  <input type="text" id="propNombre" placeholder="Jhonny" required />
-                </div>
-                <div class="form-field">
-                  <label>Apellido</label>
-                  <input type="text" id="propApellido" placeholder="Garay" required />
-                </div>
-              </div>
-              <div class="form-field">
-                <label>Teléfono</label>
-                <input type="tel" id="propTel" placeholder="8888-8888" required />
-              </div>
-              <button type="submit" class="btn-green-solid">Guardar Propietario</button>
-            </form>
-          </div>
-
-          <div class="card-clean-form">
-            <h3>🐕 Registrar Mascota</h3>
-            <form id="formMascota">
-              <div class="form-field">
-                <label>Dueño Asignado</label>
-                <select id="selectDuenoAsignado" required></select>
-              </div>
-              <div class="form-field-row">
-                <div class="form-field">
-                  <label>Nombre Mascota</label>
-                  <input type="text" id="mascotaNombre" placeholder="Jerry" required />
-                </div>
-                <div class="form-field">
-                  <label>Especie</label>
-                  <select id="mascotaEspecie">
-                    <option value="Canino">Canino</option>
-                    <option value="Felino">Felino</option>
-                    <option value="Otro">Otro</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-field-row">
-                <div class="form-field">
-                  <label>Raza</label>
-                  <input type="text" id="mascotaRaza" placeholder="Criollo" />
-                </div>
-                <div class="form-field">
-                  <label>Sexo</label>
-                  <select id="mascotaSexo">
-                    <option value="Macho">Macho</option>
-                    <option value="Hembra">Hembra</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-field">
-                <label>Alergias Conocidas</label>
-                <input type="text" id="mascotaAlergias" placeholder="Ej. Alérgico a penicilina" />
-              </div>
-              <button type="submit" class="btn-green-solid">Registrar Mascota & Expediente</button>
-            </form>
-          </div>
+    <!-- ============================ CATÁLOGO ============================ -->
+    <section class="catalog" id="catalogo">
+      <div class="catalog-head">
+        <div>
+          <p class="eyebrow">Catálogo completo</p>
+          <h2>Productos de la tienda</h2>
+        </div>
+        <div class="catalog-tools">
+          <label class="search-box">
+            <svg fill="currentColor"><use href="#i-search"/></svg>
+            <input type="search" id="buscarProducto" placeholder="Buscar alimento, medicina, accesorio…" autocomplete="off" aria-label="Buscar producto">
+          </label>
+          <select class="select-sort" id="ordenProducto" aria-label="Ordenar productos">
+            <option value="relevancia">Orden del catálogo</option>
+            <option value="precio-asc">Precio: menor a mayor</option>
+            <option value="precio-desc">Precio: mayor a menor</option>
+            <option value="nombre">Nombre A-Z</option>
+            <option value="stock">Mayor stock</option>
+          </select>
+          <span class="result-count" id="contadorProductos">{{ productos|length }} productos</span>
         </div>
       </div>
 
-      <!-- VISTA: EXPEDIENTES -->
-      <div id="pview-expediente" class="portal-view-panel">
-        <div class="card-clean-form" style="margin-bottom: 1.2rem;">
-          <div class="form-field" style="margin-bottom: 0;">
-            <label>Seleccionar Expediente del Paciente:</label>
-            <select id="selectExpediente" onchange="renderExpedienteSeleccionado(this.value)"></select>
-          </div>
-        </div>
+      <p class="empty-state" id="vacioCatalogo" hidden>No encontramos productos con esa búsqueda. Prueba con otra palabra o categoría.</p>
 
-        <div class="patient-clinical-header">
-          <div>
-            <div class="clinical-name" id="expNombreMascota">Jerry</div>
-            <p id="expDetallesMascota" style="font-size: 0.85rem; color: #475569;">Canino • Criollo • Macho</p>
-            <p id="expDuenoMascota" style="font-size: 0.85rem; color: var(--vet-green-dark); font-weight: 700;">
-              Dueño: Jhonny Garay (Tel: 8888-1234)
-            </p>
-          </div>
-          <div>
-            <span class="badge-allergy" id="expAlergiaMascota">⚠️ Alérgico a Penicilina</span>
-          </div>
-        </div>
+      <div class="product-grid" id="productGrid" aria-live="polite"></div>
 
-        <div style="display: flex; gap: 0.6rem; margin-bottom: 1.5rem;">
-          <button class="btn-act" onclick="abrirModalEditarPaciente()">✏️ Editar Datos (Dueño & Mascota)</button>
-          <button class="btn-act btn-act-danger" onclick="solicitarEliminarPaciente()">🗑️ Eliminar Paciente</button>
-        </div>
+      <div class="load-more-wrap">
+        <button type="button" class="btn-load-more" id="btnVerMas" hidden>Ver más productos</button>
+      </div>
+    </section>
 
-        <h4 style="font-family: var(--font-heading); color: var(--vet-green-dark); margin-bottom: 0.8rem;">
-          📋 Historial de Atenciones Médicas
-        </h4>
-        <div id="timelineConsultas"></div>
+    <!-- ============================ SERVICIOS ============================ -->
+    <section class="services" id="servicios">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Detrás de la tienda</p>
+          <h2>Servicios de la clínica</h2>
+        </div>
       </div>
 
-      <!-- VISTA: NUEVA CONSULTA -->
-      <div id="pview-consulta" class="portal-view-panel">
-        <div class="card-clean-form">
-          <h3>🩺 Registrar Consulta y Emitir Receta</h3>
-          <form id="formNuevaConsulta">
-            <div class="form-field-row">
-              <div class="form-field">
-                <label>Paciente</label>
-                <select id="selectPacienteConsulta" required></select>
-              </div>
-              <div class="form-field">
-                <label>Peso Actual (Kg) — <em>Dosificación</em></label>
-                <input type="number" step="0.01" id="consultaPeso" placeholder="Ej. 14.50" required />
-              </div>
-            </div>
-            <div class="form-field">
-              <label>Motivo de Consulta</label>
-              <input type="text" id="consultaMotivo" placeholder="Ej. Control preventivo y vacunación" required />
-            </div>
-            <div class="form-field">
-              <label>Diagnóstico</label>
-              <textarea rows="2" id="consultaDiagnostico" placeholder="Evaluación clínica..." required></textarea>
-            </div>
+      <div class="service-grid">
+        <article class="service-card service-card--green">
+          <span class="service-icon">🩺</span>
+          <strong>Consulta veterinaria</strong>
+          <p>Revisión general, control de peso y acompañamiento para perros y gatos de todas las edades.</p>
+          {% if es_personal %}
+            <a class="service-link" href="{{ url_for('portal_clinico') }}">Abrir portal clínico</a>
+          {% else %}
+            <a class="service-link" href="#contacto">Agendar por teléfono</a>
+          {% endif %}
+        </article>
 
-            <hr style="border: none; border-top: 1px solid var(--border-gray); margin: 1rem 0;" />
-            <h4 style="font-size: 0.95rem; color: var(--vet-green-dark); margin-bottom: 0.6rem;">Prescripción Médica</h4>
+        <article class="service-card service-card--orange">
+          <span class="service-icon">💉</span>
+          <strong>Vacunación y desparasitación</strong>
+          <p>Esquemas preventivos, refuerzos y control sanitario con registro en el expediente de tu mascota.</p>
+          <a class="service-link" href="#catalogo" data-filtrar="Vacunas y pruebas preventivas">Ver productos preventivos</a>
+        </article>
 
-            <div class="form-field">
-              <label>Medicamento</label>
-              <input type="text" id="recetaFarmaco" placeholder="Ej. Multivitamínico Canino" required />
-            </div>
-            <div class="form-field-row">
-              <div class="form-field">
-                <label>Dosis</label>
-                <input type="text" id="recetaDosis" placeholder="1 tableta cada 24 hrs" required />
-              </div>
-              <div class="form-field">
-                <label>Duración (Días)</label>
-                <input type="number" id="recetaDuracion" placeholder="30" required />
-              </div>
-            </div>
-            <button type="submit" class="btn-green-solid">Guardar Consulta & Generar Receta</button>
-          </form>
+        <article class="service-card service-card--blue">
+          <span class="service-icon">🐾</span>
+          <strong>Nutrición y cuidado diario</strong>
+          <p>Te ayudamos a elegir el alimento, la higiene y los accesorios según la etapa y tamaño de tu mascota.</p>
+          <a class="service-link" href="#catalogo" data-filtrar="Alimento seco y húmedo para perros">Ver alimentos</a>
+        </article>
+      </div>
+
+      <div class="promo-band">
+        <div>
+          <strong>Compra fácil, recoge en la clínica</strong>
+          <p>Haz tu pedido en línea y coordina la entrega o el retiro en Monseñor Lezcano. Atención de lunes a sábado.</p>
+        </div>
+        <div class="promo-tags">
+          <span class="promo-tag">Pago al retirar</span>
+          <span class="promo-tag">Asesoría veterinaria</span>
+          <span class="promo-tag">Productos con registro</span>
         </div>
       </div>
     </section>
-{% endif %}
-
-    <!-- PRODUCTOS DESTACADOS: TUS FOTOS REALES -->
-    <h2 class="section-headline">Productos Destacados</h2>
-
-    <div class="products-grid">
-      
-      <!-- FOTO 1: TALCO ECTOMEVE -->
-      <div class="product-card">
-        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Talco Antipulgas Ectomeve 100g', 103.24, 'talco.jpg')">🛒</button>
-        <div class="product-img-box">
-          <img src="\static\img\talco.jpg" alt="Talco Antipulgas Ectomeve" />
-        </div>
-        <div class="product-body">
-          <div class="product-name">TALCO ANTIPULGAS ECTOMEVE 100G</div>
-          <div class="product-price">C$103.24 <span>+IVA</span></div>
-          <button class="btn-detail" onclick="alert('Talco antipulgas, carrapaticida y piojicida para perros y gatos.')">Ver detalle</button>
-        </div>
-      </div>
-
-      <!-- FOTO 2: PURINA CAT CHOW GATITOS -->
-      <div class="product-card">
-        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Cat Chow Gatitos Defense Plus', 168.00, 'purina.jpg')">🛒</button>
-        <div class="product-img-box">
-          <img src="\static\img\purina.jpg" alt="Purina Cat Chow Gatitos" />
-        </div>
-        <div class="product-body">
-          <div class="product-name">PURINA CAT CHOW GATITOS DEFENSE PLUS</div>
-          <div class="product-price">C$168.00 <span>+IVA</span></div>
-          <button class="btn-detail" onclick="alert('Alimento 100% completo y balanceado con prebiótico natural para gatitos.')">Ver detalle</button>
-        </div>
-      </div>
-
-      <!-- FOTO 3: PURINA DOG CHOW ADULTOS MIX POLLO Y CARNE -->
-      <div class="product-card">
-        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Purina Dog Chow Adultos Pollo y Carne 100g', 35.81, 'perro.jpg')">🛒</button>
-        <div class="product-img-box">
-          <img src="\static\img\perro.jpg" alt="Purina Dog Chow Adultos" />
-        </div>
-        <div class="product-body">
-          <div class="product-name">PURINA DOG CHOW ADULTOS POLLO Y CARNE 100G</div>
-          <div class="product-price">C$35.81 <span>+IVA</span></div>
-          <button class="btn-detail" onclick="alert('Pouch húmedo con mix de pollo y carne para perros adultos de todos los tamaños.')">Ver detalle</button>
-        </div>
-      </div>
-
-      <!-- FOTO 4: ALIMENTO PRO PET ADULTO 30 KG -->
-      <div class="product-card">
-        <button class="product-btn-add" title="Agregar al carrito" onclick="agregarAlCarrito('Alimento Pro Pet Perro Adulto 30 Kg', 1744.06, '100kg.jpg')">🛒</button>
-        <div class="product-img-box">
-          <img src="\static\img\100kg.jpg" alt="Alimento Pro Pet Perro Adulto 30 Kg" />
-        </div>
-        <div class="product-body">
-          <div class="product-name">ALIMENTO PRO-PET ADULTO 30 KG</div>
-          <div class="product-price">C$1744.06 <span>+IVA</span></div>
-          <button class="btn-detail" onclick="alert('Saco de 30 kg con fórmula mejorada libre de soya y alto valor proteico.')">Ver detalle</button>
-        </div>
-      </div>
-
-    </div>
-
   </main>
 
-  <!-- ================= DRAWER LATERAL DEL CARRITO ================= -->
-  <div class="cart-drawer-backdrop" id="cartBackdrop" onclick="cerrarCarrito()"></div>
-
-  <div class="cart-drawer" id="cartDrawer">
-    <div class="cart-drawer-header">
-      <h3>🛒 Mi Carrito</h3>
-      <button class="cart-btn-close" onclick="cerrarCarrito()">✕</button>
-    </div>
-
-    <div class="cart-items-container" id="cartItemsList">
-      <!-- Los productos se inyectan dinámicamente con JS -->
-    </div>
-
-    <div class="cart-drawer-footer" id="cartFooterArea">
-      <div class="cart-total-row">
-        <span>Subtotal:</span>
-        <strong id="cartSubtotalText">C$0.00</strong>
+  <!-- ============================== PIE ============================== -->
+  <footer class="shop-footer" id="contacto">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <strong>Veterinaria Pepe &amp; Pepito</strong>
+        <p>Monseñor Lezcano, Managua, Nicaragua.<br>Teléfono: (505) 2266-0000 · WhatsApp: 8888-1234<br>Lunes a sábado de 8:00 AM a 6:00 PM.</p>
       </div>
-      <div class="cart-total-row">
-        <span>IVA (15%):</span>
-        <strong id="cartIvaText">C$0.00</strong>
-      </div>
-      <div class="cart-total-row final-total">
-        <span>Total a Pagar:</span>
-        <strong id="cartTotalText">C$0.00</strong>
-      </div>
-
-      <button class="btn-confirm-purchase" onclick="abrirModalConfirmarCompra()">
-        ¿Desea confirmar su compra?
-      </button>
-
-      <button class="btn-clear-cart" onclick="vaciarCarrito()">
-        Vaciar Carrito
-      </button>
-    </div>
-  </div>
-
-  <!-- MODAL: ¿DESEA CONFIRMAR SU COMPRA? -->
-  <div id="modalConfirmarCompra" class="modal-backdrop hidden">
-    <div class="modal-white-card" style="max-width: 460px; text-align: left;">
-      <div style="text-align: center; margin-bottom: 0.8rem;">
-        <span style="font-size: 2.4rem;">🛍️</span>
-        <h3 style="color: var(--vet-green-dark); margin-top: 4px;">Confirmación de Pedido</h3>
-        <p style="font-size: 0.82rem; color: var(--text-muted);">Por favor, revise el resumen de su pedido antes de proceder.</p>
-      </div>
-
-      <div style="background: #f8fafc; border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.8rem; max-height: 180px; overflow-y: auto; margin-bottom: 1rem;" id="checkoutSummaryList">
-        <!-- Resumen de productos -->
-      </div>
-
-      <div style="border-top: 2px dashed #cbd5e1; padding-top: 0.6rem; margin-bottom: 1.2rem; display: flex; justify-content: space-between; font-weight: 800; font-size: 1.1rem; color: var(--vet-green-dark);">
-        <span>Total Final (con IVA):</span>
-        <span id="checkoutModalTotal">C$0.00</span>
-      </div>
-
-      <div class="modal-btn-row">
-        <button type="button" class="btn-cancel-modal" onclick="cerrarModalConfirmarCompra()">Seguir Comprando</button>
-        <button type="button" class="btn-green-solid" style="margin-top: 0;" onclick="finalizarPedidoConfirmado()">Sí, Confirmar Pedido</button>
+      <div class="footer-meta">
+        <span>Tienda en línea</span>
+        <p>Precios expresados en córdobas nicaragüenses (C$).<br>Los pedidos se confirman con nuestro equipo antes de la entrega.</p>
       </div>
     </div>
-  </div>
+  </footer>
 
-  {% if es_personal %}
-  <!-- MODAL CONFIRMACION GENERICO -->
-  <div id="modalConfirmacion" class="modal-backdrop hidden">
-    <div class="modal-white-card">
-      <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">⚠️</div>
-      <h3 id="confirmTitle">¿Eliminar registro?</h3>
-      <p id="confirmMessage">Esta acción removerá el expediente del sistema.</p>
-      <div class="modal-btn-row">
-        <button class="btn-cancel-modal" onclick="cerrarModalConfirmacion()">Cancelar</button>
-        <button class="btn-delete-modal" id="btnEjecutarConfirmacion">Eliminar Definitivamente</button>
+  <!-- ============================== CARRITO ============================== -->
+  <div class="cart-backdrop" id="cartBackdrop" onclick="cerrarCarrito()"></div>
+
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Carrito de compras" aria-hidden="true">
+    <header class="cart-head">
+      <div>
+        <h3>Mi carrito</h3>
+        <small id="cartResumen">0 productos</small>
       </div>
-    </div>
-  </div>
+      <button type="button" class="cart-close" onclick="cerrarCarrito()" aria-label="Cerrar carrito">✕</button>
+    </header>
 
-  <!-- MODAL EDITAR PACIENTE -->
-  <div id="modalEditarPaciente" class="modal-backdrop hidden">
-    <div class="modal-white-card" style="max-width: 520px; text-align: left;">
-      <h3 style="color: var(--vet-green-dark); margin-bottom: 1rem;">✏️ Modificar Paciente & Dueño</h3>
-      <form id="formModalEditarPaciente">
-        <input type="hidden" id="editMascotaId" />
-        <input type="hidden" id="editDuenoId" />
+    <div class="cart-items" id="cartItemsList"></div>
 
-        <div class="form-field-row">
-          <div class="form-field">
-            <label>Nombre Dueño</label>
-            <input type="text" id="editDuenoNombre" required />
-          </div>
-          <div class="form-field">
-            <label>Apellido Dueño</label>
-            <input type="text" id="editDuenoApellido" required />
-          </div>
+    <footer class="cart-foot">
+      <div class="cart-row"><span>Subtotal</span><strong id="cartSubtotalText">C$ 0.00</strong></div>
+      <div class="cart-row"><span>IVA (15%)</span><strong id="cartIvaText">C$ 0.00</strong></div>
+      <div class="cart-row total"><span>Total a pagar</span><strong id="cartTotalText">C$ 0.00</strong></div>
+      <button type="button" class="btn-checkout" onclick="abrirModalConfirmarCompra()">Confirmar compra</button>
+      <button type="button" class="btn-clear" onclick="vaciarCarrito()">Vaciar carrito</button>
+    </footer>
+  </aside>
+
+  <!-- ===================== MODAL: DETALLE DE PRODUCTO ===================== -->
+  <div class="shop-modal" id="modalProducto" role="dialog" aria-modal="true" aria-labelledby="tituloProducto" hidden>
+    <div class="shop-modal-card">
+      <header class="shop-modal-head">
+        <div>
+          <p class="eyebrow">Detalle del producto</p>
+          <h2 id="tituloProducto">Producto</h2>
         </div>
-        <div class="form-field-row">
-          <div class="form-field">
-            <label>Cédula</label>
-            <input type="text" id="editDuenoCedula" required />
-          </div>
-          <div class="form-field">
-            <label>Teléfono</label>
-            <input type="tel" id="editDuenoTel" required />
-          </div>
-        </div>
-
-        <hr style="border: none; border-top: 1px solid var(--border-gray); margin: 0.8rem 0;" />
-
-        <div class="form-field-row">
-          <div class="form-field">
-            <label>Nombre Mascota</label>
-            <input type="text" id="editMascotaNombre" required />
-          </div>
-          <div class="form-field">
-            <label>Especie</label>
-            <select id="editMascotaEspecie">
-              <option value="Canino">Canino</option>
-              <option value="Felino">Felino</option>
-              <option value="Otro">Otro</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-field">
-          <label>Alergias / Condiciones</label>
-          <input type="text" id="editMascotaAlergias" />
-        </div>
-
-        <div class="modal-btn-row" style="margin-top: 1.2rem;">
-          <button type="submit" class="btn-green-solid" style="margin-top: 0;">Guardar Cambios</button>
-          <button type="button" class="btn-cancel-modal" onclick="cerrarModalEditarPaciente()">Cancelar</button>
-        </div>
-      </form>
+        <button type="button" class="modal-close" onclick="cerrarDetalleProducto()" aria-label="Cerrar detalle">✕</button>
+      </header>
+      <div class="shop-modal-body" id="detalleProducto"></div>
     </div>
   </div>
 
-  <!-- MODAL RECETA IMPRIMIBLE -->
-  <div id="modalReceta" class="modal-backdrop hidden">
-    <div class="receta-paper-clean">
-      <div class="receta-hdr">
-        <h2>VETERINARIA PEPE & PEPITO</h2>
-        <p style="font-size: 0.78rem; color: #64748b;">Monseñor Lezcano, Managua • Tel: 2266-0000</p>
-        <strong style="color: var(--vet-green-dark); font-size: 0.85rem; display: block; margin-top: 6px;">
-          RECETA MÉDICA VETERINARIA OFICIAL
-        </strong>
-      </div>
-
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.82rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 6px;">
-        <div><strong>Paciente:</strong> <span id="recetaModalMascota">—</span></div>
-        <div><strong>Propietario:</strong> <span id="recetaModalDueno">—</span></div>
-        <div><strong>Fecha:</strong> <span id="recetaModalFecha">—</span></div>
-        <div><strong>Peso:</strong> <span id="recetaModalPeso">—</span></div>
-      </div>
-
-      <div style="border-bottom: 1px solid #e2e8f0; padding-bottom: 0.8rem; margin-bottom: 1rem;">
-        <h4 id="recetaModalFarmaco" style="color: var(--vet-green-dark); font-size: 1rem;">—</h4>
-        <p style="font-size: 0.85rem; margin-top: 4px;"><strong>Indicación:</strong> <span id="recetaModalDosis">—</span></p>
-        <p style="font-size: 0.85rem;"><strong>Duración del tratamiento:</strong> <span id="recetaModalDuracion">—</span> días</p>
-      </div>
-
-      <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 0.8rem; margin-bottom: 1.2rem;">
-        <small style="color: #64748b;">Firma del Médico Veterinario Responsable</small>
-      </div>
-
-      <div class="modal-btn-row">
-        <button class="btn-green-solid" style="margin-top: 0;" onclick="window.print()">🖨️ Imprimir Receta</button>
-        <button class="btn-cancel-modal" onclick="cerrarModalReceta()">Cerrar</button>
+  <!-- ===================== MODAL: CONFIRMAR COMPRA ===================== -->
+  <div class="shop-modal" id="modalConfirmarCompra" role="dialog" aria-modal="true" aria-labelledby="tituloCompra" hidden>
+    <div class="shop-modal-card">
+      <header class="shop-modal-head">
+        <div>
+          <p class="eyebrow">Confirmación de pedido</p>
+          <h2 id="tituloCompra">Revisa tu compra</h2>
+          <p>Verifica los productos antes de confirmar. Te contactaremos para coordinar la entrega.</p>
+        </div>
+        <button type="button" class="modal-close" onclick="cerrarModalConfirmarCompra()" aria-label="Cerrar confirmación">✕</button>
+      </header>
+      <div class="shop-modal-body">
+        <div class="checkout-list" id="checkoutSummaryList"></div>
+        <div class="checkout-total"><span>Total final (con IVA)</span><span id="checkoutModalTotal">C$ 0.00</span></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-modal-ghost" onclick="cerrarModalConfirmarCompra()">Seguir comprando</button>
+          <button type="button" class="btn-modal-main" onclick="finalizarPedidoConfirmado()">Sí, confirmar pedido</button>
+        </div>
       </div>
     </div>
   </div>
-{% endif %}
 
-  <div id="server-data" 
-      data-clientes="{{ clientes | tojson | forceescape }}" 
-      data-mascotas="{{ mascotas | tojson | forceescape }}" 
-      style="display: none;">
-  </div>
+  <div class="shop-toast" id="avisoTienda" role="status" aria-live="polite" hidden></div>
 
+  <script id="datos-catalogo" type="application/json">{{ productos|tojson }}</script>
   <script src="{{ url_for('static', filename='js/anime.iife.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>

@@ -8,7 +8,9 @@ import pyodbc
 
 from dashboard_data import (
     actualizar_estado_cita,
+    cargar_catalogo,
     cargar_dashboard,
+    crear_producto,
     crear_proveedor,
     obtener_factura,
     panel_vacio,
@@ -17,6 +19,79 @@ from dashboard_data import (
 
 app = Flask(__name__)
 app.secret_key = 'pepe_pepito_secreto'
+app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024
+
+CARPETA_PRODUCTOS = os.path.join(app.static_folder, 'img', 'productos')
+EXTENSIONES_IMAGEN = {'png', 'jpg', 'jpeg', 'webp'}
+
+ARTE_CATEGORIAS = {
+    'alimento seco y humedo para perros': 'alimento-perros.svg',
+    'alimento y arena para gatos': 'alimento-gatos.svg',
+    'antiparasitarios': 'antiparasitarios.svg',
+    'higiene y cuidado': 'higiene.svg',
+    'accesorios para perros': 'accesorios-perros.svg',
+    'accesorios para gatos': 'accesorios-gatos.svg',
+    'farmacia y primeros auxilios': 'farmacia.svg',
+    'vacunas y pruebas preventivas': 'vacunas.svg',
+    'suplementos nutricionales': 'suplementos.svg',
+    'insumos clinicos': 'insumos.svg',
+}
+
+
+def _clave_categoria(nombre):
+    texto = str(nombre or '').strip().lower()
+    for acento, plano in (
+        ('á', 'a'), ('é', 'e'), ('í', 'i'), ('ó', 'o'), ('ú', 'u'),
+        ('ü', 'u'), ('ñ', 'n'),
+    ):
+        texto = texto.replace(acento, plano)
+    return ' '.join(texto.split())
+
+
+@app.template_global()
+def arte_categoria(nombre):
+    """Ilustración local que se usa cuando un producto no tiene foto propia."""
+    archivo = ARTE_CATEGORIAS.get(_clave_categoria(nombre), 'producto.svg')
+    return url_for('static', filename=f'img/categorias/{archivo}')
+
+
+@app.template_global()
+def imagen_producto(id_producto):
+    """Devuelve la URL de la foto subida para un producto, si existe."""
+    for extension in ('jpg', 'jpeg', 'png', 'webp'):
+        nombre = f'producto_{int(id_producto)}.{extension}'
+        if os.path.isfile(os.path.join(CARPETA_PRODUCTOS, nombre)):
+            return url_for('static', filename=f'img/productos/{nombre}')
+    return None
+
+
+def validar_imagen(archivo):
+    """Valida la extensión de una imagen subida y devuelve su extensión."""
+    if archivo is None or not archivo.filename:
+        return None
+    extension = os.path.splitext(archivo.filename)[1].lower().lstrip('.')
+    if extension not in EXTENSIONES_IMAGEN:
+        raise ValueError('La imagen debe ser JPG, PNG o WEBP.')
+    return extension
+
+
+def guardar_imagen_producto(id_producto, archivo):
+    """Guarda la foto con el id del producto y reemplaza la anterior."""
+    extension = validar_imagen(archivo)
+    if not extension:
+        return None
+
+    os.makedirs(CARPETA_PRODUCTOS, exist_ok=True)
+    for existente in os.listdir(CARPETA_PRODUCTOS):
+        if existente.lower().startswith(f'producto_{int(id_producto)}.'):
+            try:
+                os.remove(os.path.join(CARPETA_PRODUCTOS, existente))
+            except OSError:
+                pass
+
+    nombre = f'producto_{int(id_producto)}.{extension}'
+    archivo.save(os.path.join(CARPETA_PRODUCTOS, nombre))
+    return nombre
 
 
 # ---------------------------------------------------------------------------
@@ -681,11 +756,39 @@ def logout():
 
 @app.route('/')
 def index():
+    """Tienda: solo catálogo y compra. El personal entra al panel para gestionar."""
     if session.get('user_tipo') == 'cliente':
-        # El cliente entra a la tienda, pero no recibe datos del personal.
-        return render_template('index.html', clientes=[], mascotas=[], es_personal=False)
+        pass
+    elif not es_personal():
+        return redirect(url_for('login'))
 
+    productos, categorias = [], []
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        catalogo = cargar_catalogo(cursor)
+        productos = catalogo['productos']
+        categorias = catalogo['categorias']
+        for producto in productos:
+            producto['imagen'] = imagen_producto(producto['id'])
+            producto['arte'] = arte_categoria(producto['categoria'])
+    except pyodbc.Error:
+        flash('No se pudo cargar el catálogo. Revisa la conexión con la base de datos.', 'error')
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return render_template('index.html', productos=productos, categorias=categorias,
+                           es_personal=es_personal())
+
+
+@app.route('/portal-clinico')
+def portal_clinico():
+    """Expedientes y registro de pacientes, separado de la tienda."""
     if not es_personal():
+        if session.get('user_tipo') == 'cliente':
+            return redirect(url_for('index'))
         return redirect(url_for('login'))
 
     clientes, mascotas = [], []
@@ -694,12 +797,10 @@ def index():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # 1. Clientes reales de la BD (solo para el portal clínico del personal)
         cursor.execute("SELECT IdCliente, Nombre, Apellido, Cedula, Telefono FROM CLIENTE")
         clientes = [{'id': c.IdCliente, 'nombre': c.Nombre, 'apellido': c.Apellido,
                      'cedula': c.Cedula, 'tel': c.Telefono} for c in cursor.fetchall()]
 
-        # 2. Mascotas reales de la BD
         col_alergias = nombre_columna_alergias(cursor)
         cursor.execute(f"""
             SELECT M.IdMascota, M.Nombre, M.Especie, M.Raza, M.Sexo, M.IdCliente,
@@ -718,8 +819,8 @@ def index():
         if conn is not None:
             conn.close()
 
-    return render_template('index.html', clientes=clientes, mascotas=mascotas,
-                           es_personal=True)
+    return render_template('portal_clinico.html', clientes=clientes, mascotas=mascotas,
+                           usuario=datos_usuario())
 
 
 # ---------------------------------------------------------------------------
@@ -792,6 +893,94 @@ def dashboard_proveedor():
             conn.close()
 
     return redirect(url_for('dashboard', _anchor='proveedores'))
+
+
+@app.route('/dashboard/producto', methods=['POST'])
+def dashboard_producto():
+    if not es_personal():
+        return redirect(url_for('login'))
+
+    datos = {
+        'nombre': limpiar(request.form.get('nombre')),
+        'descripcion': limpiar(request.form.get('descripcion')),
+        'id_categoria': request.form.get('id_categoria'),
+        'unidad': limpiar(request.form.get('unidad')).upper() or 'UNIDAD',
+        'precio': request.form.get('precio'),
+        'stock_minimo': request.form.get('stock_minimo'),
+        'controla_vencimiento': request.form.get('controla_vencimiento') in ('1', 'on', 'true'),
+    }
+
+    archivo = request.files.get('imagen')
+    try:
+        validar_imagen(archivo)
+    except ValueError as exc:
+        flash(str(exc), 'error')
+        return redirect(url_for('dashboard', _anchor='productos'))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        resultado = crear_producto(cursor, datos)
+        conn.commit()
+
+        if archivo is not None and archivo.filename:
+            try:
+                guardar_imagen_producto(resultado['producto_id'], archivo)
+            except (OSError, ValueError):
+                flash('El producto se guardó, pero la imagen no se pudo almacenar.', 'error')
+
+        flash(f"Producto “{resultado['nombre']}” agregado al catálogo.", 'success')
+    except ValueError as exc:
+        if conn is not None:
+            conn.rollback()
+        flash(str(exc), 'error')
+    except pyodbc.IntegrityError:
+        if conn is not None:
+            conn.rollback()
+        flash('No se pudo crear el producto: revisa los datos.', 'error')
+    except pyodbc.Error:
+        if conn is not None:
+            conn.rollback()
+        flash('No se pudo crear el producto. Revisa la conexión con la base de datos.', 'error')
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return redirect(url_for('dashboard', _anchor='productos'))
+
+
+@app.route('/dashboard/producto/<int:id_producto>/imagen', methods=['POST'])
+def dashboard_producto_imagen(id_producto):
+    if not es_personal():
+        return redirect(url_for('login'))
+
+    archivo = request.files.get('imagen')
+    if archivo is None or not archivo.filename:
+        flash('Selecciona una imagen para el producto.', 'error')
+        return redirect(url_for('dashboard', _anchor='productos'))
+
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM PRODUCTO WHERE IdProducto = ?", (id_producto,))
+        if not cursor.fetchone()[0]:
+            raise ValueError('El producto seleccionado ya no existe.')
+
+        guardar_imagen_producto(id_producto, archivo)
+        flash('Imagen del producto actualizada.', 'success')
+    except ValueError as exc:
+        flash(str(exc), 'error')
+    except OSError:
+        flash('No se pudo guardar la imagen del producto.', 'error')
+    except pyodbc.Error:
+        flash('No se pudo actualizar la imagen. Revisa la conexión con la base de datos.', 'error')
+    finally:
+        if conn is not None:
+            conn.close()
+
+    return redirect(url_for('dashboard', _anchor='productos'))
 
 
 @app.route('/dashboard/movimiento', methods=['POST'])
@@ -988,6 +1177,13 @@ def crear_mascota():
     finally:
         if conn is not None:
             conn.close()
+
+
+@app.errorhandler(413)
+def archivo_demasiado_grande(error):
+    flash('La imagen es demasiado grande. El límite es de 6 MB.', 'error')
+    return redirect(url_for('dashboard', _anchor='productos'))
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

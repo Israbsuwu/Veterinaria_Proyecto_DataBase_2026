@@ -68,6 +68,12 @@
           <span class="nav-count">{{ kpis.productos }}</span>
         </button>
 
+        <button type="button" class="nav-item {% if vista_inicial == 'productos' %}active{% endif %}" data-view="productos">
+          <span class="nav-ico"><svg class="ico"><use href="#i-store"/></svg></span>
+          <span class="nav-text"><strong>Productos</strong><small>Tienda e imágenes</small></span>
+          <span class="nav-count">{{ kpis.productos }}</span>
+        </button>
+
         <button type="button" class="nav-item {% if vista_inicial == 'vencimientos' %}active{% endif %}" data-view="vencimientos">
           <span class="nav-ico"><svg class="ico"><use href="#i-hourglass"/></svg></span>
           <span class="nav-text"><strong>Vencimientos</strong><small>Lotes y caducidad</small></span>
@@ -518,6 +524,75 @@
               </table>
             </div>
             <p class="empty-state" id="vacioInventario" hidden>No hay productos que coincidan con la búsqueda.</p>
+          </section>
+        </section>
+
+        <!-- ============================================================
+             VISTA: PRODUCTOS (TIENDA)
+             ============================================================ -->
+        <section class="view {% if vista_inicial == 'productos' %}active{% endif %}" id="view-productos"
+                 data-view="productos" data-title="Productos">
+          <div class="view-head">
+            <div>
+              <p class="eyebrow">Folio 03 · Catálogo de la tienda</p>
+              <h1>Productos</h1>
+              <p>Administra lo que se muestra en la tienda: características de la base, precio en córdobas e imagen de referencia. Los productos nuevos aparecen de inmediato en el catálogo.</p>
+            </div>
+            <div class="view-actions">
+              <button type="button" class="btn-primary" data-open="modalProducto">
+                <svg class="ico"><use href="#i-plus"/></svg> Agregar producto
+              </button>
+            </div>
+          </div>
+
+          <div class="stat-strip">
+            <span class="stat"><strong>{{ kpis.productos }}</strong><span>productos</span></span>
+            <span class="stat"><strong>{{ kpis.categorias }}</strong><span>categorías</span></span>
+            <span class="stat stat--warn"><strong>{{ kpis.stock_bajo }}</strong><span>stock bajo</span></span>
+            <span class="stat stat--danger"><strong>{{ kpis.agotados }}</strong><span>agotados</span></span>
+          </div>
+
+          <section class="panel">
+            <div class="table-toolbar">
+              <label class="search-box">
+                <svg class="ico"><use href="#i-search"/></svg>
+                <input type="search" id="buscarProductos" placeholder="Buscar producto, categoría o descripción…" autocomplete="off">
+              </label>
+              <span class="result-count" id="contadorProductosDash">{{ productos|length }} productos</span>
+            </div>
+
+            <div class="product-admin-grid" id="grillaProductos">
+              {% for producto in productos %}
+                {% set foto = imagen_producto(producto.id) %}
+                <article class="product-admin-card"
+                         data-buscar="{{ (producto.nombre ~ ' ' ~ producto.categoria ~ ' ' ~ (producto.descripcion or '') ~ ' ' ~ producto.unidad)|lower }}">
+                  <div class="product-admin-img">
+                    <img src="{{ foto or arte_categoria(producto.categoria) }}"
+                         alt="{{ producto.nombre }}" loading="lazy">
+                    {% if foto %}<span class="product-admin-flag">Foto propia</span>{% endif %}
+                  </div>
+                  <div class="product-admin-body">
+                    <span class="product-admin-cat">{{ producto.categoria }}</span>
+                    <h3>{{ producto.nombre }}</h3>
+                    <p class="product-admin-desc">{{ producto.descripcion or 'Sin descripción registrada en la base.' }}</p>
+                    <div class="product-admin-meta">
+                      <strong>{{ producto.precio|moneda }}</strong>
+                      <span class="pill pill--{{ producto.clase }}">{{ producto.stock }} en stock</span>
+                    </div>
+                    <div class="product-admin-foot">
+                      <span class="mono">#{{ '%03d'|format(producto.id) }} · {{ producto.unidad }}</span>
+                      <button type="button" class="mini-btn"
+                              data-imagen="{{ producto.id }}"
+                              data-nombre="{{ producto.nombre }}"
+                              data-url="{{ url_for('dashboard_producto_imagen', id_producto=producto.id) }}">
+                        <svg class="ico"><use href="#i-eye"/></svg> Imagen
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+            <p class="empty-state" id="vacioProductos" hidden>No hay productos que coincidan con la búsqueda.</p>
           </section>
         </section>
 
@@ -984,6 +1059,120 @@
         </section>
 
       </main>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: NUEVO PRODUCTO ===================== -->
+  <div class="modal-layer" id="modalProducto" role="dialog" aria-modal="true" aria-labelledby="tituloProductoModal" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Catálogo de la tienda</p>
+          <h2 id="tituloProductoModal">Agregar producto</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="{{ url_for('dashboard_producto') }}" enctype="multipart/form-data" class="modal-form">
+        <label class="field">
+          <span>Nombre del producto <b>*</b></span>
+          <input type="text" name="nombre" maxlength="150" minlength="3" placeholder="Ej. Alimento premium para perro adulto 15 kg" required>
+        </label>
+
+        <label class="field">
+          <span>Descripción</span>
+          <textarea name="descripcion" rows="2" maxlength="255" placeholder="Características, presentación o recomendaciones de uso…"></textarea>
+        </label>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Categoría <b>*</b></span>
+            <select name="id_categoria" required>
+              {% for categoria in categorias_stock %}
+                <option value="{{ categoria.id }}">{{ categoria.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="field">
+            <span>Unidad de medida <b>*</b></span>
+            <select name="unidad" required>
+              <option value="UNIDAD">Unidad</option>
+              <option value="BOLSA">Bolsa</option>
+              <option value="CAJA">Caja</option>
+              <option value="FRASCO">Frasco</option>
+              <option value="SOBRE">Sobre</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-row">
+          <label class="field">
+            <span>Precio de venta (C$) <b>*</b></span>
+            <input type="number" name="precio" min="0.01" step="0.01" placeholder="375.00" required>
+          </label>
+          <label class="field">
+            <span>Stock mínimo <b>*</b></span>
+            <input type="number" name="stock_minimo" min="0" step="1" value="5" required>
+          </label>
+        </div>
+
+        <label class="field field-check">
+          <input type="checkbox" name="controla_vencimiento" value="1" checked>
+          <span>Este producto controla fecha de vencimiento</span>
+        </label>
+
+        <label class="field">
+          <span>Imagen de referencia</span>
+          <input type="file" name="imagen" id="imagenNuevoProducto" accept="image/png,image/jpeg,image/webp">
+        </label>
+        <div class="image-preview" id="previewNuevoProducto" hidden>
+          <img alt="Vista previa de la imagen del producto">
+          <small>Vista previa · la foto se guarda con el id del producto</small>
+        </div>
+
+        <p class="form-note">El precio se guarda en córdobas. En la tienda el IVA (15%) se muestra por separado al confirmar la compra. La imagen es opcional; si no subes una, se usa la ilustración de la categoría.</p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar producto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== MODAL: IMAGEN DE PRODUCTO ===================== -->
+  <div class="modal-layer" id="modalImagenProducto" role="dialog" aria-modal="true" aria-labelledby="tituloImagenProducto" aria-hidden="true">
+    <div class="modal-card">
+      <header class="modal-head">
+        <div>
+          <p class="panel-kicker">Foto de referencia</p>
+          <h2 id="tituloImagenProducto">Imagen del producto</h2>
+        </div>
+        <button type="button" class="icon-btn" data-close aria-label="Cerrar">
+          <svg class="ico"><use href="#i-close"/></svg>
+        </button>
+      </header>
+
+      <form method="POST" action="" enctype="multipart/form-data" class="modal-form" id="formImagenProducto">
+        <p class="form-note">Sube una foto JPG, PNG o WEBP de hasta 6 MB. La imagen anterior del producto se reemplaza automáticamente.</p>
+
+        <label class="field">
+          <span>Nueva imagen <b>*</b></span>
+          <input type="file" name="imagen" id="imagenProductoExistente" accept="image/png,image/jpeg,image/webp" required>
+        </label>
+
+        <div class="image-preview" id="previewImagenProducto" hidden>
+          <img alt="Vista previa de la nueva imagen">
+          <small>Vista previa antes de guardar</small>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-close>Cancelar</button>
+          <button type="submit" class="btn-primary">Actualizar imagen</button>
+        </div>
+      </form>
     </div>
   </div>
 

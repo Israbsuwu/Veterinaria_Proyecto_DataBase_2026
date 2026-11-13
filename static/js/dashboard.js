@@ -11,7 +11,7 @@
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hasAnime = typeof window.anime !== 'undefined';
 
-  const VISTAS = ['resumen', 'inventario', 'vencimientos', 'citas', 'proveedores', 'facturas', 'clientes', 'equipo'];
+  const VISTAS = ['resumen', 'inventario', 'productos', 'vencimientos', 'citas', 'proveedores', 'facturas', 'clientes', 'equipo'];
 
   /* ------------------------------------------------------------------------
      Utilidades
@@ -720,6 +720,77 @@
       }
     });
   });
+
+  /* ------------------------------------------------------------------------
+     Productos del catálogo
+     ------------------------------------------------------------------------ */
+
+  const grillaProductos = $('#grillaProductos');
+  const buscarProductos = $('#buscarProductos');
+  if (grillaProductos && buscarProductos) {
+    const tarjetas = $$('.product-admin-card', grillaProductos);
+    const contador = $('#contadorProductosDash');
+    const vacio = $('#vacioProductos');
+
+    function filtrarProductos() {
+      const texto = sinAcentos(buscarProductos.value.trim());
+      let visibles = 0;
+      tarjetas.forEach((tarjeta) => {
+        const coincide = !texto || sinAcentos(tarjeta.dataset.buscar).indexOf(texto) !== -1;
+        tarjeta.hidden = !coincide;
+        if (coincide) visibles += 1;
+      });
+      if (contador) contador.textContent = visibles + (visibles === 1 ? ' producto' : ' productos');
+      if (vacio) vacio.hidden = visibles !== 0;
+    }
+
+    buscarProductos.addEventListener('input', filtrarProductos);
+  }
+
+  $$('[data-imagen]').forEach((boton) => {
+    boton.addEventListener('click', () => {
+      const form = $('#formImagenProducto');
+      const titulo = $('#tituloImagenProducto');
+      const input = $('#imagenProductoExistente');
+      const preview = $('#previewImagenProducto');
+
+      if (form) form.action = boton.dataset.url || '';
+      if (titulo) titulo.textContent = boton.dataset.nombre || 'Imagen del producto';
+      if (input) input.value = '';
+      if (preview) {
+        preview.hidden = true;
+        const img = $('img', preview);
+        if (img) img.removeAttribute('src');
+      }
+
+      abrirModal('modalImagenProducto');
+    });
+  });
+
+  function conectarPreview(inputId, previewId) {
+    const input = $(inputId);
+    const preview = $(previewId);
+    if (!input || !preview) return;
+
+    input.addEventListener('change', () => {
+      const archivo = input.files && input.files[0];
+      const img = $('img', preview);
+      if (!archivo || !img) {
+        preview.hidden = true;
+        return;
+      }
+
+      const lector = new FileReader();
+      lector.onload = (evento) => {
+        img.src = evento.target.result;
+        preview.hidden = false;
+      };
+      lector.readAsDataURL(archivo);
+    });
+  }
+
+  conectarPreview('#imagenNuevoProducto', '#previewNuevoProducto');
+  conectarPreview('#imagenProductoExistente', '#previewImagenProducto');
 
   /* ------------------------------------------------------------------------
      Avisos y teclado

@@ -1,31 +1,17 @@
 /* ==========================================================================
-   Tienda y portal clínico — Pepe & Pepito
-   El cliente ve la tienda; el personal ve además el portal clínico.
+   Tienda — Veterinaria Pepe & Pepito
+   Catálogo, filtros, detalle de producto y carrito. Solo compra.
    ========================================================================== */
 
 (function () {
   'use strict';
 
   /* ------------------------------------------------------------------------
-     Datos inyectados por Flask
+     Utilidades
      ------------------------------------------------------------------------ */
 
-  const serverData = document.getElementById('server-data');
-  let propietarios = [];
-  let mascotas = [];
-
-  if (serverData) {
-    try {
-      propietarios = JSON.parse(serverData.dataset.clientes || '[]');
-    } catch (error) {
-      propietarios = [];
-    }
-    try {
-      mascotas = JSON.parse(serverData.dataset.mascotas || '[]');
-    } catch (error) {
-      mascotas = [];
-    }
-  }
+  const $ = (selector, scope) => (scope || document).querySelector(selector);
+  const $$ = (selector, scope) => Array.from((scope || document).querySelectorAll(selector));
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const hasAnime = typeof window.anime !== 'undefined';
@@ -48,12 +34,160 @@
       .replace(/'/g, '&#39;');
   }
 
+  function sinAcentos(texto) {
+    return String(texto || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  }
+
   function dinero(valor) {
     const numero = Number(valor) || 0;
-    return 'C$' + numero.toLocaleString('en-US', {
+    return 'C$ ' + numero.toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+  }
+
+  /* ------------------------------------------------------------------------
+     Catálogo entregado por Flask
+     ------------------------------------------------------------------------ */
+
+  let productos = [];
+
+  const datosCatalogo = $('#datos-catalogo');
+  if (datosCatalogo) {
+    try {
+      productos = JSON.parse(datosCatalogo.textContent || '[]');
+    } catch (error) {
+      productos = [];
+    }
+  }
+
+  const porId = new Map();
+  productos.forEach((producto) => porId.set(String(producto.id), producto));
+
+  const estado = {
+    categoria: 'todas',
+    texto: '',
+    orden: 'relevancia',
+    visibles: 12,
+  };
+
+  const TAMANO_PAGINA = 12;
+
+  function estadoStock(producto) {
+    const stock = Number(producto.stock) || 0;
+    const minimo = Number(producto.minimo) || 0;
+    if (stock <= 0) return { clase: 'agotado', texto: 'Agotado' };
+    if (stock <= minimo) return { clase: 'low', texto: 'Stock bajo' };
+    return { clase: 'ok', texto: 'Disponible' };
+  }
+
+  function imagenDe(producto) {
+    return producto.imagen || producto.arte || '';
+  }
+
+  function coincide(producto) {
+    if (estado.categoria !== 'todas' && producto.categoria !== estado.categoria) return false;
+    if (!estado.texto) return true;
+    const texto = sinAcentos([
+      producto.nombre,
+      producto.categoria,
+      producto.descripcion,
+      producto.unidad,
+    ].join(' '));
+    return texto.indexOf(estado.texto) !== -1;
+  }
+
+  function ordenar(lista) {
+    const copia = lista.slice();
+    switch (estado.orden) {
+      case 'precio-asc':
+        copia.sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0));
+        break;
+      case 'precio-desc':
+        copia.sort((a, b) => (Number(b.precio) || 0) - (Number(a.precio) || 0));
+        break;
+      case 'nombre':
+        copia.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+        break;
+      case 'stock':
+        copia.sort((a, b) => (Number(b.stock) || 0) - (Number(a.stock) || 0));
+        break;
+      default:
+        copia.sort((a, b) => String(a.nombre).localeCompare(String(b.nombre), 'es'));
+    }
+    return copia;
+  }
+
+  function tarjetaProducto(producto) {
+    const stock = estadoStock(producto);
+    const agotado = stock.clase === 'agotado';
+    const imagen = imagenDe(producto);
+    const descripcion = producto.descripcion && producto.descripcion.trim()
+      ? producto.descripcion
+      : 'Producto veterinario seleccionado por nuestro equipo.';
+
+    return `
+      <article class="shop-card" data-id="${producto.id}">
+        <button type="button" class="card-add" data-agregar="${producto.id}" ${agotado ? 'disabled' : ''}
+                title="${agotado ? 'Producto agotado' : 'Agregar al carrito'}"
+                aria-label="${agotado ? 'Producto agotado' : 'Agregar ' + escapar(producto.nombre) + ' al carrito'}">+</button>
+        <div class="shop-card-img">
+          <img src="${escapar(imagen)}" alt="${escapar(producto.nombre)}" loading="lazy">
+          <span class="stock-badge ${stock.clase}">${stock.texto}</span>
+        </div>
+        <div class="shop-card-body">
+          <span class="card-cat">${escapar(producto.categoria)}</span>
+          <h3>${escapar(producto.nombre)}</h3>
+          <p class="card-desc">${escapar(descripcion)}</p>
+          <div class="card-foot">
+            <span class="card-price">${dinero(producto.precio)}<br><small>más IVA</small></span>
+            <button type="button" class="btn-detail" data-detalle="${producto.id}">Ver detalle</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function renderCatalogo() {
+    const grilla = $('#productGrid');
+    if (!grilla) return;
+
+    const filtrados = ordenar(productos.filter(coincide));
+    const recorte = filtrados.slice(0, estado.visibles);
+
+    grilla.innerHTML = recorte.map(tarjetaProducto).join('');
+
+    const contador = $('#contadorProductos');
+    if (contador) {
+      contador.textContent = filtrados.length + (filtrados.length === 1 ? ' producto' : ' productos');
+    }
+
+    const vacio = $('#vacioCatalogo');
+    if (vacio) vacio.hidden = filtrados.length !== 0;
+
+    const verMas = $('#btnVerMas');
+    if (verMas) verMas.hidden = filtrados.length <= estado.visibles;
+
+    animar($$('.shop-card', grilla), {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      duration: 380,
+      delay: hasAnime ? window.anime.stagger(28) : 0,
+      ease: 'outCubic',
+    });
+  }
+
+  function aplicarFiltroCategoria(categoria) {
+    estado.categoria = categoria || 'todas';
+    estado.visibles = TAMANO_PAGINA;
+
+    $$('.cat-chip').forEach((chip) => {
+      chip.classList.toggle('active', chip.dataset.categoria === estado.categoria);
+    });
+
+    renderCatalogo();
   }
 
   /* ------------------------------------------------------------------------
@@ -63,299 +197,28 @@
   let temporizadorAviso = null;
 
   function avisar(mensaje, tipo) {
-    let aviso = document.getElementById('avisoTienda');
-    if (!aviso) {
-      aviso = document.createElement('div');
-      aviso.id = 'avisoTienda';
-      aviso.setAttribute('role', 'status');
-      aviso.setAttribute('aria-live', 'polite');
-      aviso.style.cssText = [
-        'position:fixed', 'right:1rem', 'bottom:1rem', 'z-index:220',
-        'max-width:min(360px, calc(100vw - 2rem))',
-        'padding:0.75rem 0.95rem', 'border-radius:9px',
-        'font-family:Open Sans, sans-serif', 'font-size:0.82rem',
-        'line-height:1.45', 'box-shadow:0 18px 40px -18px rgba(20,32,8,0.55)',
-        'border:1px solid #c7dba6', 'background:#f1f7e6', 'color:#3f641f',
-        'transition:opacity 0.2s ease, transform 0.2s ease',
-      ].join(';');
-      document.body.appendChild(aviso);
-    }
+    const aviso = $('#avisoTienda');
+    if (!aviso) return;
 
     aviso.textContent = mensaje;
-    if (tipo === 'error') {
-      aviso.style.borderColor = '#e8bdb1';
-      aviso.style.background = '#fbeae5';
-      aviso.style.color = '#8c3525';
-    } else {
-      aviso.style.borderColor = '#c7dba6';
-      aviso.style.background = '#f1f7e6';
-      aviso.style.color = '#3f641f';
-    }
+    aviso.classList.toggle('is-error', tipo === 'error');
+    aviso.hidden = false;
 
-    aviso.style.opacity = '1';
-    aviso.style.transform = 'translateY(0)';
-
-    if (hasAnime && !reduceMotion) {
-      window.anime.animate(aviso, {
-        opacity: [0, 1],
-        translateY: [12, 0],
-        duration: 240,
-        ease: 'outCubic',
-      });
-    }
+    animar(aviso, {
+      opacity: [0, 1],
+      translateY: [12, 0],
+      duration: 240,
+      ease: 'outCubic',
+    });
 
     window.clearTimeout(temporizadorAviso);
     temporizadorAviso = window.setTimeout(() => {
-      aviso.style.opacity = '0';
-      aviso.style.transform = 'translateY(10px)';
-    }, 3600);
+      aviso.hidden = true;
+    }, 3800);
   }
 
   /* ------------------------------------------------------------------------
-     Portal clínico (solo personal)
-     ------------------------------------------------------------------------ */
-
-  window.togglePortalClinico = function () {
-    const portal = document.getElementById('portalClinicoWrap');
-    if (!portal) {
-      avisar('El portal clínico está disponible para el personal de la veterinaria.', 'error');
-      return;
-    }
-
-    const oculto = portal.style.display === 'none' || portal.style.display === '';
-    portal.style.display = oculto ? 'block' : 'none';
-
-    if (oculto) {
-      portal.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-      if (hasAnime && !reduceMotion) {
-        const bloques = portal.querySelectorAll('.portal-tab-btn, .portal-view-panel.active, form');
-        if (bloques.length) {
-          window.anime.animate(bloques, {
-            opacity: [0, 1],
-            translateY: [12, 0],
-            duration: 380,
-            delay: window.anime.stagger(35),
-            ease: 'outCubic',
-          });
-        }
-      }
-    }
-  };
-
-  window.cambiarPortalTab = function (panelId, btnElement) {
-    document.querySelectorAll('.portal-tab-btn').forEach((btn) => btn.classList.remove('active'));
-    if (btnElement) btnElement.classList.add('active');
-
-    document.querySelectorAll('.portal-view-panel').forEach((panel) => panel.classList.remove('active'));
-    const panel = document.getElementById('pview-' + panelId);
-    if (panel) {
-      panel.classList.add('active');
-      animar(panel, {
-        opacity: [0, 1],
-        translateY: [10, 0],
-        duration: 320,
-        ease: 'outCubic',
-      });
-    }
-  };
-
-  window.abrirPortalEnTab = function (tabName) {
-    const portal = document.getElementById('portalClinicoWrap');
-    if (!portal) {
-      const productos = document.querySelector('.products-grid');
-      if (productos) productos.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-      avisar('El portal clínico está disponible para el personal de la veterinaria.', 'error');
-      return;
-    }
-
-    portal.style.display = 'block';
-    portal.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
-
-    const tabBtns = document.querySelectorAll('.portal-tab-btn');
-    if (tabName === 'pacientes') {
-      if (tabBtns[0]) cambiarPortalTab('registro', tabBtns[0]);
-    } else if (tabBtns[1]) {
-      cambiarPortalTab('expediente', tabBtns[1]);
-    }
-  };
-
-  /* ------------------------------------------------------------------------
-     Desplegables y expediente clínico
-     ------------------------------------------------------------------------ */
-
-  function actualizarSelectores() {
-    const selDueno = document.getElementById('selectDuenoAsignado');
-    const selExpediente = document.getElementById('selectExpediente');
-    const selPacienteConsulta = document.getElementById('selectPacienteConsulta');
-
-    if (!selDueno || !selExpediente || !selPacienteConsulta) return;
-
-    selDueno.innerHTML = '';
-    propietarios.forEach((p) => {
-      selDueno.innerHTML += `<option value="${escapar(p.id)}">${escapar(p.nombre)} ${escapar(p.apellido)} (${escapar(p.cedula)})</option>`;
-    });
-
-    selExpediente.innerHTML = '';
-    selPacienteConsulta.innerHTML = '';
-    mascotas.forEach((m) => {
-      const dueno = propietarios.find((p) => p.id === m.duenoId);
-      const duenoTxt = dueno ? `${dueno.nombre} ${dueno.apellido}` : 'Sin dueño';
-      const opt = `<option value="${escapar(m.id)}">${escapar(m.nombre)} (${escapar(m.especie)}) — Propietario: ${escapar(duenoTxt)}</option>`;
-      selExpediente.innerHTML += opt;
-      selPacienteConsulta.innerHTML += opt;
-    });
-
-    if (mascotas.length > 0) {
-      selExpediente.value = mascotas[0].id;
-      window.renderExpedienteSeleccionado(mascotas[0].id);
-    }
-  }
-
-  window.renderExpedienteSeleccionado = function (mascotaId) {
-    mascotaId = parseInt(mascotaId, 10);
-    const mascota = mascotas.find((m) => m.id === mascotaId);
-    if (!mascota) return;
-
-    const nombreEl = document.getElementById('expNombreMascota');
-    const detallesEl = document.getElementById('expDetallesMascota');
-    const duenoEl = document.getElementById('expDuenoMascota');
-    const badgeAlergia = document.getElementById('expAlergiaMascota');
-    const timeline = document.getElementById('timelineConsultas');
-
-    if (!nombreEl || !detallesEl || !duenoEl || !badgeAlergia) return;
-
-    const dueno = propietarios.find((p) => p.id === mascota.duenoId);
-
-    nombreEl.textContent = mascota.nombre;
-    detallesEl.textContent = `${mascota.especie} • Raza: ${mascota.raza} • Sexo: ${mascota.sexo}`;
-
-    if (dueno) {
-      duenoEl.textContent = `Dueño: ${dueno.nombre} ${dueno.apellido} (Tel: ${dueno.tel})`;
-
-      if (mascota.alergias && mascota.alergias.trim() !== '') {
-        badgeAlergia.textContent = `⚠️ Alergia: ${mascota.alergias}`;
-        badgeAlergia.style.backgroundColor = '#fee2e2';
-        badgeAlergia.style.color = '#b91c1c';
-        badgeAlergia.style.borderColor = '#f87171';
-      } else {
-        badgeAlergia.textContent = '✓ Sin alergias registradas';
-        badgeAlergia.style.backgroundColor = '#dcfce7';
-        badgeAlergia.style.color = '#15803d';
-        badgeAlergia.style.borderColor = '#86efac';
-      }
-    }
-
-    if (timeline) {
-      timeline.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem; padding: 1rem 0;">(En la Fase 5 conectaremos las consultas y recetas desde la base de datos).</p>';
-    }
-  };
-
-  /* ------------------------------------------------------------------------
-     Formularios clínicos (solo existen para el personal)
-     ------------------------------------------------------------------------ */
-
-  const formPropietario = document.getElementById('formPropietario');
-  if (formPropietario) {
-    formPropietario.addEventListener('submit', async (evento) => {
-      evento.preventDefault();
-      const data = {
-        cedula: document.getElementById('propCedula').value.trim(),
-        nombre: document.getElementById('propNombre').value.trim(),
-        apellido: document.getElementById('propApellido').value.trim(),
-        tel: document.getElementById('propTel').value.trim(),
-      };
-
-      try {
-        const res = await fetch('/api/cliente', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          data.id = result.id;
-          propietarios.push(data);
-          actualizarSelectores();
-          avisar(`Propietario ${data.nombre} guardado correctamente.`);
-          evento.target.reset();
-        } else {
-          avisar(`No se pudo guardar (cédula duplicada u otro dato): ${result.error}`, 'error');
-        }
-      } catch (error) {
-        avisar('No se pudo conectar con el servidor.', 'error');
-      }
-    });
-  }
-
-  const formMascota = document.getElementById('formMascota');
-  if (formMascota) {
-    formMascota.addEventListener('submit', async (evento) => {
-      evento.preventDefault();
-      const data = {
-        duenoId: parseInt(document.getElementById('selectDuenoAsignado').value, 10),
-        nombre: document.getElementById('mascotaNombre').value.trim(),
-        especie: document.getElementById('mascotaEspecie').value,
-        raza: document.getElementById('mascotaRaza').value.trim() || 'Criollo',
-        sexo: document.getElementById('mascotaSexo').value,
-        alergias: document.getElementById('mascotaAlergias').value.trim(),
-      };
-
-      try {
-        const res = await fetch('/api/mascota', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        });
-        const result = await res.json();
-
-        if (result.success) {
-          data.id = result.id;
-          mascotas.push(data);
-          actualizarSelectores();
-          avisar(`Mascota "${data.nombre}" guardada y expediente creado.`);
-          evento.target.reset();
-
-          const tabBtns = document.querySelectorAll('.portal-tab-btn');
-          if (tabBtns[1]) cambiarPortalTab('expediente', tabBtns[1]);
-        } else {
-          avisar(`Error al guardar mascota: ${result.error}`, 'error');
-        }
-      } catch (error) {
-        avisar('No se pudo conectar con el servidor.', 'error');
-      }
-    });
-  }
-
-  const formNuevaConsulta = document.getElementById('formNuevaConsulta');
-  if (formNuevaConsulta) {
-    formNuevaConsulta.addEventListener('submit', (evento) => {
-      evento.preventDefault();
-      avisar('En el próximo paso conectaremos la consulta médica, el descuento de vacuna y la notificación por correo.');
-    });
-  }
-
-  /* ------------------------------------------------------------------------
-     Modales clínicos (stubs seguros)
-     ------------------------------------------------------------------------ */
-
-  function mostrarModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('hidden');
-  }
-
-  function ocultarModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) modal.classList.add('hidden');
-  }
-
-  window.abrirModalEditarPaciente = () => mostrarModal('modalEditarPaciente');
-  window.cerrarModalEditarPaciente = () => ocultarModal('modalEditarPaciente');
-  window.cerrarModalReceta = () => ocultarModal('modalReceta');
-  window.cerrarModalConfirmacion = () => ocultarModal('modalConfirmacion');
-
-  /* ------------------------------------------------------------------------
-     Carrito de compras
+     Carrito
      ------------------------------------------------------------------------ */
 
   const CLAVE_CARRITO = 'vetpepe_carrito_v1';
@@ -368,13 +231,17 @@
       const lista = crudo ? JSON.parse(crudo) : [];
       if (!Array.isArray(lista)) return [];
       return lista
-        .filter((item) => item && item.nombre)
-        .map((item) => ({
-          nombre: String(item.nombre),
-          precio: Number(item.precio) || 0,
-          imagen: item.imagen ? String(item.imagen) : '',
-          cantidad: Math.max(1, parseInt(item.cantidad, 10) || 1),
-        }));
+        .filter((item) => item && (item.nombre || item.id))
+        .map((item) => {
+          const producto = item.id != null ? porId.get(String(item.id)) : null;
+          return {
+            id: item.id != null ? item.id : null,
+            nombre: String(item.nombre || (producto ? producto.nombre : 'Producto')),
+            precio: Number(item.precio != null ? item.precio : producto ? producto.precio : 0) || 0,
+            imagen: String(item.imagen || (producto ? imagenDe(producto) : '')),
+            cantidad: Math.max(1, parseInt(item.cantidad, 10) || 1),
+          };
+        });
     } catch (error) {
       return [];
     }
@@ -384,7 +251,7 @@
     try {
       window.localStorage.setItem(CLAVE_CARRITO, JSON.stringify(carrito));
     } catch (error) {
-      /* Sin almacenamiento: el carrito funciona solo en esta página. */
+      /* Sin almacenamiento: el carrito vive solo en esta página. */
     }
   }
 
@@ -395,58 +262,60 @@
   }
 
   function actualizarContador() {
-    const contador = document.getElementById('cartCount');
+    const contador = $('#cartCount');
+    const resumen = $('#cartResumen');
+    const unidades = carrito.reduce((suma, item) => suma + item.cantidad, 0);
+
     if (contador) {
-      const unidades = carrito.reduce((suma, item) => suma + item.cantidad, 0);
       contador.textContent = unidades;
-      if (hasAnime && !reduceMotion && unidades > 0) {
-        window.anime.animate(contador, {
-          scale: [1.35, 1],
-          duration: 320,
-          ease: 'outBack',
-        });
+      if (unidades > 0) {
+        animar(contador, { scale: [1.35, 1], duration: 320, ease: 'outBack' });
       }
+    }
+
+    if (resumen) {
+      resumen.textContent = unidades === 1 ? '1 producto' : unidades + ' productos';
     }
   }
 
   function renderCarrito() {
-    const lista = document.getElementById('cartItemsList');
+    const lista = $('#cartItemsList');
     if (!lista) return;
 
     if (carrito.length === 0) {
       lista.innerHTML = `
-        <div class="cart-empty-state">
-          <div style="font-size: 2.4rem; margin-bottom: 0.4rem;">🐾</div>
-          <p style="font-weight: 700; color: var(--vet-green-dark);">Tu carrito está vacío</p>
-          <p style="font-size: 0.8rem;">Agrega productos desde la tienda.</p>
+        <div class="cart-empty">
+          <span>🐾</span>
+          <strong>Tu carrito está vacío</strong>
+          <p>Agrega productos desde el catálogo de la tienda.</p>
         </div>`;
     } else {
       lista.innerHTML = carrito.map((item, indice) => {
         const imagen = item.imagen
-          ? `<img src="static/img/${escapar(item.imagen)}" alt="${escapar(item.nombre)}">`
-          : '<span style="font-size:1.4rem;">🐾</span>';
+          ? `<img src="${escapar(item.imagen)}" alt="${escapar(item.nombre)}">`
+          : '<span style="font-size:1.5rem">🐾</span>';
         return `
-          <div class="cart-item-card" data-indice="${indice}">
+          <div class="cart-item" data-indice="${indice}">
             <div class="cart-item-img">${imagen}</div>
             <div class="cart-item-info">
-              <div class="cart-item-title">${escapar(item.nombre)}</div>
-              <div class="cart-item-price-unit">${dinero(item.precio)} c/u</div>
-              <div class="cart-qty-controls">
-                <button type="button" class="btn-qty" onclick="cambiarCantidad(${indice}, -1)" aria-label="Quitar una unidad">−</button>
-                <span class="qty-display-number">${item.cantidad}</span>
-                <button type="button" class="btn-qty" onclick="cambiarCantidad(${indice}, 1)" aria-label="Agregar una unidad">+</button>
+              <strong>${escapar(item.nombre)}</strong>
+              <small>${dinero(item.precio)} c/u</small>
+              <div class="qty-controls">
+                <button type="button" class="qty-btn" data-cantidad="${indice}" data-delta="-1" aria-label="Quitar una unidad">−</button>
+                <span class="qty-value">${item.cantidad}</span>
+                <button type="button" class="qty-btn" data-cantidad="${indice}" data-delta="1" aria-label="Agregar una unidad">+</button>
               </div>
               <div class="cart-item-subtotal">${dinero(item.precio * item.cantidad)}</div>
             </div>
-            <button type="button" class="btn-remove-item" onclick="quitarDelCarrito(${indice})" aria-label="Quitar producto">🗑️</button>
+            <button type="button" class="cart-remove" data-quitar="${indice}" aria-label="Quitar ${escapar(item.nombre)}">✕</button>
           </div>`;
       }).join('');
     }
 
     const { subtotal, iva, total } = totales();
-    const subtotalEl = document.getElementById('cartSubtotalText');
-    const ivaEl = document.getElementById('cartIvaText');
-    const totalEl = document.getElementById('cartTotalText');
+    const subtotalEl = $('#cartSubtotalText');
+    const ivaEl = $('#cartIvaText');
+    const totalEl = $('#cartTotalText');
 
     if (subtotalEl) subtotalEl.textContent = dinero(subtotal);
     if (ivaEl) ivaEl.textContent = dinero(iva);
@@ -454,62 +323,204 @@
 
     actualizarContador();
 
-    if (hasAnime && !reduceMotion && carrito.length) {
-      const tarjetas = lista.querySelectorAll('.cart-item-card');
-      if (tarjetas.length) {
-        window.anime.animate(tarjetas, {
-          opacity: [0, 1],
-          translateX: [14, 0],
-          duration: 300,
-          delay: window.anime.stagger(30),
-          ease: 'outCubic',
-        });
-      }
-    }
+    animar($$('.cart-item', lista), {
+      opacity: [0, 1],
+      translateX: [14, 0],
+      duration: 300,
+      delay: hasAnime ? window.anime.stagger(30) : 0,
+      ease: 'outCubic',
+    });
   }
 
-  window.agregarAlCarrito = function (nombre, precio, imagen) {
-    const existente = carrito.find((item) => item.nombre === nombre);
+  function agregarProducto(id, cantidad) {
+    const producto = porId.get(String(id));
+    if (!producto) return;
+
+    const stock = Number(producto.stock) || 0;
+    if (stock <= 0) {
+      avisar('Ese producto está agotado por el momento.', 'error');
+      return;
+    }
+
+    const existente = carrito.find((item) => String(item.id) === String(id));
     if (existente) {
-      existente.cantidad += 1;
+      existente.cantidad += cantidad || 1;
     } else {
       carrito.push({
-        nombre: String(nombre),
-        precio: Number(precio) || 0,
-        imagen: imagen ? String(imagen) : '',
-        cantidad: 1,
+        id: producto.id,
+        nombre: producto.nombre,
+        precio: Number(producto.precio) || 0,
+        imagen: imagenDe(producto),
+        cantidad: cantidad || 1,
       });
     }
 
     guardarCarrito();
     renderCarrito();
-    avisar(`"${nombre}" se agregó al carrito.`);
-    actualizarContador();
-  };
+    avisar(`“${producto.nombre}” se agregó al carrito.`);
+  }
 
-  window.cambiarCantidad = function (indice, delta) {
+  /* ------------------------------------------------------------------------
+     Detalle de producto
+     ------------------------------------------------------------------------ */
+
+  function abrirDetalleProducto(id) {
+    const producto = porId.get(String(id));
+    const modal = $('#modalProducto');
+    const cuerpo = $('#detalleProducto');
+    const titulo = $('#tituloProducto');
+    if (!producto || !modal || !cuerpo) return;
+
+    const stock = estadoStock(producto);
+    const agotado = stock.clase === 'agotado';
+    const descripcion = producto.descripcion && producto.descripcion.trim()
+      ? producto.descripcion
+      : 'Producto veterinario seleccionado por nuestro equipo. Consulta disponibilidad y recomendaciones con el personal de la clínica.';
+
+    if (titulo) titulo.textContent = producto.nombre;
+
+    cuerpo.innerHTML = `
+      <div class="detail-grid">
+        <div class="detail-img">
+          <img src="${escapar(imagenDe(producto))}" alt="${escapar(producto.nombre)}">
+        </div>
+        <div>
+          <span class="detail-cat">${escapar(producto.categoria)}</span>
+          <h3 class="detail-name">${escapar(producto.nombre)}</h3>
+          <p class="detail-desc">${escapar(descripcion)}</p>
+          <div class="detail-meta">
+            <span>${escapar(producto.unidad)}</span>
+            <span>${stock.texto}</span>
+            <span>${producto.controla_vencimiento ? 'Controla vencimiento' : 'Sin vencimiento'}</span>
+            <span>Mínimo: ${Number(producto.minimo) || 0}</span>
+          </div>
+          <div class="detail-price">${dinero(producto.precio)} <small>+ IVA</small></div>
+          <button type="button" class="btn-primary detail-add" data-agregar="${producto.id}" ${agotado ? 'disabled' : ''}>
+            ${agotado ? 'Producto agotado' : 'Agregar al carrito'}
+          </button>
+        </div>
+      </div>`;
+
+    modal.hidden = false;
+    document.body.classList.add('no-scroll');
+    animar($('.shop-modal-card', modal), {
+      opacity: [0, 1],
+      translateY: [18, 0],
+      scale: [0.98, 1],
+      duration: 300,
+      ease: 'outCubic',
+    });
+  }
+
+  function cerrarDetalleProducto() {
+    const modal = $('#modalProducto');
+    if (modal) modal.hidden = true;
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  /* ------------------------------------------------------------------------
+     Carrito visual y confirmación
+     ------------------------------------------------------------------------ */
+
+  function abrirCarrito() {
+    const cajon = $('#cartDrawer');
+    const fondo = $('#cartBackdrop');
+    if (!cajon || !fondo) return;
+
+    cajon.classList.add('active');
+    cajon.setAttribute('aria-hidden', 'false');
+    fondo.classList.add('active');
+    document.body.classList.add('no-scroll');
+
+    animar(cajon, { translateX: [24, 0], opacity: [0.4, 1], duration: 320, ease: 'outCubic' });
+  }
+
+  function cerrarCarrito() {
+    const cajon = $('#cartDrawer');
+    const fondo = $('#cartBackdrop');
+    if (!cajon || !fondo) return;
+
+    cajon.classList.remove('active');
+    cajon.setAttribute('aria-hidden', 'true');
+    fondo.classList.remove('active');
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  function modalAbierto() {
+    return $$('.shop-modal').some((modal) => !modal.hidden);
+  }
+
+  function abrirModalConfirmarCompra() {
+    if (!carrito.length) {
+      avisar('Agrega al menos un producto antes de confirmar el pedido.', 'error');
+      return;
+    }
+
+    const resumen = $('#checkoutSummaryList');
+    const totalEl = $('#checkoutModalTotal');
+
+    if (resumen) {
+      resumen.innerHTML = carrito.map((item) => `
+        <div class="checkout-item">
+          <span>${escapar(item.nombre)} <strong>×${item.cantidad}</strong></span>
+          <strong>${dinero(item.precio * item.cantidad)}</strong>
+        </div>`).join('');
+    }
+
+    if (totalEl) totalEl.textContent = dinero(totales().total);
+
+    const modal = $('#modalConfirmarCompra');
+    if (modal) modal.hidden = false;
+    document.body.classList.add('no-scroll');
+
+    animar($('#modalConfirmarCompra .shop-modal-card'), {
+      opacity: [0, 1],
+      translateY: [16, 0],
+      scale: [0.98, 1],
+      duration: 300,
+      ease: 'outCubic',
+    });
+  }
+
+  function cerrarModalConfirmarCompra() {
+    const modal = $('#modalConfirmarCompra');
+    if (modal) modal.hidden = true;
+    if (!modalAbierto()) document.body.classList.remove('no-scroll');
+  }
+
+  function finalizarPedidoConfirmado() {
+    const total = dinero(totales().total);
+    cerrarModalConfirmarCompra();
+    carrito = [];
+    guardarCarrito();
+    renderCarrito();
+    window.setTimeout(() => {
+      cerrarCarrito();
+      avisar(`¡Pedido confirmado por ${total}! Te contactaremos para coordinar la entrega.`);
+    }, 180);
+  }
+
+  function cambiarCantidad(indice, delta) {
     const item = carrito[indice];
     if (!item) return;
 
     item.cantidad += delta;
-    if (item.cantidad <= 0) {
-      carrito.splice(indice, 1);
-    }
+    if (item.cantidad <= 0) carrito.splice(indice, 1);
 
     guardarCarrito();
     renderCarrito();
-  };
+  }
 
-  window.quitarDelCarrito = function (indice) {
-    if (!carrito[indice]) return;
-    const nombre = carrito[indice].nombre;
+  function quitarDelCarrito(indice) {
+    const item = carrito[indice];
+    if (!item) return;
     carrito.splice(indice, 1);
     guardarCarrito();
     renderCarrito();
-    avisar(`"${nombre}" se quitó del carrito.`);
-  };
+    avisar(`“${item.nombre}” se quitó del carrito.`);
+  }
 
-  window.vaciarCarrito = function () {
+  function vaciarCarrito() {
     if (!carrito.length) {
       avisar('El carrito ya está vacío.');
       return;
@@ -518,114 +529,133 @@
     guardarCarrito();
     renderCarrito();
     avisar('Carrito vaciado.');
-  };
+  }
 
-  window.abrirCarrito = function () {
-    const cajon = document.getElementById('cartDrawer');
-    const fondo = document.getElementById('cartBackdrop');
-    if (!cajon || !fondo) return;
+  /* ------------------------------------------------------------------------
+     Eventos
+     ------------------------------------------------------------------------ */
 
-    cajon.classList.add('active');
-    fondo.classList.add('active');
-    document.body.style.overflow = 'hidden';
-
-    if (hasAnime && !reduceMotion) {
-      window.anime.animate(cajon, {
-        translateX: [24, 0],
-        opacity: [0.4, 1],
-        duration: 320,
-        ease: 'outCubic',
-      });
-    }
-  };
-
-  window.cerrarCarrito = function () {
-    const cajon = document.getElementById('cartDrawer');
-    const fondo = document.getElementById('cartBackdrop');
-    if (!cajon || !fondo) return;
-
-    cajon.classList.remove('active');
-    fondo.classList.remove('active');
-    document.body.style.overflow = '';
-  };
-
-  window.abrirModalConfirmarCompra = function () {
-    if (!carrito.length) {
-      avisar('Agrega al menos un producto antes de confirmar el pedido.', 'error');
+  // Delegación de clics del catálogo, carrito y detalle.
+  document.addEventListener('click', (evento) => {
+    const agregar = evento.target.closest('[data-agregar]');
+    if (agregar) {
+      evento.preventDefault();
+      agregarProducto(agregar.dataset.agregar, 1);
       return;
     }
 
-    const resumen = document.getElementById('checkoutSummaryList');
-    const totalEl = document.getElementById('checkoutModalTotal');
-
-    if (resumen) {
-      resumen.innerHTML = carrito.map((item) => `
-        <div style="display:flex; justify-content:space-between; gap:0.6rem; font-size:0.8rem; padding:0.28rem 0; border-bottom:1px dashed #e2e8f0;">
-          <span>${escapar(item.nombre)} <strong>×${item.cantidad}</strong></span>
-          <strong style="white-space:nowrap;">${dinero(item.precio * item.cantidad)}</strong>
-        </div>`).join('');
+    const detalle = evento.target.closest('[data-detalle]');
+    if (detalle) {
+      evento.preventDefault();
+      abrirDetalleProducto(detalle.dataset.detalle);
+      return;
     }
 
-    if (totalEl) totalEl.textContent = dinero(totales().total);
-
-    mostrarModal('modalConfirmarCompra');
-    if (hasAnime && !reduceMotion) {
-      const tarjeta = document.querySelector('#modalConfirmarCompra .modal-white-card');
-      if (tarjeta) {
-        window.anime.animate(tarjeta, {
-          opacity: [0, 1],
-          translateY: [16, 0],
-          scale: [0.98, 1],
-          duration: 300,
-          ease: 'outCubic',
-        });
-      }
+    const cantidad = evento.target.closest('[data-cantidad]');
+    if (cantidad) {
+      cambiarCantidad(Number(cantidad.dataset.cantidad), Number(cantidad.dataset.delta));
+      return;
     }
-  };
 
-  window.cerrarModalConfirmarCompra = function () {
-    ocultarModal('modalConfirmarCompra');
-  };
+    const quitar = evento.target.closest('[data-quitar]');
+    if (quitar) {
+      quitarDelCarrito(Number(quitar.dataset.quitar));
+      return;
+    }
 
-  window.finalizarPedidoConfirmado = function () {
-    const total = dinero(totales().total);
-    ocultarModal('modalConfirmarCompra');
-    carrito = [];
-    guardarCarrito();
-    renderCarrito();
-    window.setTimeout(() => {
-      window.cerrarCarrito();
-      avisar(`¡Pedido confirmado por ${total}! Te contactaremos para coordinar la entrega.`);
-    }, 180);
-  };
+    const chip = evento.target.closest('.cat-chip');
+    if (chip) {
+      aplicarFiltroCategoria(chip.dataset.categoria);
+      return;
+    }
 
-  /* Cerrar el carrito con Escape */
-  document.addEventListener('keydown', (evento) => {
-    if (evento.key === 'Escape') {
-      window.cerrarCarrito();
-      ocultarModal('modalConfirmarCompra');
+    const filtrar = evento.target.closest('[data-filtrar]');
+    if (filtrar) {
+      evento.preventDefault();
+      const categoria = filtrar.dataset.filtrar;
+      aplicarFiltroCategoria(categoria);
+      const destino = $('#catalogo');
+      if (destino) destino.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth' });
+      return;
+    }
+
+    // Cerrar modales al hacer clic en el fondo oscuro.
+    if (evento.target.classList.contains('shop-modal')) {
+      evento.target.hidden = true;
+      if (!modalAbierto()) document.body.classList.remove('no-scroll');
     }
   });
+
+  const buscador = $('#buscarProducto');
+  if (buscador) {
+    buscador.addEventListener('input', () => {
+      estado.texto = sinAcentos(buscador.value.trim());
+      estado.visibles = TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  const orden = $('#ordenProducto');
+  if (orden) {
+    orden.addEventListener('change', () => {
+      estado.orden = orden.value;
+      estado.visibles = TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  const verMas = $('#btnVerMas');
+  if (verMas) {
+    verMas.addEventListener('click', () => {
+      estado.visibles += TAMANO_PAGINA;
+      renderCatalogo();
+    });
+  }
+
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key !== 'Escape') return;
+    cerrarCarrito();
+    cerrarModalConfirmarCompra();
+    cerrarDetalleProducto();
+  });
+
+  /* API usada por los botones del HTML */
+  window.abrirCarrito = abrirCarrito;
+  window.cerrarCarrito = cerrarCarrito;
+  window.abrirModalConfirmarCompra = abrirModalConfirmarCompra;
+  window.cerrarModalConfirmarCompra = cerrarModalConfirmarCompra;
+  window.finalizarPedidoConfirmado = finalizarPedidoConfirmado;
+  window.vaciarCarrito = vaciarCarrito;
+  window.cerrarDetalleProducto = cerrarDetalleProducto;
 
   /* ------------------------------------------------------------------------
      Arranque
      ------------------------------------------------------------------------ */
 
-  document.addEventListener('DOMContentLoaded', () => {
-    actualizarSelectores();
+  function iniciar() {
+    renderCatalogo();
     renderCarrito();
 
-    if (hasAnime && !reduceMotion) {
-      const tarjetas = document.querySelectorAll('.product-card');
-      if (tarjetas.length) {
-        window.anime.animate(tarjetas, {
-          opacity: [0, 1],
-          translateY: [18, 0],
-          duration: 460,
-          delay: window.anime.stagger(55),
-          ease: 'outCubic',
-        });
-      }
-    }
-  });
+    animar($$('.hero-copy > *'), {
+      opacity: [0, 1],
+      translateY: [18, 0],
+      duration: 520,
+      delay: hasAnime ? window.anime.stagger(70) : 0,
+      ease: 'outCubic',
+    });
+
+    animar($$('.hero-photo'), {
+      opacity: [0, 1],
+      scale: [0.94, 1],
+      duration: 620,
+      delay: hasAnime ? window.anime.stagger(80, { start: 180 }) : 0,
+      ease: 'outCubic',
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciar);
+  } else {
+    iniciar();
+  }
 })();

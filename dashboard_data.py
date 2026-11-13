@@ -143,6 +143,7 @@ def _contexto(cursor):
 def _productos(cursor, ctx):
     sql = f"""
         SELECT P.IdProducto,
+               P.IdCategoria,
                {ctx['nombre_expr']} AS Nombre,
                CAT.Nombre AS Categoria,
                P.{ctx['unidad']} AS Unidad,
@@ -154,13 +155,14 @@ def _productos(cursor, ctx):
                    ELSE 0 END), 0) AS int) AS Stock,
                COUNT(DISTINCT L.IdLote) AS Lotes,
                MIN(L.{ctx['fecha_venc']}) AS ProximoVencimiento,
-               {ctx['precio_expr']} AS Precio
+               {ctx['precio_expr']} AS Precio,
+               MAX(CF.Descripcion) AS Descripcion
         FROM PRODUCTO P
         LEFT JOIN CATEGORIA CAT ON CAT.IdCategoria = P.IdCategoria
         LEFT JOIN LOTE L ON L.IdProducto = P.IdProducto
         LEFT JOIN MOVIMIENTO_INVENTARIO M ON M.IdLote = L.IdLote
         {ctx['join_concepto']}
-        GROUP BY P.IdProducto, {ctx['nombre_expr']}, CAT.Nombre,
+        GROUP BY P.IdProducto, P.IdCategoria, {ctx['nombre_expr']}, CAT.Nombre,
                  P.{ctx['unidad']}, P.{ctx['controla']}, P.{ctx['minimo']},
                  {ctx['precio_expr']}
         ORDER BY P.IdProducto
@@ -178,6 +180,7 @@ def _productos(cursor, ctx):
             estado, clase = 'Disponible', 'ok'
         productos.append({
             'id': _entero(fila.IdProducto),
+            'id_categoria': _entero(fila.IdCategoria),
             'nombre': _texto(fila.Nombre, f'Producto #{_entero(fila.IdProducto)}'),
             'categoria': _texto(fila.Categoria, 'Sin categoría'),
             'unidad': _texto(fila.Unidad, 'UND'),
@@ -186,11 +189,28 @@ def _productos(cursor, ctx):
             'stock': stock,
             'lotes': _entero(fila.Lotes),
             'precio': _decimal(fila.Precio),
+            'descripcion': _texto(fila.Descripcion, ''),
             'proximo_vencimiento': fila.ProximoVencimiento,
             'estado': estado,
             'clase': clase,
         })
     return productos
+
+
+def cargar_catalogo(cursor):
+    """Productos y categorías para la tienda y la sección de productos."""
+    ctx = _contexto(cursor)
+    productos = _productos(cursor, ctx)
+
+    agrupadas = {}
+    for producto in productos:
+        nombre = producto['categoria']
+        if nombre not in agrupadas:
+            agrupadas[nombre] = {'nombre': nombre, 'productos': 0}
+        agrupadas[nombre]['productos'] += 1
+
+    categorias = sorted(agrupadas.values(), key=lambda c: c['nombre'].lower())
+    return {'productos': productos, 'categorias': categorias}
 
 
 def _lotes(cursor, ctx, hoy):
@@ -686,7 +706,8 @@ def panel_vacio(mensaje):
 def _categorias(productos):
     agrupadas = {}
     for p in productos:
-        fila = agrupadas.setdefault(p['categoria'], {'nombre': p['categoria'],
+        fila = agrupadas.setdefault(p['categoria'], {'id': p.get('id_categoria'),
+                                                     'nombre': p['categoria'],
                                                      'productos': 0, 'stock': 0,
                                                      'bajo': 0})
         fila['productos'] += 1
@@ -880,3 +901,108 @@ def actualizar_estado_cita(cursor, id_reserva, estado):
     cursor.execute("UPDATE RESERVA SET Estado = ? WHERE IdReserva = ?",
                    (estado, id_reserva))
     return {'anterior': _texto(cita.Estado, '—').upper(), 'nuevo': estado}
+
+
+def crear_producto(cursor, datos):
+    """Crea un producto vendible en las dos variantes de esquema del proyecto.
+
+    Base demo: PRODUCTO.IdProducto comparte valor con CONCEPTO_FACTURABLE.IdConcepto.
+    Base real: PRODUCTO tiene Nombre propio e IdProducto es IDENTITY; el precio
+    vive en CONCEPTO_FACTURABLE y se enlaza por nombre.
+    """
+    nombre = (datos.get('nombre') or '').strip()
+    descripcion = (datos.get('descripcion') or '').strip()
+    unidad = (datos.get('unidad') or 'UNIDAD').strip().upper()
+    try:
+        id_categoria = int(datos.get('id_categoria') or 0)
+        stock_minimo = int(datos.get('stock_minimo') or 0)
+        precio = float(datos.get('precio') or 0)
+    except (TypeError, ValueError):
+        raise ValueError('Los datos numéricos del producto no son válidos.')
+
+    if len(nombre) < 3:
+        raise ValueError('El nombre del producto debe tener al menos 3 caracteres.')
+    if len(nombre) > 150:
+        raise ValueError('El nombre del producto no puede superar los 150 caracteres.')
+    if descripcion and len(descripcion) > 255:
+        raise ValueError('La descripción no puede superar los 255 caracteres.')
+    if not unidad:
+        raise ValueError('Indica la unidad de medida del producto.')
+    if precio <= 0:
+        raise ValueError('El precio de venta debe ser mayor que cero.')
+    if stock_minimo < 0:
+        raise ValueError('El stock mínimo no puede ser negativo.')
+
+    cursor.execute("SELECT COUNT(*) FROM CATEGORIA WHERE IdCategoria = ?", (id_categoria,))
+    if not cursor.fetchone()[0]:
+        raise ValueError('La categoría seleccionada no existe.')
+
+    concepto = _columnas(cursor, 'CONCEPTO_FACTURABLE')
+    precio_col = _col(concepto, 'PrecioVenta', 'Precio')
+    if not precio_col:
+        raise ValueError('La tabla de conceptos no tiene una columna de precio reconocible.')
+
+    campos = ['TipoConcepto', 'Nombre']
+    parametros = ['PRODUCTO', nombre]
+    if 'descripcion' in concepto:
+        campos.append('Descripcion')
+        parametros.append(descripcion or None)
+    campos.append(precio_col)
+    parametros.append(precio)
+    if 'estado' in concepto:
+        campos.append('Estado')
+        parametros.append('ACTIVO')
+
+    id_concepto_col = _col(concepto, 'IdConcepto', default='IdConcepto')
+    if _es_identidad(cursor, 'CONCEPTO_FACTURABLE', id_concepto_col):
+        cursor.execute(f"""
+            INSERT INTO CONCEPTO_FACTURABLE ({', '.join(campos)})
+            OUTPUT INSERTED.{id_concepto_col}
+            VALUES ({', '.join(['?'] * len(campos))})
+        """, parametros)
+        id_concepto = int(cursor.fetchone()[0])
+    else:
+        cursor.execute(f"SELECT ISNULL(MAX({id_concepto_col}), 0) + 1 FROM CONCEPTO_FACTURABLE")
+        id_concepto = int(cursor.fetchone()[0])
+        cursor.execute(f"""
+            INSERT INTO CONCEPTO_FACTURABLE ({id_concepto_col}, {', '.join(campos)})
+            VALUES (?, {', '.join(['?'] * len(campos))})
+        """, [id_concepto] + parametros)
+
+    producto = _columnas(cursor, 'PRODUCTO')
+    nombre_col = _col(producto, 'Nombre')
+    control_col = _col(producto, 'ControlaVencimiento', 'ControlVenc')
+    minimo_col = _col(producto, 'StockMinimo', 'StockMin')
+    id_producto_col = _col(producto, 'IdProducto', default='IdProducto')
+    if not control_col or not minimo_col:
+        raise ValueError('La tabla de productos no tiene las columnas esperadas.')
+
+    campos_prod = []
+    parametros_prod = []
+    if nombre_col:
+        campos_prod.append(nombre_col)
+        parametros_prod.append(nombre)
+    campos_prod.extend([control_col, minimo_col, 'IdCategoria', 'UnidadMedida'])
+    parametros_prod.extend([1 if datos.get('controla_vencimiento') else 0,
+                            stock_minimo, id_categoria, unidad])
+
+    if _es_identidad(cursor, 'PRODUCTO', id_producto_col):
+        cursor.execute(f"""
+            INSERT INTO PRODUCTO ({', '.join(campos_prod)})
+            OUTPUT INSERTED.{id_producto_col}
+            VALUES ({', '.join(['?'] * len(campos_prod))})
+        """, parametros_prod)
+        id_producto = int(cursor.fetchone()[0])
+    else:
+        if nombre_col:
+            cursor.execute(f"SELECT ISNULL(MAX({id_producto_col}), 0) + 1 FROM PRODUCTO")
+            id_producto = int(cursor.fetchone()[0])
+        else:
+            # La base demo exige que PRODUCTO.IdProducto sea el mismo del concepto.
+            id_producto = id_concepto
+        cursor.execute(f"""
+            INSERT INTO PRODUCTO ({id_producto_col}, {', '.join(campos_prod)})
+            VALUES (?, {', '.join(['?'] * len(campos_prod))})
+        """, [id_producto] + parametros_prod)
+
+    return {'producto_id': id_producto, 'concepto_id': id_concepto, 'nombre': nombre}
