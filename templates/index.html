@@ -298,5 +298,19 @@
   <script id="datos-catalogo" type="application/json">{{ productos|tojson }}</script>
   <script src="{{ url_for('static', filename='js/anime.iife.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var drawer = document.getElementById('cartDrawer');
+      var backdrop = document.getElementById('cartBackdrop');
+      function cerrar() {
+        if (drawer) drawer.classList.remove('active');
+        if (backdrop) backdrop.classList.remove('active');
+        document.body.classList.remove('no-scroll');
+      }
+      var btn = document.querySelector('.cart-close');
+      if (btn) btn.addEventListener('click', cerrar);
+      if (backdrop) backdrop.addEventListener('click', cerrar);
+    });
+  </script>
 </body>
 </html>
