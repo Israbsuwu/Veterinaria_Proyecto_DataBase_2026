@@ -64,7 +64,7 @@ def login_required(view: Callable) -> Callable:
             if _wants_json():
                 return jsonify({"success": False, "error": "Debes iniciar sesión."}), 401
             flash("Debes iniciar sesión para continuar.", "warning")
-            return redirect(url_for("auth.login", next=_next_path()))
+            return redirect(url_for("login", next=_next_path()))
         return view(*args, **kwargs)
 
     return wrapper
@@ -76,7 +76,7 @@ def staff_required(view: Callable) -> Callable:
         if not session.get("uid"):
             if _wants_json():
                 return jsonify({"success": False, "error": "Debes iniciar sesión."}), 401
-            return redirect(url_for("auth.login", next=_next_path()))
+            return redirect(url_for("login", next=_next_path()))
         if not is_staff():
             if _wants_json():
                 return jsonify({"success": False, "error": "No tienes permisos internos."}), 403
@@ -94,7 +94,7 @@ def role_required(*roles: str) -> Callable:
             if not session.get("uid"):
                 if _wants_json():
                     return jsonify({"success": False, "error": "Debes iniciar sesión."}), 401
-                return redirect(url_for("auth.login", next=_next_path()))
+                return redirect(url_for("login", next=_next_path()))
             if session.get("rol") not in roles:
                 if _wants_json():
                     return jsonify({"success": False, "error": "No tienes permisos para esta acción."}), 403

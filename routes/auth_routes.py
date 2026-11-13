@@ -46,16 +46,16 @@ def _start_session(user: dict) -> None:
 @auth_bp.route("/inicio")
 def index():
     if session.get("rol") == Config.ROLE_CLIENT:
-        return redirect(url_for("shop.home"))
+        return redirect(url_for("index"))
     if session.get("rol") in Config.STAFF_ROLES:
-        return redirect(url_for("admin.dashboard"))
-    return redirect(url_for("shop.home"))
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("index"))
 
 
-@auth_bp.route("/login", methods=["GET", "POST"])
+@auth_bp.route("/admin/login", methods=["GET", "POST"])
 def login():
     if session.get("rol") in Config.STAFF_ROLES:
-        return redirect(url_for("admin.dashboard"))
+        return redirect(url_for("dashboard"))
     if request.method == "POST":
         try:
             user = auth_service.authenticate(
@@ -67,7 +67,7 @@ def login():
                 raise BusinessError("Usa el acceso de clientes en la tienda en línea.")
             _start_session(user)
             flash(f"Bienvenido(a), {user['nombre']}.", "success")
-            return redirect(_safe_next(url_for("admin.dashboard")))
+            return redirect(_safe_next(url_for("dashboard")))
         except BusinessError as error:
             flash(error.message, "danger")
     return render_template("login.html", tab="login", correo="", datos={}, roles=[])
@@ -77,13 +77,13 @@ def login():
 def logout():
     session.clear()
     flash("Sesión finalizada.", "info")
-    return redirect(url_for("auth.login"))
+    return redirect(url_for("login"))
 
 
 @auth_bp.route("/tienda/login", methods=["GET", "POST"])
 def shop_login():
     if session.get("rol") == Config.ROLE_CLIENT:
-        return redirect(url_for("shop.cuenta"))
+        return redirect(url_for("mi_cuenta"))
     if request.method == "POST":
         try:
             user = auth_service.authenticate(
@@ -93,7 +93,7 @@ def shop_login():
             )
             _start_session(user)
             flash(f"¡Hola de nuevo, {user['nombre']}!", "success")
-            return redirect(_safe_next(url_for("shop.cuenta")))
+            return redirect(_safe_next(url_for("mi_cuenta")))
         except BusinessError as error:
             flash(error.message, "danger")
     return render_template("shop/login.html")
@@ -102,7 +102,7 @@ def shop_login():
 @auth_bp.route("/tienda/registro", methods=["GET", "POST"])
 def shop_register():
     if session.get("rol") == Config.ROLE_CLIENT:
-        return redirect(url_for("shop.cuenta"))
+        return redirect(url_for("mi_cuenta"))
     if request.method == "POST":
         data = {
             "nombre": request.form.get("nombre", ""),
@@ -117,7 +117,7 @@ def shop_register():
             user = ecommerce_service.register_and_login(data)
             _start_session(user)
             flash("Tu cuenta fue creada. ¡Bienvenido a la familia Pepe & Pepito!", "success")
-            return redirect(url_for("shop.cuenta"))
+            return redirect(url_for("mi_cuenta"))
         except BusinessError as error:
             flash(error.message, "danger")
     return render_template("shop/register.html")
@@ -127,4 +127,4 @@ def shop_register():
 def shop_logout():
     session.clear()
     flash("Has cerrado sesión.", "info")
-    return redirect(url_for("shop.home"))
+    return redirect(url_for("index"))

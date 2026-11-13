@@ -85,6 +85,19 @@ def login():
         return redirect(url_for("index"))
     if session.get("uid") and _es_personal():
         return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        correo = _limpiar(request.form.get("correo")).lower()
+        contrasena = request.form.get("contrasena") or ""
+        if not correo or not contrasena:
+            flash("Escribe tu correo y tu contraseña para entrar.", "error")
+            return render_template("login.html", tab="login", correo=correo, datos={}, roles=[])
+        try:
+            user = auth_service.authenticate(correo, contrasena, expected_role="staff")
+            _start_session(user)
+            flash("Bienvenido(a), %s." % user["nombre"], "success")
+            return redirect(url_for("dashboard"))
+        except BusinessError as error:
+            flash(error.message, "danger")
     return render_template("login.html", tab="login", correo="", datos={}, roles=[])
 
 
@@ -93,6 +106,9 @@ def registro():
         return redirect(url_for("index"))
     if session.get("uid") and _es_personal():
         return redirect(url_for("dashboard"))
+    if request.method == "POST":
+        flash("El registro de personal se gestiona desde el panel de administración.", "info")
+        return redirect(url_for("login"))
     return render_template("login.html", tab="registro", correo="", datos={}, roles=[])
 
 
